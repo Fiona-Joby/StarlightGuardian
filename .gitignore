@@ -3,3 +3,7 @@ Temp/
 Logs/ 
 UserSettings/ 
 .vscode/ 
+
+# MediaPipe model (download separately)
+*.task
+
