@@ -67,8 +67,8 @@ public class ParallaxLayerSetup : MonoBehaviour
         layers = new LoopingLayer[4];
         layers[0] = MakeLayer("BG_L1_Sky",      layer1Sky,      speed1, 1f, -9);
         layers[1] = MakeLayer("BG_L2_Hills",    layer2Hills,    speed2, 2f, -8);
-        layers[2] = MakeLayer("BG_L3_Wreckage", layer3Wreckage, speed3, 3f, -7);
-        layers[3] = MakeLayer("BG_L4_Glow",     layer4Glow,     speed4, 4f, -6);
+        layers[2] = MakeLayer("BG_L3_Wreckage", layer3Wreckage, speed3, 3f, -6);
+        layers[3] = MakeLayer("BG_L4_Glow",     layer4Glow,     speed4, 4f, -7);
 
         Debug.Log("[ParallaxLayerSetup] Background layers created (looping).");
     }

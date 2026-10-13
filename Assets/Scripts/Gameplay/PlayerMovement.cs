@@ -5,8 +5,8 @@ using UnityEngine;
 /// Clamps position between configurable left/right boundaries.
 /// Drives the Animator's "isMoving" and "isReaching" parameters.
 ///
-/// The reach animation triggers automatically when collecting a fallen star
-/// (via CatchZone.StarCaught) OR when the webcam pose detects the reach gesture.
+/// The reach animation triggers when collecting a star (via CatchZone.StarCaught)
+/// or when the webcam pose detects the reach gesture.
 /// While reaching, horizontal movement is disabled.
 /// </summary>
 public class PlayerMovement : MonoBehaviour

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -12,21 +13,58 @@ public class CatchZone : MonoBehaviour
     /// <summary>Fires when a star is caught (for local listeners on the player).</summary>
     public event Action<StarMovement> StarCaught;
 
+    private readonly HashSet<StarMovement> overlappingStars = new HashSet<StarMovement>();
+    private PlayerInput playerInput;
+
     private void Awake()
     {
         // Ensure the collider is a trigger.
         var col = GetComponent<Collider2D>();
         col.isTrigger = true;
+        playerInput = GetComponentInParent<PlayerInput>();
+    }
+
+    private void Update()
+    {
+        if (playerInput == null || !playerInput.CollectPressed) return;
+
+        // Copy first because Caught() destroys stars, which removes them from
+        // the overlap set through OnTriggerExit2D.
+        var stars = new List<StarMovement>(overlappingStars);
+        foreach (StarMovement star in stars)
+            TryCatch(star);
     }
 
     /// <summary>
-    /// Called by StarMovement.OnTriggerEnter2D when a star overlaps this zone.
-    /// The star detects the player, not the other way around.
+    /// Called when a star overlaps this zone. Contact alone never collects it.
     /// </summary>
-    public void TryCatch(StarMovement star)
+    public void RegisterStar(StarMovement star)
     {
-        if (star == null) return;
+        if (star != null) overlappingStars.Add(star);
+    }
+
+    public void UnregisterStar(StarMovement star)
+    {
+        if (star != null) overlappingStars.Remove(star);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        StarMovement star = other.GetComponent<StarMovement>();
+        if (star != null) RegisterStar(star);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        StarMovement star = other.GetComponent<StarMovement>();
+        if (star != null) UnregisterStar(star);
+    }
+
+    private void TryCatch(StarMovement star)
+    {
+        if (star == null || !overlappingStars.Contains(star)) return;
         StarCaught?.Invoke(star);
         star.Caught();
+        overlappingStars.Remove(star);
     }
 }

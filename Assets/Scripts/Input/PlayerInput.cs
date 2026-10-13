@@ -6,7 +6,8 @@ using UnityEngine;
 ///
 /// Properties exposed to consumers (PlayerMovement, etc.):
 ///   HorizontalInput  — [-1, 1] movement axis
-///   IsReaching        — true when the webcam pose detects both-hands-open gesture
+///   IsReaching        — true when the webcam pose detects the reach gesture
+///   CollectPressed   — one-frame request from an open palm or Space
 ///   FacingRight       — last known facing direction
 /// </summary>
 public class PlayerInput : MonoBehaviour
@@ -14,14 +15,18 @@ public class PlayerInput : MonoBehaviour
     /// <summary>Normalised horizontal axis (–1 left, +1 right, 0 idle).</summary>
     public float HorizontalInput { get; private set; }
 
-    /// <summary>True when the webcam pose detects the reach/catch gesture.</summary>
+    /// <summary>True when the webcam pose detects the reach animation gesture.</summary>
     public bool IsReaching { get; private set; }
+
+    /// <summary>True for one frame when the player requests a star pickup.</summary>
+    public bool CollectPressed { get; private set; }
 
     /// <summary>True if the character was last moving/facing right.</summary>
     public bool FacingRight { get; private set; } = true;
 
     // The pose bridge is optional — the game must work without a webcam.
     private WebcamPoseInput poseInput;
+    private bool wasCollecting;
 
     private void Awake()
     {
@@ -35,14 +40,17 @@ public class PlayerInput : MonoBehaviour
         {
             HorizontalInput = poseInput.HorizontalAxis;
             IsReaching = poseInput.IsReaching;
+            CollectPressed = Input.GetKeyDown(KeyCode.Space) ||
+                             (poseInput.IsCollecting && !wasCollecting);
+            wasCollecting = poseInput.IsCollecting;
         }
         else
         {
             // ----- Keyboard fallback -----
             HorizontalInput = Input.GetAxis("Horizontal");
-            // No manual reach trigger from keyboard —
-            // reach triggers automatically on star collection.
             IsReaching = false;
+            CollectPressed = Input.GetKeyDown(KeyCode.Space);
+            wasCollecting = false;
         }
 
         // Track facing direction.

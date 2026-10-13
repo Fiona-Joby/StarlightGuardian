@@ -12,10 +12,11 @@ using UnityEngine;
 /// Gesture mapping (from Python MediaPipe Hands):
 ///   • Right hand index finger raised  → run right  (HorizontalAxis = +1)
 ///   • Left  hand index finger raised  → run left   (HorizontalAxis = -1)
-///   • Two hands open raised           → reaching / catching stars
+///   • Both hands open and raised      → reach animation
+///   • One open palm                   → collect stars
 ///
 /// The Python side sends a tiny JSON payload at ~30 Hz:
-///   { "gesture": "right" | "left" | "reach" | "idle" }
+///   { "gesture": "right" | "left" | "reach" | "collect" | "idle" }
 ///
 /// This component is optional — if no pose server is running,
 /// the game falls back to keyboard input (handled by PlayerInput).
@@ -34,6 +35,9 @@ public class WebcamPoseInput : MonoBehaviour
 
     /// <summary>True when the player wants to catch/collect (both hands open).</summary>
     public bool IsReaching { get; private set; }
+
+    /// <summary>True while the pose server detects an open palm.</summary>
+    public bool IsCollecting { get; private set; }
 
     // ------------------------------------------------------------------ //
     //  Internal state
@@ -107,18 +111,27 @@ public class WebcamPoseInput : MonoBehaviour
             case "right":
                 HorizontalAxis = 1f;
                 IsReaching = false;
+                IsCollecting = false;
                 break;
             case "left":
                 HorizontalAxis = -1f;
                 IsReaching = false;
+                IsCollecting = false;
                 break;
             case "reach":
                 HorizontalAxis = 0f;
                 IsReaching = true;
+                IsCollecting = false;
+                break;
+            case "collect":
+                HorizontalAxis = 0f;
+                IsReaching = false;
+                IsCollecting = true;
                 break;
             default: // "idle"
                 HorizontalAxis = 0f;
                 IsReaching = false;
+                IsCollecting = false;
                 break;
         }
     }

@@ -8,7 +8,8 @@ and sends the result to Unity via UDP (localhost:8765).
 Gesture mapping:
   • Right hand index finger raised (other fingers curled) → "right"  (run right)
   • Left  hand index finger raised (other fingers curled) → "left"   (run left)
-  • Both hands open and raised                            → "reach"  (catch stars)
+  • Both hands open and raised                            → "reach"
+  • One open palm                                         → "collect" (catch stars)
   • Anything else                                         → "idle"
 
 Requirements:
@@ -107,6 +108,12 @@ def classify_gesture(result) -> str:
         if (is_hand_open(left_lm) and is_hand_raised(left_lm) and
                 is_hand_open(right_lm) and is_hand_raised(right_lm)):
             return "reach"
+
+    # One open palm requests a pickup. Both hands can also collect if they
+    # are open but not raised enough to match the reach gesture above.
+    if ((left_lm and is_hand_open(left_lm)) or
+            (right_lm and is_hand_open(right_lm))):
+        return "collect"
 
     # Rule 2: MediaPipe "Right" (player's LEFT) index only → run LEFT
     if right_lm and is_index_only(right_lm):
@@ -214,6 +221,7 @@ def main(port: int):
                 "right": (255, 200, 0),
                 "left": (0, 200, 255),
                 "reach": (0, 255, 0),
+                "collect": (255, 0, 255),
                 "idle": (128, 128, 128),
             }.get(gesture, (128, 128, 128))
 
