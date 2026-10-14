@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: 26a81c0b71afc424b9b168a7d577a5d5
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - layer1Sky: {instanceID: 0}
+  - layer2Hills: {fileID: -4192839779386851752, guid: 60b9ba7152507f3439787ade63db2fbc, type: 3}
+  - layer3Wreckage: {instanceID: 0}
+  - layer4Glow: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
