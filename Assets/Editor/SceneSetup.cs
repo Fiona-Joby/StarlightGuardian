@@ -152,9 +152,7 @@ public class SceneSetup : EditorWindow
         bgSR.color = new Color(0.08f, 0.04f, 0.2f); // dark sky background
         bgSR.sortingOrder = -10;
 
-        var parallax = bgGO.AddComponent<ParallaxBackground>();
-        parallax.cameraTransform = cameraGO.transform;
-        parallax.parallaxSpeed = 0.3f;
+        // ParallaxLayerSetup (auto-bootstrapped) replaces the old ParallaxBackground.
 
         // ============================================================
         // 7. STAR PREFAB (create or find)

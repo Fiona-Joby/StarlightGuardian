@@ -124,12 +124,6 @@ public class ParallaxLayerSetup : MonoBehaviour
                 sr.enabled = false;
                 Debug.Log("[ParallaxLayerSetup] Disabled old Background SpriteRenderer.");
             }
-            // Also disable the old ParallaxBackground script if present.
-            var oldScript = old.GetComponent<ParallaxBackground>();
-            if (oldScript != null)
-            {
-                oldScript.enabled = false;
-            }
         }
     }
 

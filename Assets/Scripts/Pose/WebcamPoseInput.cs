@@ -1,187 +1,319 @@
 using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
+using System.Collections;
 using UnityEngine;
 
+// MediaPipe namespaces — only used when the plugin is installed.
+using Mediapipe;
+using Mediapipe.Tasks.Core;
+using Mediapipe.Tasks.Vision.Core;
+using Mediapipe.Tasks.Vision.HandLandmarker;
+using Mediapipe.Unity;
+using Mediapipe.Unity.Experimental;
+
 /// <summary>
-/// Receives webcam pose-detection results from the companion Python script
-/// via UDP on localhost:8765.
+/// Native webcam hand-pose detection using MediaPipe Unity Plugin (v0.16+).
 ///
-/// Gesture mapping (from Python MediaPipe Hands):
-///   • Right hand index finger raised  → run right  (HorizontalAxis = +1)
-///   • Left  hand index finger raised  → run left   (HorizontalAxis = -1)
-///   • Both hands open and raised      → reach animation
-///   • One open palm                   → collect stars
+/// Replaces the old Python UDP bridge entirely — webcam capture, hand landmark
+/// detection, and gesture classification all run inside Unity.
 ///
-/// The Python side sends a tiny JSON payload at ~30 Hz:
-///   { "gesture": "right" | "left" | "reach" | "collect" | "idle" }
-///
-/// This component is optional — if no pose server is running,
+/// This component is optional — if the webcam or MediaPipe fails to initialise,
 /// the game falls back to keyboard input (handled by PlayerInput).
+///
+/// Setup:
+///   1. Install MediaPipeUnityPlugin v0.16+ via UPM.
+///   2. Place hand_landmarker.task in Assets/StreamingAssets/.
+///   3. Attach this component to the Player GameObject.
 /// </summary>
 public class WebcamPoseInput : MonoBehaviour
 {
-    [Header("UDP")]
-    [SerializeField] private int listenPort = 8765;
-    [SerializeField, Min(0.5f)] private float timeoutSeconds = 2f;
+    // ------------------------------------------------------------------ //
+    //  Inspector settings
+    // ------------------------------------------------------------------ //
 
-    /// <summary>True when receiving pose data.</summary>
+    [Header("Webcam")]
+    [SerializeField] private int requestedWidth = 640;
+    [SerializeField] private int requestedHeight = 480;
+    [SerializeField] private int requestedFPS = 30;
+
+    [Header("MediaPipe Hand Landmarker")]
+    [Tooltip("Model file name inside Assets/StreamingAssets/")]
+    [SerializeField] private string modelFileName = "hand_landmarker.task";
+    [SerializeField, Range(0f, 1f)] private float minDetectionConfidence = 0.6f;
+    [SerializeField, Range(0f, 1f)] private float minPresenceConfidence = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float minTrackingConfidence = 0.5f;
+
+    // ------------------------------------------------------------------ //
+    //  Public properties consumed by PlayerInput
+    // ------------------------------------------------------------------ //
+
     public bool IsActive { get; private set; }
-
-    /// <summary>–1 = left, 0 = idle, +1 = right.</summary>
     public float HorizontalAxis { get; private set; }
-
-    /// <summary>True when the player wants to catch/collect (both hands open).</summary>
     public bool IsReaching { get; private set; }
-
-    /// <summary>True while the pose server detects an open palm.</summary>
     public bool IsCollecting { get; private set; }
 
     // ------------------------------------------------------------------ //
-    //  Internal state
+    //  Private state
     // ------------------------------------------------------------------ //
-    private UdpClient udpClient;
-    private Thread receiveThread;
-    private volatile bool running;
-    private volatile string latestGesture = "idle";
 
-    // Track when the last packet was received (set on background thread,
-    // read on main thread). We use frame count instead of Time.time because
-    // Time.time cannot be accessed from a background thread.
-    private volatile bool receivedThisSecond;
-    private float timeSinceLastReceive;
+    private WebCamTexture webcamTexture;
+    private HandLandmarker handLandmarker;
+    private TextureFrame textureFrame;
+    private bool initialized;
+    private long frameTimestampMs;
+    private string currentGesture = "idle";
+    private GestureClassifier.HandData[] handDataBuffer;
+
+    // Pre-allocated result struct to avoid GC pressure.
+    private HandLandmarkerResult cachedResult;
 
     // ------------------------------------------------------------------ //
     //  Lifecycle
     // ------------------------------------------------------------------ //
 
-    private void OnEnable()
+    private IEnumerator Start()
     {
+        // Wrap entire init in try/catch so a failure here can NEVER
+        // break keyboard input on the same GameObject.
+        bool success = false;
+        IEnumerator routine = null;
         try
         {
-            udpClient = new UdpClient(listenPort);
-            udpClient.Client.ReceiveTimeout = 100;
-            running = true;
-            receivedThisSecond = false;
-            timeSinceLastReceive = timeoutSeconds + 1f; // Start as inactive
-
-            receiveThread = new Thread(ReceiveLoop)
-            {
-                IsBackground = true,
-                Name = "PoseUDPReceiver"
-            };
-            receiveThread.Start();
-            Debug.Log($"[WebcamPoseInput] Listening on UDP port {listenPort}");
+            routine = InitializeAsync();
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"[WebcamPoseInput] Could not start: {ex.Message}. Keyboard fallback active.");
+            Debug.LogWarning($"[WebcamPoseInput] Init failed (outer): {ex.Message}");
+        }
+
+        if (routine != null)
+        {
+            // Run the coroutine step by step so we can catch exceptions.
+            while (true)
+            {
+                object current;
+                try
+                {
+                    if (!routine.MoveNext())
+                    {
+                        success = initialized;
+                        break;
+                    }
+                    current = routine.Current;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[WebcamPoseInput] Init failed: {ex.Message}");
+                    break;
+                }
+                yield return current;
+            }
+        }
+
+        if (!success)
+        {
+            Debug.Log("[WebcamPoseInput] Webcam pose disabled — keyboard fallback is active.");
+            Cleanup();
         }
     }
 
-    private void OnDisable()
+    private IEnumerator InitializeAsync()
     {
-        running = false;
-        udpClient?.Close();
-        receiveThread?.Join(500);
-        IsActive = false;
+        // ---- 1. Start webcam ----
+        webcamTexture = new WebCamTexture(requestedWidth, requestedHeight, requestedFPS);
+        webcamTexture.Play();
+
+        int timeout = 300;
+        while (webcamTexture.width <= 16 && timeout-- > 0)
+            yield return null;
+
+        if (webcamTexture.width <= 16)
+        {
+            Debug.LogWarning("[WebcamPoseInput] Webcam failed to initialise.");
+            yield break;
+        }
+
+        Debug.Log($"[WebcamPoseInput] Webcam ready: {webcamTexture.width}x{webcamTexture.height}");
+
+        // ---- 2. Initialise MediaPipe resource manager ----
+        // This tells the native MediaPipe layer where to find model files.
+        // PrepareAssetAsync is an explicit interface implementation, so cast to IResourceManager.
+        IResourceManager resourceManager = new StreamingAssetsResourceManager();
+        yield return resourceManager.PrepareAssetAsync(modelFileName);
+
+        Debug.Log("[WebcamPoseInput] Model asset prepared via StreamingAssetsResourceManager.");
+
+        // ---- 3. Create HandLandmarker ----
+        var baseOptions = new BaseOptions(
+            delegateCase: BaseOptions.Delegate.CPU,
+            modelAssetPath: modelFileName
+        );
+
+        var options = new HandLandmarkerOptions(
+            baseOptions,
+            runningMode: RunningMode.VIDEO,
+            numHands: 2,
+            minHandDetectionConfidence: minDetectionConfidence,
+            minHandPresenceConfidence: minPresenceConfidence,
+            minTrackingConfidence: minTrackingConfidence
+        );
+
+        handLandmarker = HandLandmarker.CreateFromOptions(options);
+
+        // ---- 4. Create TextureFrame for pixel transfer ----
+        textureFrame = new TextureFrame(
+            webcamTexture.width,
+            webcamTexture.height,
+            TextureFormat.RGBA32
+        );
+
+        handDataBuffer = new GestureClassifier.HandData[2];
+        cachedResult = HandLandmarkerResult.Alloc(2);
+        initialized = true;
+        IsActive = true;
+        frameTimestampMs = 0;
+
+        Debug.Log("[WebcamPoseInput] MediaPipe HandLandmarker initialised — webcam pose active.");
     }
 
     private void Update()
     {
-        // Check if the background thread has received any data recently.
-        if (receivedThisSecond)
+        if (!initialized || webcamTexture == null || !webcamTexture.didUpdateThisFrame)
+            return;
+
+        try
         {
-            receivedThisSecond = false;
-            timeSinceLastReceive = 0f;
+            RunDetection();
+            ApplyGesture();
         }
-        else
+        catch (Exception ex)
         {
-            timeSinceLastReceive += Time.deltaTime;
+            Debug.LogError($"[WebcamPoseInput] Detection error: {ex.Message}");
+            // If detection keeps failing, disable webcam so keyboard takes over.
+            initialized = false;
+            IsActive = false;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        Cleanup();
+    }
+
+    private void Cleanup()
+    {
+        initialized = false;
+        IsActive = false;
+
+        if (handLandmarker != null)
+        {
+            try { handLandmarker.Close(); } catch { /* ignore cleanup errors */ }
+            handLandmarker = null;
         }
 
-        IsActive = timeSinceLastReceive < timeoutSeconds;
+        if (textureFrame != null)
+        {
+            try { textureFrame.Dispose(); } catch { /* ignore */ }
+            textureFrame = null;
+        }
 
-        // Apply the latest gesture on the main thread.
-        string gesture = latestGesture;
-        switch (gesture)
+        if (webcamTexture != null)
+        {
+            webcamTexture.Stop();
+            webcamTexture = null;
+        }
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Detection
+    // ------------------------------------------------------------------ //
+
+    private void RunDetection()
+    {
+        // Copy webcam pixels into the TextureFrame (CPU path).
+        // flipHorizontally mirrors like cv2.flip(frame, 1) so handedness labels
+        // match the original Python mapping.
+        // flipVertically converts Unity bottom-up to MediaPipe top-down.
+        textureFrame.ReadTextureOnCPU(webcamTexture, flipHorizontally: true, flipVertically: true);
+
+        using (var image = textureFrame.BuildCPUImage())
+        {
+            // Release the texture frame now that the Image owns the data.
+            textureFrame.Release();
+
+            // Timestamp must be monotonically increasing (milliseconds).
+            frameTimestampMs += 33;
+
+            if (handLandmarker.TryDetectForVideo(image, frameTimestampMs, null, ref cachedResult))
+            {
+                currentGesture = ExtractGesture(cachedResult);
+            }
+            else
+            {
+                currentGesture = "idle";
+            }
+        }
+    }
+
+    private string ExtractGesture(HandLandmarkerResult result)
+    {
+        if (result.handLandmarks == null || result.handLandmarks.Count == 0)
+            return "idle";
+
+        int handCount = result.handLandmarks.Count;
+        if (handDataBuffer.Length < handCount)
+            handDataBuffer = new GestureClassifier.HandData[handCount];
+
+        for (int h = 0; h < handCount; h++)
+        {
+            var landmarks = result.handLandmarks[h].landmarks;
+            var categories = result.handedness[h].categories;
+
+            string label = (categories != null && categories.Count > 0)
+                ? categories[0].categoryName
+                : "Unknown";
+
+            var points = new GestureClassifier.LandmarkPoint[landmarks.Count];
+            for (int i = 0; i < landmarks.Count; i++)
+            {
+                points[i].x = landmarks[i].x;
+                points[i].y = landmarks[i].y;
+            }
+
+            handDataBuffer[h] = new GestureClassifier.HandData
+            {
+                label = label,
+                landmarks = points
+            };
+        }
+
+        var slice = new GestureClassifier.HandData[handCount];
+        System.Array.Copy(handDataBuffer, slice, handCount);
+        return GestureClassifier.Classify(slice);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Gesture → properties
+    // ------------------------------------------------------------------ //
+
+    private void ApplyGesture()
+    {
+        switch (currentGesture)
         {
             case "right":
-                HorizontalAxis = 1f;
-                IsReaching = false;
-                IsCollecting = false;
+                HorizontalAxis = 1f; IsReaching = false; IsCollecting = false;
                 break;
             case "left":
-                HorizontalAxis = -1f;
-                IsReaching = false;
-                IsCollecting = false;
+                HorizontalAxis = -1f; IsReaching = false; IsCollecting = false;
                 break;
             case "reach":
-                HorizontalAxis = 0f;
-                IsReaching = true;
-                IsCollecting = false;
+                HorizontalAxis = 0f; IsReaching = true; IsCollecting = false;
                 break;
             case "collect":
-                HorizontalAxis = 0f;
-                IsReaching = false;
-                IsCollecting = true;
+                HorizontalAxis = 0f; IsReaching = false; IsCollecting = true;
                 break;
-            default: // "idle"
-                HorizontalAxis = 0f;
-                IsReaching = false;
-                IsCollecting = false;
+            default:
+                HorizontalAxis = 0f; IsReaching = false; IsCollecting = false;
                 break;
         }
-    }
-
-    // ------------------------------------------------------------------ //
-    //  UDP receive thread
-    // ------------------------------------------------------------------ //
-
-    private void ReceiveLoop()
-    {
-        IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-
-        while (running)
-        {
-            try
-            {
-                byte[] data = udpClient.Receive(ref remoteEP);
-                string json = Encoding.UTF8.GetString(data);
-                latestGesture = ParseGesture(json);
-                receivedThisSecond = true; // Flag for main thread
-            }
-            catch (SocketException)
-            {
-                // Timeout — normal, just loop.
-            }
-            catch (ObjectDisposedException)
-            {
-                break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Minimal JSON parse for {"gesture":"value"}.
-    /// </summary>
-    private static string ParseGesture(string json)
-    {
-        const string key = "\"gesture\"";
-        int keyIdx = json.IndexOf(key, StringComparison.Ordinal);
-        if (keyIdx < 0) return "idle";
-
-        int colonIdx = json.IndexOf(':', keyIdx + key.Length);
-        if (colonIdx < 0) return "idle";
-
-        int firstQuote = json.IndexOf('"', colonIdx + 1);
-        if (firstQuote < 0) return "idle";
-
-        int lastQuote = json.IndexOf('"', firstQuote + 1);
-        if (lastQuote < 0) return "idle";
-
-        return json.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
     }
 }

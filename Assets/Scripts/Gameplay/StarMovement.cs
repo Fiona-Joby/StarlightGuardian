@@ -104,18 +104,6 @@ public class StarMovement : MonoBehaviour
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  Trigger detection — register overlap; collection requires explicit input
-    // ------------------------------------------------------------------ //
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        CatchZone catchZone = other.GetComponent<CatchZone>();
-        if (catchZone != null)
-        {
-            catchZone.RegisterStar(this);
-        }
-    }
 
     // ------------------------------------------------------------------ //
     //  Ground landing

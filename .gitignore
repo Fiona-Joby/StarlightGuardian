@@ -1,9 +1,8 @@
-Library/ 
-Temp/ 
-Logs/ 
-UserSettings/ 
-.vscode/ 
+Library/
+Temp/
+Logs/
+UserSettings/
+.vscode/
 
-# MediaPipe model (download separately)
-*.task
-
+# Teammate's visual assets folder (still pulled from git, just ignored locally)
+Starlight Guardian Visual Assets/

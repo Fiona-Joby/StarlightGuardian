@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// Unified input hub: reads from keyboard AND from the webcam pose bridge.
-/// Pose input takes priority when available; keyboard is always the fallback.
+/// Keyboard movement overrides webcam movement while a direction key is held;
+/// webcam gestures remain active when no keyboard direction is pressed.
 ///
 /// Properties exposed to consumers (PlayerMovement, etc.):
 ///   HorizontalInput  — [-1, 1] movement axis
@@ -35,11 +36,16 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
-        // ----- Pose input (webcam) takes priority when active -----
+        float keyboardAxis = Input.GetAxisRaw("Horizontal");
+
+        // ----- Combine keyboard movement with webcam gestures when active -----
         if (poseInput != null && poseInput.IsActive)
         {
-            HorizontalInput = poseInput.HorizontalAxis;
-            IsReaching = poseInput.IsReaching;
+            // A direction key overrides webcam movement and reach locking;
+            // webcam gestures remain available when the keyboard is idle.
+            bool keyboardOverride = Mathf.Abs(keyboardAxis) > 0.01f;
+            HorizontalInput = keyboardOverride ? keyboardAxis : poseInput.HorizontalAxis;
+            IsReaching = !keyboardOverride && poseInput.IsReaching;
             CollectPressed = Input.GetKeyDown(KeyCode.Space) ||
                              (poseInput.IsCollecting && !wasCollecting);
             wasCollecting = poseInput.IsCollecting;
