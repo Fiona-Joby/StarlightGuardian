@@ -64,6 +64,7 @@ public class PlayerMovement : MonoBehaviour
     // Animator parameter hashes for performance.
     private static readonly int IsMoving = Animator.StringToHash("isMoving");
     private static readonly int IsReaching = Animator.StringToHash("isReaching");
+    private static readonly int IsJumping = Animator.StringToHash("isJumping");
 
     private void Awake()
     {
@@ -160,7 +161,10 @@ public class PlayerMovement : MonoBehaviour
         // Drive animation state.
         bool moving = Mathf.Abs(horizontalSpeed) > 0.01f;
         if (animator != null)
+        {
             animator.SetBool(IsMoving, moving && !isJumping && !isReaching);
+            animator.SetBool(IsJumping, isJumping);
+        }
 
         // Flip sprite when moving left (run frames face right).
         if (spriteRenderer != null && moving)

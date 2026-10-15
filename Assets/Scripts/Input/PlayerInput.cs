@@ -47,7 +47,7 @@ public class PlayerInput : MonoBehaviour
     {
         float keyboardAxis = Input.GetAxisRaw("Horizontal");
 
-        JumpHeld = poseInput != null && poseInput.IsJumpHeld;
+        JumpHeld = Input.GetKey(KeyCode.UpArrow) || (poseInput != null && poseInput.IsJumpHeld);
         JumpPressed = JumpHeld && jumpArmed;
         if (JumpHeld)
         {

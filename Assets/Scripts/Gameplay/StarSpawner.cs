@@ -1,81 +1,69 @@
 using UnityEngine;
 
 /// <summary>
-/// Pairs a world spawn location with motion/type settings for that star.
-/// </summary>
-[System.Serializable]
-public class StarSpawnPoint
-{
-    public Transform point;
-    public StarType starType = StarType.Normal;
-    [Min(0f)] public float horizontalSpeed = 3f;
-    [Min(0f)] public float downwardSpeed = 1.5f;
-}
-
-/// <summary>
-/// Sequentially spawns stars from an ordered list of world positions.
-/// Each spawn point has its own StarType, speed and trajectory.
-///
-/// Normal stars alternate between the yellow and blue star sprites.
-/// Rainbow stars always use the rainbow star sprite.
-///
-/// NOTE: Currently timer-based. A future iteration should tie spawning
-/// to world/camera progression rather than a flat interval.
+/// Spawns stars at randomized positions ahead of the player as they move forward.
 /// </summary>
 public class StarSpawner : MonoBehaviour
 {
     [SerializeField] private StarMovement starPrefab;
-    [SerializeField] private StarSpawnPoint[] spawnPoints;
+    [SerializeField] private Transform player;
     [SerializeField, Min(0f)] private float spawnInterval = 2f;
-    [SerializeField] private bool repeatSequence = true;
+    [SerializeField, Min(0f)] private float minDistanceAhead = 12f;
+    [SerializeField, Min(0f)] private float maxDistanceAhead = 20f;
+    [SerializeField] private float minHeightAbovePlayer = 2f;
+    [SerializeField] private float maxHeightAbovePlayer = 6f;
+    [SerializeField] private float horizontalSpeed = 3f;
+    [SerializeField] private float downwardSpeed = 1.5f;
+    [SerializeField, Range(0f, 1f)] private float rainbowChance = 0.100f;
 
     [Header("Star Sprites")]
-    [Tooltip("Drag Art/Stars/Yellow Star here.")]
     [SerializeField] private Sprite yellowStarSprite;
-    [Tooltip("Drag Art/Stars/Blue Star here.")]
     [SerializeField] private Sprite blueStarSprite;
-    [Tooltip("Drag Art/Stars/Rainbow Star here.")]
     [SerializeField] private Sprite rainbowStarSprite;
 
-    private int currentSpawnPoint;
     private float spawnTimer;
-    private int normalStarCounter;   // toggles 0 / 1 to alternate yellow ↔ blue
+    private int normalStarCounter;
+
+    private void Awake()
+    {
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+                player = playerObject.transform;
+        }
+    }
 
     private void Update()
     {
-        if (starPrefab == null || spawnPoints == null || spawnPoints.Length == 0) return;
-        if (!repeatSequence && currentSpawnPoint >= spawnPoints.Length) return;
+        if (starPrefab == null || player == null) return;
 
         spawnTimer += Time.deltaTime;
         if (spawnTimer < spawnInterval) return;
-        spawnTimer = 0f;
+
+        spawnTimer -= spawnInterval;
         SpawnNext();
     }
 
     private void SpawnNext()
     {
-        StarSpawnPoint settings = spawnPoints[currentSpawnPoint];
-        currentSpawnPoint++;
-        if (repeatSequence && currentSpawnPoint >= spawnPoints.Length)
-            currentSpawnPoint = 0;
+        StarType type = Random.value < rainbowChance ? StarType.Rainbow : StarType.Normal;
+        float distanceAhead = Random.Range(minDistanceAhead, Mathf.Max(minDistanceAhead, maxDistanceAhead));
+        float height = Random.Range(minHeightAbovePlayer, Mathf.Max(minHeightAbovePlayer, maxHeightAbovePlayer));
+        Vector3 position = new Vector3(player.position.x + distanceAhead, player.position.y + height, 0f);
 
-        if (settings == null || settings.point == null) return;
-
-        // Choose the correct sprite based on type.
         Sprite visual;
-        if (settings.starType == StarType.Rainbow)
+        if (type == StarType.Rainbow)
         {
             visual = rainbowStarSprite;
         }
         else
         {
-            // Alternate between yellow and blue for Normal stars.
             visual = (normalStarCounter % 2 == 0) ? yellowStarSprite : blueStarSprite;
             normalStarCounter++;
         }
 
-        StarMovement star = Instantiate(starPrefab, settings.point.position, Quaternion.identity);
-        star.Initialize(settings.starType, settings.horizontalSpeed, settings.downwardSpeed, visual);
+        StarMovement star = Instantiate(starPrefab, position, Quaternion.identity);
+        star.Initialize(type, horizontalSpeed, downwardSpeed, visual);
     }
 }
-

@@ -119,99 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &87022601
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 87022602}
-  m_Layer: 0
-  m_Name: StarSpawnPoint_03
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &87022602
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 87022601}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 32, y: 3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 435183970}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &175893176
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 175893177}
-  m_Layer: 0
-  m_Name: StarSpawnPoint_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &175893177
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 175893176}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 12, y: 3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 435183970}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &213894192
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 213894193}
-  m_Layer: 0
-  m_Name: StarSpawnPoint_02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &213894193
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 213894192}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 22, y: 4, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 435183970}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &271118334
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,7 +221,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 120, y: 0.2}
+  m_Size: {x: 500, y: 0.2}
   m_EdgeRadius: 0
 --- !u!4 &271118338
 Transform:
@@ -482,40 +389,6 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!1 &435183969
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 435183970}
-  m_Layer: 0
-  m_Name: StarSpawnPoints
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &435183970
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 435183969}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 175893177}
-  - {fileID: 213894193}
-  - {fileID: 87022602}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &477842374
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,8 +804,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
-  leftBoundary: -6
-  rightBoundary: 175
+  leftBoundary: -15
+  rightBoundary: 200
   reachDuration: 0.875
   jumpSpeed: 7
   jumpGravity: 24
@@ -940,6 +813,10 @@ MonoBehaviour:
   maxJumpHoldTime: 0.4
   fallGravity: 60
   maxFallSpeed: 20
+  takeoffSpeedMultiplier: 1.2
+  takeoffForwardBoost: 0
+  airControlAcceleration: 6
+  airDrag: 0
 --- !u!114 &1605530573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1276,21 +1153,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSpawner
   starPrefab: {fileID: 1802250175764459607, guid: cb0580723a5998d49959949241d6ffd3, type: 3}
-  spawnPoints:
-  - point: {fileID: 175893177}
-    starType: 0
-    horizontalSpeed: 3
-    downwardSpeed: 1.5
-  - point: {fileID: 213894193}
-    starType: 1
-    horizontalSpeed: 3
-    downwardSpeed: 1.5
-  - point: {fileID: 87022602}
-    starType: 0
-    horizontalSpeed: 3
-    downwardSpeed: 1.5
+  player: {fileID: 1605530577}
   spawnInterval: 2
-  repeatSequence: 1
+  minDistanceAhead: 12
+  maxDistanceAhead: 20
+  minHeightAbovePlayer: 2
+  maxHeightAbovePlayer: 6
+  horizontalSpeed: 3
+  downwardSpeed: 1.5
+  rainbowChance: 0.085
   yellowStarSprite: {fileID: 21300000, guid: d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6, type: 3}
   blueStarSprite: {fileID: 21300000, guid: e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7, type: 3}
   rainbowStarSprite: {fileID: 21300000, guid: f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8, type: 3}
@@ -1319,6 +1190,5 @@ SceneRoots:
   - {fileID: 1163127148}
   - {fileID: 271118338}
   - {fileID: 1648634309}
-  - {fileID: 435183970}
   - {fileID: 1988928150}
   - {fileID: 813047698}
