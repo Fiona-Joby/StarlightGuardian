@@ -934,6 +934,12 @@ MonoBehaviour:
   leftBoundary: -6
   rightBoundary: 175
   reachDuration: 0.875
+  jumpSpeed: 7
+  jumpGravity: 24
+  heldJumpGravity: 8
+  maxJumpHoldTime: 0.4
+  fallGravity: 60
+  maxFallSpeed: 20
 --- !u!114 &1605530573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -946,6 +952,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2afdd286441549a4c89b8a2f3a0b408c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
+  jumpRearmDelay: 0.12
 --- !u!50 &1605530574
 Rigidbody2D:
   serializedVersion: 5

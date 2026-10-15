@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.github.homuler.mediapipe": "file:C:/Users/jobyv/Downloads/com.github.homuler.mediapipe-0.16.3.tgz",
+    "com.github.homuler.mediapipe": "file:D:/IndiaTEEPProject/GestureExhibitionShowcase/Packages/com.github.homuler.mediapipe-0.16.3.tgz",
     "com.unity.2d.animation": "14.0.4",
     "com.unity.2d.aseprite": "4.0.2",
     "com.unity.2d.psdimporter": "13.0.3",

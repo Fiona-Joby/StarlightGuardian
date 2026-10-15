@@ -24,6 +24,7 @@ using Mediapipe.Unity.Experimental;
 ///   2. Place hand_landmarker.task in Assets/StreamingAssets/.
 ///   3. Attach this component to the Player GameObject.
 /// </summary>
+[DefaultExecutionOrder(-200)]
 public class WebcamPoseInput : MonoBehaviour
 {
     // ------------------------------------------------------------------ //
@@ -50,6 +51,19 @@ public class WebcamPoseInput : MonoBehaviour
     public float HorizontalAxis { get; private set; }
     public bool IsReaching { get; private set; }
     public bool IsCollecting { get; private set; }
+    public bool IsJumpHeld => isActiveAndEnabled && IsActive && jumpGestureHeld;
+    private bool jumpGestureHeld;
+    public WebCamTexture PreviewTexture => webcamTexture;
+    public bool HasHandPosition { get; private set; }
+    // Mirrored camera coordinates, with the origin at the bottom left.
+    public Vector2 HandPosition { get; private set; }
+    private string trackedHandLabel;
+
+    private void Awake()
+    {
+        if (GetComponent<WebcamPreview>() == null)
+            gameObject.AddComponent<WebcamPreview>();
+    }
 
     // ------------------------------------------------------------------ //
     //  Private state
@@ -191,6 +205,7 @@ public class WebcamPoseInput : MonoBehaviour
             // If detection keeps failing, disable webcam so keyboard takes over.
             initialized = false;
             IsActive = false;
+            HasHandPosition = false;
         }
     }
 
@@ -203,6 +218,7 @@ public class WebcamPoseInput : MonoBehaviour
     {
         initialized = false;
         IsActive = false;
+        HasHandPosition = false;
 
         if (handLandmarker != null)
         {
@@ -229,6 +245,8 @@ public class WebcamPoseInput : MonoBehaviour
 
     private void RunDetection()
     {
+        jumpGestureHeld = false;
+        HasHandPosition = false;
         // Copy webcam pixels into the TextureFrame (CPU path).
         // flipHorizontally mirrors like cv2.flip(frame, 1) so handedness labels
         // match the original Python mapping.
@@ -260,6 +278,29 @@ public class WebcamPoseInput : MonoBehaviour
             return "idle";
 
         int handCount = result.handLandmarks.Count;
+        // Keep the same hand when MediaPipe changes the ordering of two hands.
+        int selectedHand = 0;
+        for (int h = 0; h < handCount; h++)
+        {
+            var labels = result.handedness[h].categories;
+            if (labels != null && labels.Count > 0 && labels[0].categoryName == trackedHandLabel)
+            {
+                selectedHand = h;
+                break;
+            }
+        }
+        var selectedLabels = result.handedness[selectedHand].categories;
+        trackedHandLabel = selectedLabels != null && selectedLabels.Count > 0
+            ? selectedLabels[0].categoryName : null;
+        var palm = result.handLandmarks[selectedHand].landmarks;
+        if (palm != null && palm.Count >= 21)
+        {
+            // Wrist and four knuckles form a stable palm center.
+            float x = (palm[0].x + palm[5].x + palm[9].x + palm[13].x + palm[17].x) / 5f;
+            float y = (palm[0].y + palm[5].y + palm[9].y + palm[13].y + palm[17].y) / 5f;
+            HandPosition = new Vector2(x, 1f - y);
+            HasHandPosition = true;
+        }
         if (handDataBuffer.Length < handCount)
             handDataBuffer = new GestureClassifier.HandData[handCount];
 
@@ -288,6 +329,7 @@ public class WebcamPoseInput : MonoBehaviour
 
         var slice = new GestureClassifier.HandData[handCount];
         System.Array.Copy(handDataBuffer, slice, handCount);
+        jumpGestureHeld = GestureClassifier.HasJumpGesture(slice);
         return GestureClassifier.Classify(slice);
     }
 

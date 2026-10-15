@@ -10,6 +10,7 @@
 ///   • Left hand index finger raised (others curled)  → "left"  (run left)
 ///   • Both hands open and raised                     → "reach"
 ///   • One open palm                                  → "collect"
+///   • Either hand making a V sign is read independently by HasJumpGesture.
 ///   • Anything else                                  → "idle"
 /// </summary>
 public static class GestureClassifier
@@ -78,6 +79,15 @@ public static class GestureClassifier
                !IsFingerRaised(lm, 4);
     }
 
+    // Thumb position is deliberately relaxed; index and middle must be raised,
+    // while ring and pinky must be curled. This excludes movement and open palms.
+    private static bool IsVictorySign(LandmarkPoint[] lm)
+    {
+        return lm != null && lm.Length >= 21 &&
+               IsFingerRaised(lm, 1) && IsFingerRaised(lm, 2) &&
+               !IsFingerRaised(lm, 3) && !IsFingerRaised(lm, 4);
+    }
+
     /// <summary>True when at least 4 fingers are raised.</summary>
     private static bool IsHandOpen(LandmarkPoint[] lm) => CountRaisedFingers(lm) >= 4;
 
@@ -91,6 +101,7 @@ public static class GestureClassifier
     /// <summary>
     /// Classify gesture from detected hands.
     /// Returns: "right", "left", "reach", "collect", or "idle".
+    /// Jump is independent, so one hand can move while the other holds V.
     /// </summary>
     public static string Classify(HandData[] hands)
     {
@@ -139,5 +150,13 @@ public static class GestureClassifier
         }
 
         return "idle";
+    }
+
+    public static bool HasJumpGesture(HandData[] hands)
+    {
+        if (hands == null) return false;
+        for (int i = 0; i < hands.Length; i++)
+            if (IsVictorySign(hands[i].landmarks)) return true;
+        return false;
     }
 }

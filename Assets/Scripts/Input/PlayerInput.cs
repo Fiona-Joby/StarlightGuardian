@@ -11,6 +11,7 @@ using UnityEngine;
 ///   CollectPressed   — one-frame request from an open palm or Space
 ///   FacingRight       — last known facing direction
 /// </summary>
+[DefaultExecutionOrder(-100)]
 public class PlayerInput : MonoBehaviour
 {
     /// <summary>Normalised horizontal axis (–1 left, +1 right, 0 idle).</summary>
@@ -21,6 +22,14 @@ public class PlayerInput : MonoBehaviour
 
     /// <summary>True for one frame when the player requests a star pickup.</summary>
     public bool CollectPressed { get; private set; }
+    public bool JumpHeld { get; private set; }
+    public bool JumpPressed { get; private set; }
+
+    private bool jumpArmed = true;
+    private float jumpReleaseTime;
+    [Header("Jump Gesture")]
+    [Tooltip("解除 V 手勢多久後，才允許下一次起跳（秒）。")]
+    [SerializeField, Min(0f)] private float jumpRearmDelay = 0.12f;
 
     /// <summary>True if the character was last moving/facing right.</summary>
     public bool FacingRight { get; private set; } = true;
@@ -37,6 +46,22 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         float keyboardAxis = Input.GetAxisRaw("Horizontal");
+
+        JumpHeld = poseInput != null && poseInput.IsJumpHeld;
+        JumpPressed = JumpHeld && jumpArmed;
+        if (JumpHeld)
+        {
+            jumpArmed = false;
+            jumpReleaseTime = 0f;
+        }
+        else
+        {
+            // Release ends the boost immediately. A short stable release is
+            // required to rearm, so a single missed camera frame cannot retrigger.
+            jumpReleaseTime += Time.deltaTime;
+            if (jumpReleaseTime >= jumpRearmDelay)
+                jumpArmed = true;
+        }
 
         // ----- Combine keyboard movement with webcam gestures when active -----
         if (poseInput != null && poseInput.IsActive)
