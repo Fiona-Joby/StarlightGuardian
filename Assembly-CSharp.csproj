@@ -56,6 +56,7 @@
     <Compile Include="Assets\Scripts\Gameplay\StarEvents.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\Core\CameraFollow.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\PlayerShield.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\CatchZone.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameplayBootstrapper.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Core\ParallaxLayerSetup.cs" />
+    <Compile Include="Assets\Scripts\Core\Stage2ParallaxSetup.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GroundDetector.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreProgressBar.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPreview.cs" />

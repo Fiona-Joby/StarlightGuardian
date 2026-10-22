@@ -94,6 +94,12 @@ public static class GestureClassifier
     /// <summary>True when the wrist is above the midpoint of the frame.</summary>
     private static bool IsHandRaised(LandmarkPoint[] lm) => lm[WRIST].y < 0.6f;
 
+    /// <summary>True when all fingers are curled (closed fist).</summary>
+    private static bool IsFist(LandmarkPoint[] lm)
+    {
+        return lm != null && lm.Length >= 21 && CountRaisedFingers(lm) == 0;
+    }
+
     // ------------------------------------------------------------------ //
     //  Classification
     // ------------------------------------------------------------------ //
@@ -157,6 +163,15 @@ public static class GestureClassifier
         if (hands == null) return false;
         for (int i = 0; i < hands.Length; i++)
             if (IsVictorySign(hands[i].landmarks)) return true;
+        return false;
+    }
+
+    /// <summary>True when at least one hand is making a fist (all fingers curled).</summary>
+    public static bool HasFistGesture(HandData[] hands)
+    {
+        if (hands == null) return false;
+        for (int i = 0; i < hands.Length; i++)
+            if (IsFist(hands[i].landmarks)) return true;
         return false;
     }
 }

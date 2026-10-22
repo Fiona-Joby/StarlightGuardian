@@ -25,6 +25,9 @@ public class PlayerInput : MonoBehaviour
     public bool JumpHeld { get; private set; }
     public bool JumpPressed { get; private set; }
 
+    /// <summary>True for one frame when the player makes a fist gesture (shield activation).</summary>
+    public bool ShieldPressed { get; private set; }
+
     private bool jumpArmed = true;
     private float jumpReleaseTime;
     [Header("Jump Gesture")]
@@ -37,6 +40,7 @@ public class PlayerInput : MonoBehaviour
     // The pose bridge is optional — the game must work without a webcam.
     private WebcamPoseInput poseInput;
     private bool wasCollecting;
+    private bool wasFisting;
 
     private void Awake()
     {
@@ -74,6 +78,9 @@ public class PlayerInput : MonoBehaviour
             CollectPressed = Input.GetKeyDown(KeyCode.Space) ||
                              (poseInput.IsCollecting && !wasCollecting);
             wasCollecting = poseInput.IsCollecting;
+
+            ShieldPressed = poseInput.IsFistHeld && !wasFisting;
+            wasFisting = poseInput.IsFistHeld;
         }
         else
         {
@@ -81,7 +88,9 @@ public class PlayerInput : MonoBehaviour
             HorizontalInput = Input.GetAxis("Horizontal");
             IsReaching = false;
             CollectPressed = Input.GetKeyDown(KeyCode.Space);
+            ShieldPressed = false;
             wasCollecting = false;
+            wasFisting = false;
         }
 
         // Track facing direction.

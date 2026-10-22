@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Automatically creates the ScoreManager, ScoreProgressBar, StageManager,
@@ -6,12 +7,19 @@ using UnityEngine;
 ///
 /// Uses [RuntimeInitializeOnLoadMethod] so no manual GameObject setup
 /// is needed in the Unity Editor.
+///
+/// On Stage 2, the ScoreProgressBar (points bar) is NOT created, and the
+/// Stage2ParallaxSetup is used instead of ParallaxLayerSetup.
+/// The Player is already embedded in the Stage2 scene file.
 /// </summary>
 public static class GameplayBootstrapper
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
+        string sceneName = SceneManager.GetActiveScene().name;
+        bool isStage2 = sceneName == "Stage2";
+
         // --- ScoreManager ---
         if (Object.FindAnyObjectByType<ScoreManager>() == null)
         {
@@ -20,8 +28,8 @@ public static class GameplayBootstrapper
             Debug.Log("[GameplayBootstrapper] Created ScoreManager.");
         }
 
-        // --- ScoreProgressBar ---
-        if (Object.FindAnyObjectByType<ScoreProgressBar>() == null)
+        // --- ScoreProgressBar (skip on Stage 2) ---
+        if (!isStage2 && Object.FindAnyObjectByType<ScoreProgressBar>() == null)
         {
             ScoreManager sm = Object.FindAnyObjectByType<ScoreManager>();
             var host = (sm != null) ? sm.gameObject : new GameObject("ScoreUI");
@@ -29,8 +37,8 @@ public static class GameplayBootstrapper
             Debug.Log("[GameplayBootstrapper] Created ScoreProgressBar.");
         }
 
-        // --- StageManager ---
-        if (Object.FindAnyObjectByType<StageManager>() == null)
+        // --- StageManager (only needed on Stage 1) ---
+        if (!isStage2 && Object.FindAnyObjectByType<StageManager>() == null)
         {
             ScoreManager sm = Object.FindAnyObjectByType<ScoreManager>();
             var host = (sm != null) ? sm.gameObject : new GameObject("StageManager");
@@ -38,12 +46,24 @@ public static class GameplayBootstrapper
             Debug.Log("[GameplayBootstrapper] Created StageManager.");
         }
 
-        // --- ParallaxLayerSetup ---
-        if (Object.FindAnyObjectByType<ParallaxLayerSetup>() == null)
+        // --- Parallax background ---
+        if (isStage2)
         {
-            var bgGO = new GameObject("ParallaxBackground_Auto");
-            bgGO.AddComponent<ParallaxLayerSetup>();
-            Debug.Log("[GameplayBootstrapper] Created ParallaxLayerSetup.");
+            if (Object.FindAnyObjectByType<Stage2ParallaxSetup>() == null)
+            {
+                var bgGO = new GameObject("Stage2Parallax_Auto");
+                bgGO.AddComponent<Stage2ParallaxSetup>();
+                Debug.Log("[GameplayBootstrapper] Created Stage2ParallaxSetup.");
+            }
+        }
+        else
+        {
+            if (Object.FindAnyObjectByType<ParallaxLayerSetup>() == null)
+            {
+                var bgGO = new GameObject("ParallaxBackground_Auto");
+                bgGO.AddComponent<ParallaxLayerSetup>();
+                Debug.Log("[GameplayBootstrapper] Created ParallaxLayerSetup.");
+            }
         }
     }
 }

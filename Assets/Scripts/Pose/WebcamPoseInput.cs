@@ -53,6 +53,8 @@ public class WebcamPoseInput : MonoBehaviour
     public bool IsCollecting { get; private set; }
     public bool IsJumpHeld => isActiveAndEnabled && IsActive && jumpGestureHeld;
     private bool jumpGestureHeld;
+    public bool IsFistHeld => isActiveAndEnabled && IsActive && fistGestureHeld;
+    private bool fistGestureHeld;
     public WebCamTexture PreviewTexture => webcamTexture;
     public bool HasHandPosition { get; private set; }
     // Mirrored camera coordinates, with the origin at the bottom left.
@@ -246,6 +248,7 @@ public class WebcamPoseInput : MonoBehaviour
     private void RunDetection()
     {
         jumpGestureHeld = false;
+        fistGestureHeld = false;
         HasHandPosition = false;
         // Copy webcam pixels into the TextureFrame (CPU path).
         // flipHorizontally mirrors like cv2.flip(frame, 1) so handedness labels
@@ -330,6 +333,7 @@ public class WebcamPoseInput : MonoBehaviour
         var slice = new GestureClassifier.HandData[handCount];
         System.Array.Copy(handDataBuffer, slice, handCount);
         jumpGestureHeld = GestureClassifier.HasJumpGesture(slice);
+        fistGestureHeld = GestureClassifier.HasFistGesture(slice);
         return GestureClassifier.Classify(slice);
     }
 
