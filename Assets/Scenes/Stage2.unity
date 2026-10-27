@@ -651,6 +651,10 @@ MonoBehaviour:
   leftBoundary: -15
   rightBoundary: 200
   reachDuration: 0.875
+  platformRayLength: 1.5
+  platformRaySpread: 0.3
+  playerHalfHeight: 0.5
+  platformLandingLift: 0.25
   jumpSpeed: 7
   jumpGravity: 24
   heldJumpGravity: 8
@@ -958,6 +962,60 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: -0.21049532}
   m_Radius: 1.2104954
+--- !u!1 &4000000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4000000002}
+  - component: {fileID: 4000000003}
+  m_Layer: 0
+  m_Name: PlatformSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4000000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04ef76512a9a332489da5ccf9a9ccc02, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlatformSpawner
+  platformLongSprites:
+  - {fileID: 21300000, guid: e21a0a4b7f8946189c0a4ee289c7d012, type: 3}
+  platformShortSprite: {fileID: 21300000, guid: f32b1b5c8a9d4720ad1b5ff39ad8e123, type: 3}
+  minSpacing: 8
+  maxSpacing: 14
+  minHeight: 0.5
+  maxHeight: 1.6
+  spawnAheadDistance: 25
+  platformScale: 0.35
+  groundY: -3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -967,3 +1025,4 @@ SceneRoots:
   - {fileID: 3005530577}
   - {fileID: 3003127148}
   - {fileID: 3001118338}
+  - {fileID: 4000000002}

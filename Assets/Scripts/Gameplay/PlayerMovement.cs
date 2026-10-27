@@ -24,7 +24,7 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Half-height of the player collider, used to offset rays to feet.")]
     [SerializeField] private float playerHalfHeight = 0.5f;
     [Tooltip("Extra lift applied only when landing on a platform.")]
-    [SerializeField, Min(0f)] private float platformLandingLift = 0.15f;
+    [SerializeField, Min(0f)] private float platformLandingLift = 0.25f;
 
     [Header("V Gesture Jump")]
     [Tooltip("起跳速度，越大跳得越高。單位：世界單位／秒。")]

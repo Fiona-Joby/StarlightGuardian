@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Spawns platforms at random intervals ahead of the player as they move
-/// through Stage 1. Platforms use the "Platform Long" and "Platform Short"
+/// through a stage. Platforms use that stage's "Platform Long" and "Platform Short"
 /// sprites and are tagged "Platform" for collision detection.
 ///
 /// Platforms are placed at heights reachable by jumping from the ground.
@@ -35,12 +36,14 @@ public class PlatformSpawner : MonoBehaviour
     private Transform player;
     private float nextSpawnX;
     private bool nextPlatformIsLong;
+    private bool hasStarLandingDetectors;
 
     // Start spawning platforms a short distance ahead of initial player position.
     private const float INITIAL_OFFSET = 8f;
 
     private void Start()
     {
+        hasStarLandingDetectors = SceneManager.GetActiveScene().name != "Stage2";
         // Find the player.
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
         if (playerGO != null)
@@ -104,8 +107,21 @@ public class PlatformSpawner : MonoBehaviour
         // so the player can jump through from below.
         // The sprite has the platform bar roughly in the vertical center.
         Vector2 spriteSize = sprite.bounds.size;
-        col.size = new Vector2(spriteSize.x * 0.95f, spriteSize.y * 0.25f);
-        col.offset = new Vector2(0f, spriteSize.y * 0.15f);
+        if (hasStarLandingDetectors)
+        {
+            col.size = new Vector2(spriteSize.x * 0.95f, spriteSize.y * 0.25f);
+            col.offset = new Vector2(0f, spriteSize.y * 0.15f);
+        }
+        else
+        {
+            // Stage 2's platform art is trimmed to its visible strip and uses
+            // a centered pivot. Put the collider's top edge at the sprite top.
+            col.size = new Vector2(spriteSize.x * 0.95f, spriteSize.y * 0.15f);
+            col.offset = new Vector2(0f, spriteSize.y * 0.425f);
+        }
+
+        if (!hasStarLandingDetectors)
+            return;
 
         // Add the platform landing detector (trigger) for stars.
         GameObject detectorGO = new GameObject("PlatformDetector");
@@ -130,10 +146,18 @@ public class PlatformSpawner : MonoBehaviour
     private void LoadSpritesInEditor()
     {
 #if UNITY_EDITOR
+        bool isStage2 = SceneManager.GetActiveScene().name == "Stage2";
+        string longSpritePath = isStage2
+            ? "Assets/Art/Backgrounds/Stage2/PlatformLong.png"
+            : "Assets/Art/Backgrounds/Stage1/PlatformLong.png";
+        string shortSpritePath = isStage2
+            ? "Assets/Art/Backgrounds/Stage2/PlatformShort.png"
+            : "Assets/Art/Backgrounds/Stage1/PlatformShort.png";
+
         if (platformLongSprites == null || platformLongSprites.Length == 0)
         {
             Object[] longAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(
-                "Assets/Art/Backgrounds/Stage1/PlatformLong.png");
+                longSpritePath);
             var loadedLongSprites = new System.Collections.Generic.List<Sprite>();
             foreach (Object asset in longAssets)
                 if (asset is Sprite sprite)
@@ -142,11 +166,12 @@ public class PlatformSpawner : MonoBehaviour
         }
         if (platformShortSprite == null)
             platformShortSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                "Assets/Art/Backgrounds/Stage1/PlatformShort.png");
+                shortSpritePath);
 
         Debug.Log($"[PlatformSpawner] Sprites loaded — Long:{platformLongSprites.Length} Short:{platformShortSprite != null}");
 #else
-        Debug.LogWarning("[PlatformSpawner] Not in Editor — sprites must be assigned in Inspector.");
+        if (platformLongSprites == null || platformLongSprites.Length == 0 || platformShortSprite == null)
+            Debug.LogWarning("[PlatformSpawner] Platform sprites must be assigned in the Inspector.");
 #endif
     }
 }

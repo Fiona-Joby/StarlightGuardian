@@ -76,8 +76,8 @@ public static class GameplayBootstrapper
             }
         }
 
-        // --- PlatformSpawner (Stage 1 only) ---
-        if (!isStage2 && Object.FindAnyObjectByType<PlatformSpawner>() == null)
+        // --- Platforms ---
+        if (Object.FindAnyObjectByType<PlatformSpawner>() == null)
         {
             var platGO = new GameObject("PlatformSpawner_Auto");
             platGO.AddComponent<PlatformSpawner>();
