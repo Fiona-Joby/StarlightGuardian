@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 /// Automatically creates the ScoreManager, ScoreProgressBar, StageManager,
 /// and ParallaxLayerSetup at game start if they are not already present.
 ///
-/// Uses [RuntimeInitializeOnLoadMethod] so no manual GameObject setup
-/// is needed in the Unity Editor.
+/// Uses [RuntimeInitializeOnLoadMethod] to register a sceneLoaded callback
+/// so bootstrapping runs on every scene load (initial + transitions).
 ///
 /// On Stage 2, the ScoreProgressBar (points bar) is NOT created, and the
 /// Stage2ParallaxSetup is used instead of ParallaxLayerSetup.
@@ -14,10 +14,20 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class GameplayBootstrapper
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Bootstrap()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Init()
     {
-        string sceneName = SceneManager.GetActiveScene().name;
+        // Subscribe once; this survives scene loads because it's a static handler.
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Bootstrap(scene.name);
+    }
+
+    private static void Bootstrap(string sceneName)
+    {
         bool isStage2 = sceneName == "Stage2";
 
         // --- ScoreManager ---
@@ -64,6 +74,14 @@ public static class GameplayBootstrapper
                 bgGO.AddComponent<ParallaxLayerSetup>();
                 Debug.Log("[GameplayBootstrapper] Created ParallaxLayerSetup.");
             }
+        }
+
+        // --- PlatformSpawner (Stage 1 only) ---
+        if (!isStage2 && Object.FindAnyObjectByType<PlatformSpawner>() == null)
+        {
+            var platGO = new GameObject("PlatformSpawner_Auto");
+            platGO.AddComponent<PlatformSpawner>();
+            Debug.Log("[GameplayBootstrapper] Created PlatformSpawner.");
         }
     }
 }

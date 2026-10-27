@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\Stages\StageManager.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreMultiplier.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarEvents.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\PlatformSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\Core\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerShield.cs" />

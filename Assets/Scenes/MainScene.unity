@@ -807,6 +807,9 @@ MonoBehaviour:
   leftBoundary: -15
   rightBoundary: 200
   reachDuration: 0.875
+  platformRayLength: 0.6
+  platformRaySpread: 0.3
+  playerHalfHeight: 0.5
   jumpSpeed: 7
   jumpGravity: 24
   heldJumpGravity: 8

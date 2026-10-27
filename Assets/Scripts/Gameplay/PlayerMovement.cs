@@ -16,6 +16,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float rightBoundary = 50f;
     [SerializeField, Min(0f)] private float reachDuration = 0.875f; // 7 frames at 8fps
 
+    [Header("Platform Detection")]
+    [Tooltip("How far below the player's feet to cast the platform detection ray.")]
+    [SerializeField] private float platformRayLength = 1.5f;
+    [Tooltip("Extra horizontal rays for edge detection.")]
+    [SerializeField] private float platformRaySpread = 0.3f;
+    [Tooltip("Half-height of the player collider, used to offset rays to feet.")]
+    [SerializeField] private float playerHalfHeight = 0.5f;
+
     [Header("V Gesture Jump")]
     [Tooltip("起跳速度，越大跳得越高。單位：世界單位／秒。")]
     [SerializeField, Min(0.1f)] private float jumpSpeed = 7f;
@@ -48,10 +56,12 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsGrounded => !isJumping;
     private float groundY;
+    private float baseGroundY; // The original ground level (no platform).
     private float verticalSpeed;
     private float jumpHoldTime;
     private bool isJumping;
     private bool jumpBoostEnded;
+    private bool onPlatform; // True when grounded on a platform (not base ground).
 
     private PlayerInput playerInput;
     private Animator animator;
@@ -73,6 +83,7 @@ public class PlayerMovement : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         // The existing kinematic player moves along a flat ground baseline.
         groundY = transform.position.y;
+        baseGroundY = groundY;
 
         // Find the CatchZone on a child object.
         catchZone = GetComponentInChildren<CatchZone>();
@@ -158,6 +169,21 @@ public class PlayerMovement : MonoBehaviour
             airborneSpeed = 0f;
         }
 
+        // --- Platform edge detection while grounded ---
+        if (!isJumping && onPlatform)
+        {
+            // Check if we've walked off the platform edge.
+            if (!CheckPlatformBelow(transform.position))
+            {
+                // Walked off — start falling to base ground.
+                onPlatform = false;
+                isJumping = true;
+                verticalSpeed = 0f;
+                jumpBoostEnded = true;
+                groundY = baseGroundY;
+            }
+        }
+
         // Drive animation state.
         bool moving = Mathf.Abs(horizontalSpeed) > 0.01f;
         if (animator != null)
@@ -210,11 +236,35 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 position = transform.position;
         position.y += displacement;
-        if (position.y <= groundY && verticalSpeed <= 0f)
+
+        // --- Platform landing detection while falling ---
+        if (verticalSpeed <= 0f)
         {
-            position.y = groundY;
-            verticalSpeed = 0f;
-            isJumping = false;
+            float platformTopY;
+            if (CheckPlatformBelow(position, out platformTopY))
+            {
+                // Land if the player's feet are at or below the platform top.
+                // This catches fast-falling frames that would skip past the surface.
+                float feetY = position.y - playerHalfHeight;
+                if (feetY <= platformTopY + 0.15f)
+                {
+                    position.y = platformTopY + playerHalfHeight;
+                    verticalSpeed = 0f;
+                    isJumping = false;
+                    groundY = platformTopY + playerHalfHeight;
+                    onPlatform = true;
+                }
+            }
+
+            if (isJumping && position.y <= baseGroundY)
+            {
+                // Land on the base ground.
+                position.y = baseGroundY;
+                verticalSpeed = 0f;
+                isJumping = false;
+                groundY = baseGroundY;
+                onPlatform = false;
+            }
         }
         transform.position = position;
     }
@@ -243,5 +293,63 @@ public class PlayerMovement : MonoBehaviour
             displacement += verticalSpeed * (duration - accelerationTime);
         }
         return displacement;
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Platform raycast helpers
+    // ------------------------------------------------------------------ //
+
+    /// <summary>
+    /// Checks if there is a platform directly below the given position.
+    /// </summary>
+    private bool CheckPlatformBelow(Vector3 pos)
+    {
+        float dummy;
+        return CheckPlatformBelow(pos, out dummy);
+    }
+
+    /// <summary>
+    /// Casts rays downward from the player's feet to find a platform tagged
+    /// "Platform". Uses RaycastAll so the player's own collider (which the
+    /// ray may start inside) doesn't block detection.
+    /// Returns true if found, and outputs the top Y of the platform collider.
+    /// </summary>
+    private bool CheckPlatformBelow(Vector3 pos, out float platformTopY)
+    {
+        platformTopY = baseGroundY;
+
+        // Start rays from the player's feet (bottom of collider) to avoid
+        // self-intersection with the player's own BoxCollider2D.
+        float feetY = pos.y - playerHalfHeight;
+        float[] offsets = { 0f, -platformRaySpread, platformRaySpread };
+
+        float bestY = float.NegativeInfinity;
+        bool found = false;
+
+        foreach (float xOff in offsets)
+        {
+            Vector2 rayOrigin = new Vector2(pos.x + xOff, feetY);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(rayOrigin, Vector2.down, platformRayLength);
+
+            foreach (var hit in hits)
+            {
+                if (hit.collider != null && hit.collider.CompareTag("Platform"))
+                {
+                    float topY = hit.collider.bounds.max.y;
+                    if (topY > bestY)
+                    {
+                        bestY = topY;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        if (found)
+        {
+            platformTopY = bestY;
+            return true;
+        }
+        return false;
     }
 }
