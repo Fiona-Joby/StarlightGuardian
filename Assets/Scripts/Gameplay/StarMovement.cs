@@ -24,6 +24,7 @@ public class StarMovement : MonoBehaviour
     [Header("Type")]
     [SerializeField] private StarType starType = StarType.Normal;
     [SerializeField, Min(0f)] private float rainbowMultiplierDuration = 5f;
+    [SerializeField, Min(0f)] private float landedCollectibleLifetime = 15f;
 
     [Header("Rainbow Visuals")]
     [SerializeField, Min(0f)] private float rainbowCycleSpeed = 0.5f;
@@ -33,9 +34,16 @@ public class StarMovement : MonoBehaviour
     private bool collected;
     private Rigidbody2D body;
     private SpriteRenderer spriteRenderer;
+    private Collider2D landingPlatform;
+    private float landedAtTime;
+    private Collider2D starCollider;
 
     public StarType Type => starType;
     public bool IsLanded => landed;
+    public bool CanBeCaughtBy(PlayerMovement player)
+    {
+        return landingPlatform == null || (player != null && player.IsOnPlatform(landingPlatform));
+    }
 
     // ------------------------------------------------------------------ //
     //  Lifecycle
@@ -50,6 +58,7 @@ public class StarMovement : MonoBehaviour
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
+        starCollider = GetComponent<Collider2D>();
     }
 
     /// <summary>Called by StarSpawner right after Instantiate.</summary>
@@ -89,12 +98,20 @@ public class StarMovement : MonoBehaviour
     {
         if (landed || collected) return;
         // World-space motion: stars never read the player transform.
-        body.MovePosition(body.position + new Vector2(-speed, -downwardSpeed) * Time.fixedDeltaTime);
+        Vector2 nextPosition = body.position + new Vector2(-speed, -downwardSpeed) * Time.fixedDeltaTime;
+        if (!TryLandOnPlatform(nextPosition))
+            body.MovePosition(nextPosition);
     }
 
     /// <summary>Rainbow stars shimmer with a subtle brightness pulse.</summary>
     private void Update()
     {
+        if (landed && landedCollectibleLifetime > 0f && Time.time - landedAtTime >= landedCollectibleLifetime)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (starType == StarType.Rainbow && spriteRenderer != null && !collected)
         {
             // Subtle brightness pulse instead of full HSV cycling,
@@ -126,7 +143,16 @@ public class StarMovement : MonoBehaviour
 
         // Normal star: stop moving, stay visible, keep collider active for pickup.
         landed = true;
+        landedAtTime = Time.time;
         body.MovePosition(landingPosition);
+    }
+
+    /// <summary>Land on a platform and remember which platform supports this star.</summary>
+    public void ReachPlatform(Collider2D platform, Vector2 landingPosition)
+    {
+        if (platform == null || landed || collected) return;
+        landingPlatform = platform;
+        ReachGround(landingPosition);
     }
 
     // ------------------------------------------------------------------ //
@@ -144,5 +170,62 @@ public class StarMovement : MonoBehaviour
 
         StarEvents.RaiseCaught(this);
         Destroy(gameObject);
+    }
+
+    private bool TryLandOnPlatform(Vector2 nextPosition)
+    {
+        if (starCollider == null || downwardSpeed <= 0f) return false;
+
+        Bounds starBounds = starCollider.bounds;
+        float halfWidth = starBounds.extents.x;
+        float halfHeight = starBounds.extents.y;
+        float currentBottom = body.position.y - halfHeight;
+        float nextBottom = nextPosition.y - halfHeight;
+        if (nextBottom > currentBottom) return false;
+
+        Vector2 areaMin = new Vector2(
+            Mathf.Min(body.position.x, nextPosition.x) - halfWidth,
+            nextBottom - 0.02f);
+        Vector2 areaMax = new Vector2(
+            Mathf.Max(body.position.x, nextPosition.x) + halfWidth,
+            currentBottom + 0.02f);
+        Collider2D[] candidates = Physics2D.OverlapAreaAll(areaMin, areaMax);
+
+        Collider2D landingSurface = null;
+        float landingY = float.NegativeInfinity;
+        float landingX = nextPosition.x;
+        float earliestCrossing = float.PositiveInfinity;
+
+        foreach (Collider2D candidate in candidates)
+        {
+            if (candidate == null || !candidate.CompareTag("Platform")) continue;
+
+            Bounds platformBounds = candidate.bounds;
+            float starMinX = Mathf.Min(body.position.x, nextPosition.x) - halfWidth;
+            float starMaxX = Mathf.Max(body.position.x, nextPosition.x) + halfWidth;
+            if (starMaxX < platformBounds.min.x || starMinX > platformBounds.max.x) continue;
+
+            float platformTop = platformBounds.max.y;
+            if (currentBottom < platformTop - 0.02f || nextBottom > platformTop) continue;
+
+            float crossing = (currentBottom - platformTop) / Mathf.Max(0.0001f, currentBottom - nextBottom);
+            float crossingX = Mathf.Lerp(body.position.x, nextPosition.x, crossing);
+            if (crossingX + halfWidth < platformBounds.min.x ||
+                crossingX - halfWidth > platformBounds.max.x)
+                continue;
+
+            if (crossing < earliestCrossing)
+            {
+                earliestCrossing = crossing;
+                landingSurface = candidate;
+                landingY = platformTop;
+                landingX = crossingX;
+            }
+        }
+
+        if (landingSurface == null) return false;
+
+        ReachPlatform(landingSurface, new Vector2(landingX, landingY + halfHeight));
+        return true;
     }
 }

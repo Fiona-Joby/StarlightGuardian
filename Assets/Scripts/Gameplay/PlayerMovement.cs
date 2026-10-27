@@ -23,10 +23,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float platformRaySpread = 0.3f;
     [Tooltip("Half-height of the player collider, used to offset rays to feet.")]
     [SerializeField] private float playerHalfHeight = 0.5f;
+    [Tooltip("Extra lift applied only when landing on a platform.")]
+    [SerializeField, Min(0f)] private float platformLandingLift = 0.15f;
 
     [Header("V Gesture Jump")]
     [Tooltip("起跳速度，越大跳得越高。單位：世界單位／秒。")]
-    [SerializeField, Min(0.1f)] private float jumpSpeed = 7f;
+    [SerializeField, Min(0.1f)] private float jumpSpeed = 7.4f;
     [Tooltip("收手後的上升重力，越大越快停止上升。")]
     [SerializeField, Min(0.1f)] private float jumpGravity = 24f;
     [Tooltip("維持 V 時的上升重力，越小越容易跳高。")]
@@ -62,11 +64,16 @@ public class PlayerMovement : MonoBehaviour
     private bool isJumping;
     private bool jumpBoostEnded;
     private bool onPlatform; // True when grounded on a platform (not base ground).
+    private Collider2D currentPlatform;
+    private Collider2D playerCollider;
 
     private PlayerInput playerInput;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
     private CatchZone catchZone;
+
+    public bool IsOnPlatform(Collider2D platform) =>
+        !isJumping && onPlatform && platform != null && currentPlatform == platform;
 
     private float reachTimer;
     private bool isReaching;
@@ -81,6 +88,7 @@ public class PlayerMovement : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        playerCollider = GetComponent<Collider2D>();
         // The existing kinematic player moves along a flat ground baseline.
         groundY = transform.position.y;
         baseGroundY = groundY;
@@ -177,6 +185,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 // Walked off — start falling to base ground.
                 onPlatform = false;
+                currentPlatform = null;
                 isJumping = true;
                 verticalSpeed = 0f;
                 jumpBoostEnded = true;
@@ -241,18 +250,20 @@ public class PlayerMovement : MonoBehaviour
         if (verticalSpeed <= 0f)
         {
             float platformTopY;
-            if (CheckPlatformBelow(position, out platformTopY))
+            Collider2D platformCollider;
+            if (CheckPlatformBelow(position, out platformTopY, out platformCollider))
             {
                 // Land if the player's feet are at or below the platform top.
                 // This catches fast-falling frames that would skip past the surface.
-                float feetY = position.y - playerHalfHeight;
+                float feetY = position.y - GetPlayerHalfHeight();
                 if (feetY <= platformTopY + 0.15f)
                 {
-                    position.y = platformTopY + playerHalfHeight;
+                    position.y = platformTopY + GetPlayerHalfHeight() + platformLandingLift;
                     verticalSpeed = 0f;
                     isJumping = false;
-                    groundY = platformTopY + playerHalfHeight;
+                    groundY = position.y;
                     onPlatform = true;
+                    currentPlatform = platformCollider;
                 }
             }
 
@@ -264,6 +275,7 @@ public class PlayerMovement : MonoBehaviour
                 isJumping = false;
                 groundY = baseGroundY;
                 onPlatform = false;
+                currentPlatform = null;
             }
         }
         transform.position = position;
@@ -316,11 +328,18 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private bool CheckPlatformBelow(Vector3 pos, out float platformTopY)
     {
+        Collider2D ignored;
+        return CheckPlatformBelow(pos, out platformTopY, out ignored);
+    }
+
+    private bool CheckPlatformBelow(Vector3 pos, out float platformTopY, out Collider2D platformCollider)
+    {
         platformTopY = baseGroundY;
+        platformCollider = null;
 
         // Start rays from the player's feet (bottom of collider) to avoid
         // self-intersection with the player's own BoxCollider2D.
-        float feetY = pos.y - playerHalfHeight;
+        float feetY = pos.y - GetPlayerHalfHeight();
         float[] offsets = { 0f, -platformRaySpread, platformRaySpread };
 
         float bestY = float.NegativeInfinity;
@@ -340,6 +359,7 @@ public class PlayerMovement : MonoBehaviour
                     {
                         bestY = topY;
                         found = true;
+                        platformCollider = hit.collider;
                     }
                 }
             }
@@ -352,4 +372,10 @@ public class PlayerMovement : MonoBehaviour
         }
         return false;
     }
+
+    private float GetPlayerHalfHeight()
+    {
+        return playerCollider != null ? playerCollider.bounds.extents.y : playerHalfHeight;
+    }
+
 }

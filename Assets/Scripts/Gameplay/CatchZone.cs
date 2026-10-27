@@ -15,6 +15,7 @@ public class CatchZone : MonoBehaviour
 
     private readonly HashSet<StarMovement> overlappingStars = new HashSet<StarMovement>();
     private PlayerInput playerInput;
+    private PlayerMovement playerMovement;
 
     private void Awake()
     {
@@ -22,6 +23,7 @@ public class CatchZone : MonoBehaviour
         var col = GetComponent<Collider2D>();
         col.isTrigger = true;
         playerInput = GetComponentInParent<PlayerInput>();
+        playerMovement = GetComponentInParent<PlayerMovement>();
     }
 
     private void Update()
@@ -62,7 +64,7 @@ public class CatchZone : MonoBehaviour
 
     private void TryCatch(StarMovement star)
     {
-        if (star == null || !overlappingStars.Contains(star)) return;
+        if (star == null || !overlappingStars.Contains(star) || !star.CanBeCaughtBy(playerMovement)) return;
         StarCaught?.Invoke(star);
         star.Caught();
         overlappingStars.Remove(star);

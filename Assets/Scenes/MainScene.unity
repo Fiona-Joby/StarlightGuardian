@@ -809,8 +809,9 @@ MonoBehaviour:
   reachDuration: 0.875
   platformRayLength: 0.6
   platformRaySpread: 0.3
-  playerHalfHeight: 0.5
-  jumpSpeed: 7
+  playerHalfHeight: 0.75
+  platformLandingLift: 0.3
+  jumpSpeed: 7.4
   jumpGravity: 24
   heldJumpGravity: 8
   maxJumpHoldTime: 0.4
@@ -974,7 +975,7 @@ Transform:
   m_GameObject: {fileID: 1605530571}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6, y: -4, z: 0}
+  m_LocalPosition: {x: -6, y: -3.75, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:

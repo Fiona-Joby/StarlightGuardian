@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 /// <summary>
 /// Spawns platforms at random intervals ahead of the player as they move
@@ -7,27 +6,25 @@ using System.Collections.Generic;
 /// sprites and are tagged "Platform" for collision detection.
 ///
 /// Platforms are placed at heights reachable by jumping from the ground.
-/// Old platforms that are far behind the camera are recycled.
+/// Platforms remain in the scene after they are spawned.
 /// </summary>
 public class PlatformSpawner : MonoBehaviour
 {
     [Header("Platform Sprites (auto-loaded in Editor)")]
-    [SerializeField] private Sprite platformLongSprite;
+    [SerializeField] private Sprite[] platformLongSprites;
     [SerializeField] private Sprite platformShortSprite;
 
     [Header("Spawn Settings")]
     [Tooltip("Minimum horizontal distance between consecutive platforms.")]
-    [SerializeField, Min(1f)] private float minSpacing = 6f;
+    [SerializeField, Min(1f)] private float minSpacing = 8f;
     [Tooltip("Maximum horizontal distance between consecutive platforms.")]
-    [SerializeField, Min(1f)] private float maxSpacing = 12f;
+    [SerializeField, Min(1f)] private float maxSpacing = 14f;
     [Tooltip("Minimum Y position for platforms (relative to ground).")]
     [SerializeField] private float minHeight = 0.5f;
     [Tooltip("Maximum Y position for platforms (player jump apex reachable).")]
     [SerializeField] private float maxHeight = 1.8f;
     [Tooltip("How far ahead of the player to pre-spawn platforms.")]
     [SerializeField, Min(5f)] private float spawnAheadDistance = 25f;
-    [Tooltip("How far behind the camera before a platform is destroyed.")]
-    [SerializeField, Min(5f)] private float despawnBehindDistance = 20f;
     [Tooltip("Platform visual scale multiplier.")]
     [SerializeField, Min(0.1f)] private float platformScale = 0.35f;
 
@@ -37,7 +34,7 @@ public class PlatformSpawner : MonoBehaviour
 
     private Transform player;
     private float nextSpawnX;
-    private readonly List<GameObject> activePlatforms = new List<GameObject>();
+    private bool nextPlatformIsLong;
 
     // Start spawning platforms a short distance ahead of initial player position.
     private const float INITIAL_OFFSET = 8f;
@@ -51,7 +48,6 @@ public class PlatformSpawner : MonoBehaviour
             player = playerGO.transform;
             groundY = player.position.y;
         }
-
         nextSpawnX = (player != null ? player.position.x : 0f) + INITIAL_OFFSET;
 
         LoadSpritesInEditor();
@@ -68,27 +64,16 @@ public class PlatformSpawner : MonoBehaviour
             nextSpawnX += Random.Range(minSpacing, maxSpacing);
         }
 
-        // Despawn platforms far behind.
-        for (int i = activePlatforms.Count - 1; i >= 0; i--)
-        {
-            if (activePlatforms[i] == null)
-            {
-                activePlatforms.RemoveAt(i);
-                continue;
-            }
-            if (activePlatforms[i].transform.position.x < player.position.x - despawnBehindDistance)
-            {
-                Destroy(activePlatforms[i]);
-                activePlatforms.RemoveAt(i);
-            }
-        }
     }
 
     private void SpawnPlatform(float x)
     {
         // Randomly pick long or short.
-        bool isLong = Random.value > 0.5f;
-        Sprite sprite = isLong ? platformLongSprite : platformShortSprite;
+        bool isLong = nextPlatformIsLong;
+        nextPlatformIsLong = !nextPlatformIsLong;
+        Sprite sprite = isLong && platformLongSprites != null && platformLongSprites.Length > 0
+            ? platformLongSprites[Random.Range(0, platformLongSprites.Length)]
+            : platformShortSprite;
 
         if (sprite == null)
         {
@@ -107,7 +92,7 @@ public class PlatformSpawner : MonoBehaviour
         // Visual sprite.
         SpriteRenderer sr = platformGO.AddComponent<SpriteRenderer>();
         sr.sprite = sprite;
-        sr.sortingOrder = 4; // Above background (-10), below ground (5) and player (10).
+        sr.sortingOrder = 9; // Above scenery and ground, just behind the player (10).
         sr.color = Color.white;
 
         // Collider sized to the sprite, used for both player landing and star landing.
@@ -136,8 +121,6 @@ public class PlatformSpawner : MonoBehaviour
         detectorRB.gravityScale = 0f;
 
         detectorGO.AddComponent<GroundDetector>();
-
-        activePlatforms.Add(platformGO);
     }
 
     // ------------------------------------------------------------------ //
@@ -147,14 +130,21 @@ public class PlatformSpawner : MonoBehaviour
     private void LoadSpritesInEditor()
     {
 #if UNITY_EDITOR
-        if (platformLongSprite == null)
-            platformLongSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+        if (platformLongSprites == null || platformLongSprites.Length == 0)
+        {
+            Object[] longAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(
                 "Assets/Art/Backgrounds/Stage1/PlatformLong.png");
+            var loadedLongSprites = new System.Collections.Generic.List<Sprite>();
+            foreach (Object asset in longAssets)
+                if (asset is Sprite sprite)
+                    loadedLongSprites.Add(sprite);
+            platformLongSprites = loadedLongSprites.ToArray();
+        }
         if (platformShortSprite == null)
             platformShortSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
                 "Assets/Art/Backgrounds/Stage1/PlatformShort.png");
 
-        Debug.Log($"[PlatformSpawner] Sprites loaded — Long:{platformLongSprite != null} Short:{platformShortSprite != null}");
+        Debug.Log($"[PlatformSpawner] Sprites loaded — Long:{platformLongSprites.Length} Short:{platformShortSprite != null}");
 #else
         Debug.LogWarning("[PlatformSpawner] Not in Editor — sprites must be assigned in Inspector.");
 #endif
