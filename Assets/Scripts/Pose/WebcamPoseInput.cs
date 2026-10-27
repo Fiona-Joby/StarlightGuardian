@@ -55,6 +55,8 @@ public class WebcamPoseInput : MonoBehaviour
     private bool jumpGestureHeld;
     public bool IsFistHeld => isActiveAndEnabled && IsActive && fistGestureHeld;
     private bool fistGestureHeld;
+    public bool IsShooting => isActiveAndEnabled && IsActive && shootGestureHeld;
+    private bool shootGestureHeld;
     public WebCamTexture PreviewTexture => webcamTexture;
     public bool HasHandPosition { get; private set; }
     // Mirrored camera coordinates, with the origin at the bottom left.
@@ -334,6 +336,7 @@ public class WebcamPoseInput : MonoBehaviour
         System.Array.Copy(handDataBuffer, slice, handCount);
         jumpGestureHeld = GestureClassifier.HasJumpGesture(slice);
         fistGestureHeld = GestureClassifier.HasFistGesture(slice);
+        shootGestureHeld = GestureClassifier.HasShootGesture(slice);
         return GestureClassifier.Classify(slice);
     }
 

@@ -88,6 +88,14 @@ public static class GestureClassifier
                !IsFingerRaised(lm, 3) && !IsFingerRaised(lm, 4);
     }
 
+    /// <summary>Index, middle and thumb raised together; ring and pinky curled.</summary>
+    private static bool IsShootGesture(LandmarkPoint[] lm)
+    {
+        return lm != null && lm.Length >= 21 && IsFingerRaised(lm, 0) &&
+               IsFingerRaised(lm, 1) && IsFingerRaised(lm, 2) &&
+               !IsFingerRaised(lm, 3) && !IsFingerRaised(lm, 4);
+    }
+
     /// <summary>True when at least 4 fingers are raised.</summary>
     private static bool IsHandOpen(LandmarkPoint[] lm) => CountRaisedFingers(lm) >= 4;
 
@@ -162,7 +170,15 @@ public static class GestureClassifier
     {
         if (hands == null) return false;
         for (int i = 0; i < hands.Length; i++)
-            if (IsVictorySign(hands[i].landmarks)) return true;
+            if (IsVictorySign(hands[i].landmarks) && !IsShootGesture(hands[i].landmarks)) return true;
+        return false;
+    }
+
+    public static bool HasShootGesture(HandData[] hands)
+    {
+        if (hands == null) return false;
+        for (int i = 0; i < hands.Length; i++)
+            if (IsShootGesture(hands[i].landmarks)) return true;
         return false;
     }
 

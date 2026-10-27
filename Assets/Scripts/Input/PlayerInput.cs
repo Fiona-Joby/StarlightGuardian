@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Unified input hub: reads from keyboard AND from the webcam pose bridge.
@@ -24,6 +25,7 @@ public class PlayerInput : MonoBehaviour
     public bool CollectPressed { get; private set; }
     public bool JumpHeld { get; private set; }
     public bool JumpPressed { get; private set; }
+    public bool ShootPressed { get; private set; }
 
     /// <summary>True for one frame when the player makes a fist gesture (shield activation).</summary>
     public bool ShieldPressed { get; private set; }
@@ -41,6 +43,7 @@ public class PlayerInput : MonoBehaviour
     private WebcamPoseInput poseInput;
     private bool wasCollecting;
     private bool wasFisting;
+    private bool wasShooting;
 
     private void Awake()
     {
@@ -49,6 +52,11 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
+        bool isStage2 = SceneManager.GetActiveScene().name == "Stage2";
+        bool shootingGesture = isStage2 && poseInput != null && poseInput.IsShooting;
+        ShootPressed = isStage2 && (Input.GetKeyDown(KeyCode.X) || (shootingGesture && !wasShooting));
+        wasShooting = shootingGesture;
+
         float keyboardAxis = Input.GetAxisRaw("Horizontal");
 
         JumpHeld = Input.GetKey(KeyCode.UpArrow) || (poseInput != null && poseInput.IsJumpHeld);

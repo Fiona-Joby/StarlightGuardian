@@ -70,7 +70,9 @@
     <Compile Include="Assets\Scripts\Gameplay\ScoreProgressBar.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPreview.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreMultiplierTimer.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2Beam.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPoseInput.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2Shooter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

@@ -30,6 +30,13 @@ public static class GameplayBootstrapper
     {
         bool isStage2 = sceneName == "Stage2";
 
+        if (isStage2)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null && player.GetComponent<Stage2Shooter>() == null)
+                player.AddComponent<Stage2Shooter>();
+        }
+
         // --- ScoreManager ---
         if (Object.FindAnyObjectByType<ScoreManager>() == null)
         {
