@@ -29,12 +29,22 @@ public static class GameplayBootstrapper
     private static void Bootstrap(string sceneName)
     {
         bool isStage2 = sceneName == "Stage2";
+        bool isStage3 = sceneName == "Stage3";
+        bool usesStage2World = isStage2 || isStage3;
+        Time.timeScale = 1f;
 
         if (isStage2)
         {
+            var encounterGO = new GameObject("Stage2TurretEncounter");
+            encounterGO.AddComponent<Stage2TurretEncounter>();
             GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null && player.GetComponent<Stage2Shooter>() == null)
-                player.AddComponent<Stage2Shooter>();
+            if (player != null)
+            {
+                if (player.GetComponent<Stage2Shooter>() == null)
+                    player.AddComponent<Stage2Shooter>();
+                if (player.GetComponent<Stage2PlayerHealth>() == null)
+                    player.AddComponent<Stage2PlayerHealth>();
+            }
         }
 
         // --- ScoreManager ---
@@ -46,7 +56,7 @@ public static class GameplayBootstrapper
         }
 
         // --- ScoreProgressBar (skip on Stage 2) ---
-        if (!isStage2 && Object.FindAnyObjectByType<ScoreProgressBar>() == null)
+        if (!usesStage2World && Object.FindAnyObjectByType<ScoreProgressBar>() == null)
         {
             ScoreManager sm = Object.FindAnyObjectByType<ScoreManager>();
             var host = (sm != null) ? sm.gameObject : new GameObject("ScoreUI");
@@ -55,7 +65,7 @@ public static class GameplayBootstrapper
         }
 
         // --- StageManager (only needed on Stage 1) ---
-        if (!isStage2 && Object.FindAnyObjectByType<StageManager>() == null)
+        if (!usesStage2World && Object.FindAnyObjectByType<StageManager>() == null)
         {
             ScoreManager sm = Object.FindAnyObjectByType<ScoreManager>();
             var host = (sm != null) ? sm.gameObject : new GameObject("StageManager");
@@ -64,7 +74,7 @@ public static class GameplayBootstrapper
         }
 
         // --- Parallax background ---
-        if (isStage2)
+        if (usesStage2World)
         {
             if (Object.FindAnyObjectByType<Stage2ParallaxSetup>() == null)
             {
@@ -83,8 +93,8 @@ public static class GameplayBootstrapper
             }
         }
 
-        // --- Platforms ---
-        if (Object.FindAnyObjectByType<PlatformSpawner>() == null)
+        // --- PlatformSpawner (Stage 1 only) ---
+        if (!usesStage2World && Object.FindAnyObjectByType<PlatformSpawner>() == null)
         {
             var platGO = new GameObject("PlatformSpawner_Auto");
             platGO.AddComponent<PlatformSpawner>();

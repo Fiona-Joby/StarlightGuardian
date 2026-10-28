@@ -88,12 +88,14 @@ public static class GestureClassifier
                !IsFingerRaised(lm, 3) && !IsFingerRaised(lm, 4);
     }
 
-    /// <summary>Index, middle and thumb raised together; ring and pinky curled.</summary>
+    /// <summary>Rockstar sign: index and pinky raised, with middle and ring curled.</summary>
     private static bool IsShootGesture(LandmarkPoint[] lm)
     {
-        return lm != null && lm.Length >= 21 && IsFingerRaised(lm, 0) &&
-               IsFingerRaised(lm, 1) && IsFingerRaised(lm, 2) &&
-               !IsFingerRaised(lm, 3) && !IsFingerRaised(lm, 4);
+        return lm != null && lm.Length >= 21 &&
+               IsFingerRaised(lm, 1) &&
+               !IsFingerRaised(lm, 2) &&
+               !IsFingerRaised(lm, 3) &&
+               IsFingerRaised(lm, 4);
     }
 
     /// <summary>True when at least 4 fingers are raised.</summary>

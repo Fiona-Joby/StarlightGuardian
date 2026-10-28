@@ -52,7 +52,9 @@
     <Compile Include="Assets\Scripts\Gameplay\StarMovement.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarType.cs" />
     <Compile Include="Assets\Scripts\Stages\StageManager.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2TurretEncounter.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreMultiplier.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2Turret.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarEvents.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlatformSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreManager.cs" />
@@ -62,6 +64,8 @@
     <Compile Include="Assets\Scripts\Gameplay\CatchZone.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameplayBootstrapper.cs" />
     <Compile Include="Assets\Scripts\Pose\GestureClassifier.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\TurretProjectile.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2PlayerHealth.cs" />
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Core\ParallaxLayerSetup.cs" />
