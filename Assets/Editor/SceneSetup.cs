@@ -14,14 +14,30 @@ public class SceneSetup : EditorWindow
     [MenuItem("Tools/Starlight Guardian/Build Scene")]
     public static void BuildScene()
     {
+        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if (activeScene.path != "Assets/Scenes/MainScene.unity")
+        {
+            EditorUtility.DisplayDialog(
+                "Open MainScene First",
+                "This tool rebuilds MainScene. Open Assets/Scenes/MainScene.unity before running it.",
+                "OK");
+            return;
+        }
+
         if (!EditorUtility.DisplayDialog(
             "Build Starlight Guardian Scene",
-            "This will CLEAR the current scene and rebuild it.\n\nContinue?",
+            "This will clear MainScene and rebuild it. Save any changes you want to keep before continuing.\n\nContinue?",
             "Build", "Cancel"))
             return;
 
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Rebuild MainScene");
         ClearScene();
         CreateScene();
+        foreach (GameObject root in activeScene.GetRootGameObjects())
+            Undo.RegisterCreatedObjectUndo(root, "Rebuild MainScene");
+        Undo.CollapseUndoOperations(undoGroup);
         Debug.Log("[StarlightGuardian] Scene built successfully. Save the scene (Ctrl+S).");
     }
 
@@ -30,7 +46,7 @@ public class SceneSetup : EditorWindow
         // Destroy all root objects in the scene.
         var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
         foreach (var go in roots)
-            DestroyImmediate(go);
+            Undo.DestroyObjectImmediate(go);
     }
 
     private static void CreateScene()
@@ -71,8 +87,8 @@ public class SceneSetup : EditorWindow
         playerGO.transform.position = new Vector3(-6f, -3f, 0f);
 
         var playerSR = playerGO.AddComponent<SpriteRenderer>();
-        playerSR.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        playerSR.color = Color.cyan;
+        playerSR.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Character/Idle/Idle_Right.png");
+        playerSR.color = Color.white;
         playerSR.sortingOrder = 10;
 
         var playerCol = playerGO.AddComponent<BoxCollider2D>();
@@ -152,30 +168,35 @@ public class SceneSetup : EditorWindow
         bgSR.color = new Color(0.08f, 0.04f, 0.2f); // dark sky background
         bgSR.sortingOrder = -10;
 
-        // ParallaxLayerSetup (auto-bootstrapped) replaces the old ParallaxBackground.
+        var parallax = bgGO.AddComponent<ParallaxLayerSetup>();
+        var parallaxSO = new SerializedObject(parallax);
+        parallaxSO.FindProperty("layer1Sky").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage1/Layer1_Sky.png");
+        parallaxSO.FindProperty("layer2Hills").objectReferenceValue = LoadSpriteAtPath("Assets/Art/Backgrounds/Stage1/Layer 2_Hills.png", "Fixed Layer 2_Hills Midground_0");
+        parallaxSO.FindProperty("layer3Wreckage").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage1/Layer3_Wreckage.png");
+        parallaxSO.FindProperty("layer4Glow").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage1/Layer4_Glow.png");
+        parallaxSO.ApplyModifiedPropertiesWithoutUndo();
 
         // ============================================================
-        // 7. STAR PREFAB (create or find)
+        // 7. PLATFORM SPAWNER
+        // ============================================================
+        var platformSpawnerGO = new GameObject("PlatformSpawner");
+        var platformSpawner = platformSpawnerGO.AddComponent<PlatformSpawner>();
+        var platformSO = new SerializedObject(platformSpawner);
+        var platformLongAssets = AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Backgrounds/Stage1/PlatformLong.png");
+        var platformSprites = new System.Collections.Generic.List<Sprite>();
+        foreach (Object asset in platformLongAssets)
+            if (asset is Sprite sprite && sprite.name == "PlatformLong_1") platformSprites.Add(sprite);
+        var platformArray = platformSO.FindProperty("platformLongSprites");
+        platformArray.arraySize = platformSprites.Count;
+        for (int i = 0; i < platformSprites.Count; i++)
+            platformArray.GetArrayElementAtIndex(i).objectReferenceValue = platformSprites[i];
+        platformSO.FindProperty("platformShortSprite").objectReferenceValue = LoadSpriteAtPath("Assets/Art/Backgrounds/Stage1/PlatformShort.png", "PlatformShort_0");
+        platformSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // ============================================================
+        // 8. STAR PREFAB (create or find)
         // ============================================================
         var starPrefab = CreateStarPrefab();
-
-        // ============================================================
-        // 8. STAR SPAWN POINTS
-        // ============================================================
-        var spawnParent = new GameObject("StarSpawnPoints");
-        spawnParent.transform.position = Vector3.zero;
-
-        var sp1GO = new GameObject("StarSpawnPoint_01");
-        sp1GO.transform.SetParent(spawnParent.transform, false);
-        sp1GO.transform.localPosition = new Vector3(12f, 3f, 0f);
-
-        var sp2GO = new GameObject("StarSpawnPoint_02");
-        sp2GO.transform.SetParent(spawnParent.transform, false);
-        sp2GO.transform.localPosition = new Vector3(22f, 4f, 0f);
-
-        var sp3GO = new GameObject("StarSpawnPoint_03");
-        sp3GO.transform.SetParent(spawnParent.transform, false);
-        sp3GO.transform.localPosition = new Vector3(32f, 3f, 0f);
 
         // ============================================================
         // 9. STAR SPAWNER
@@ -186,19 +207,14 @@ public class SceneSetup : EditorWindow
         // Use SerializedObject to set private serialized fields.
         var so = new SerializedObject(spawner);
         so.FindProperty("starPrefab").objectReferenceValue = starPrefab;
-
-        var spArray = so.FindProperty("spawnPoints");
-        spArray.arraySize = 3;
-
-        // Point 1: Normal
-        SetSpawnPoint(spArray.GetArrayElementAtIndex(0), sp1GO.transform, 0, 3f, 1.5f);
-        // Point 2: Rainbow
-        SetSpawnPoint(spArray.GetArrayElementAtIndex(1), sp2GO.transform, 1, 3f, 1.5f);
-        // Point 3: Normal
-        SetSpawnPoint(spArray.GetArrayElementAtIndex(2), sp3GO.transform, 0, 3f, 1.5f);
-
+        so.FindProperty("player").objectReferenceValue = playerGO.transform;
         so.FindProperty("spawnInterval").floatValue = 2f;
-        so.FindProperty("repeatSequence").boolValue = true;
+        so.FindProperty("minDistanceAhead").floatValue = 12f;
+        so.FindProperty("maxDistanceAhead").floatValue = 20f;
+        so.FindProperty("yellowStarSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Stars/Yellow Star.png");
+        so.FindProperty("blueStarSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Stars/Blue Star.png");
+        so.FindProperty("rainbowStarSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Stars/Rainbow Star.png");
+        so.FindProperty("rainbowChance").floatValue = 0.085f;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         // ============================================================
@@ -211,12 +227,11 @@ public class SceneSetup : EditorWindow
     //  Helpers
     // ------------------------------------------------------------------ //
 
-    private static void SetSpawnPoint(SerializedProperty element, Transform point, int type, float hSpeed, float dSpeed)
+    private static Sprite LoadSpriteAtPath(string path, string spriteName)
     {
-        element.FindPropertyRelative("point").objectReferenceValue = point;
-        element.FindPropertyRelative("starType").enumValueIndex = type;
-        element.FindPropertyRelative("horizontalSpeed").floatValue = hSpeed;
-        element.FindPropertyRelative("downwardSpeed").floatValue = dSpeed;
+        foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+            if (asset is Sprite sprite && sprite.name == spriteName) return sprite;
+        return null;
     }
 
     private static StarMovement CreateStarPrefab()
@@ -235,8 +250,8 @@ public class SceneSetup : EditorWindow
         var starGO = new GameObject("Star");
 
         var sr = starGO.AddComponent<SpriteRenderer>();
-        sr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        sr.color = new Color(1f, 0.85f, 0.2f); // golden-yellow star
+        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Stars/Yellow Star.png");
+        sr.color = Color.white;
         sr.sortingOrder = 8;
         starGO.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
 

@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 /// Properties exposed to consumers (PlayerMovement, etc.):
 ///   HorizontalInput  — [-1, 1] movement axis
 ///   IsReaching        — true when the webcam pose detects the reach gesture
-///   CollectPressed   — one-frame request from an open palm or Space
+///   CollectPressed   — collection request from an open palm or Space
 ///   FacingRight       — last known facing direction
 /// </summary>
 [DefaultExecutionOrder(-100)]
@@ -21,7 +21,7 @@ public class PlayerInput : MonoBehaviour
     /// <summary>True when the webcam pose detects the reach animation gesture.</summary>
     public bool IsReaching { get; private set; }
 
-    /// <summary>True for one frame when the player requests a star pickup.</summary>
+    /// <summary>True while the player requests a star pickup.</summary>
     public bool CollectPressed { get; private set; }
     public bool JumpHeld { get; private set; }
     public bool JumpPressed { get; private set; }
@@ -41,7 +41,6 @@ public class PlayerInput : MonoBehaviour
 
     // The pose bridge is optional — the game must work without a webcam.
     private WebcamPoseInput poseInput;
-    private bool wasCollecting;
     private bool wasFisting;
     private bool wasShooting;
 
@@ -83,9 +82,9 @@ public class PlayerInput : MonoBehaviour
             bool keyboardOverride = Mathf.Abs(keyboardAxis) > 0.01f;
             HorizontalInput = keyboardOverride ? keyboardAxis : poseInput.HorizontalAxis;
             IsReaching = !keyboardOverride && poseInput.IsReaching;
-            CollectPressed = Input.GetKeyDown(KeyCode.Space) ||
-                             (poseInput.IsCollecting && !wasCollecting);
-            wasCollecting = poseInput.IsCollecting;
+            // Keep checking for stars for as long as the open-palm gesture is
+            // held. A star may enter the catch zone after the gesture starts.
+            CollectPressed = Input.GetKeyDown(KeyCode.Space) || poseInput.IsCollecting;
 
             ShieldPressed = poseInput.IsFistHeld && !wasFisting;
             wasFisting = poseInput.IsFistHeld;
@@ -97,7 +96,6 @@ public class PlayerInput : MonoBehaviour
             IsReaching = false;
             CollectPressed = Input.GetKeyDown(KeyCode.Space);
             ShieldPressed = false;
-            wasCollecting = false;
             wasFisting = false;
         }
 

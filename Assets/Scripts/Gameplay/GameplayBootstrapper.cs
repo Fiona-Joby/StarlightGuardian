@@ -17,7 +17,8 @@ public static class GameplayBootstrapper
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Init()
     {
-        // Subscribe once; this survives scene loads because it's a static handler.
+        // Make registration idempotent when Enter Play Mode keeps static state.
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 

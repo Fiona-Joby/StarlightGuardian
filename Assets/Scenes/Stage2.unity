@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 2008550238}
   - component: {fileID: 2008550239}
   - component: {fileID: 2008550240}
+  - component: {fileID: 2008550241}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -292,6 +293,24 @@ MonoBehaviour:
   turretShort: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667701, type: 3}
   turretTall: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667702, type: 3}
   turretBeam: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667703, type: 3}
+--- !u!114 &2008550241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008550234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff11aa22bb33cc44dd55ee6677889901, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Stage2ParallaxSetup
+  layer1Sky: {fileID: 21300000, guid: bb11cc22dd33ee44ff55aa6677889901, type: 3}
+  layer2Buildings: {fileID: 21300000, guid: bb11cc22dd33ee44ff55aa6677889902, type: 3}
+  layer3Fence: {fileID: 21300000, guid: bb11cc22dd33ee44ff55aa6677889903, type: 3}
+  speed1: 0.05
+  speed2: 0.25
+  speed3: 0.55
 --- !u!1 &2100550234
 GameObject:
   m_ObjectHideFlags: 0

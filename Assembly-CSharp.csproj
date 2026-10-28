@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Gameplay\StarMovement.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlatformMover.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\RuntimeUiUtility.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarType.cs" />
     <Compile Include="Assets\Scripts\Stages\StageManager.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2TurretEncounter.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Core\ParallaxLayerSetup.cs" />
+    <Compile Include="Assets\Scripts\Core\LoopingParallaxUtility.cs" />
     <Compile Include="Assets\Scripts\Core\Stage2ParallaxSetup.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GroundDetector.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreProgressBar.cs" />

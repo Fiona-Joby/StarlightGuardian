@@ -9,9 +9,7 @@ public sealed class WebcamPreview : MonoBehaviour
     [SerializeField, Min(0.1f)] private float mappingScale = 1.8f;
     [SerializeField, Range(0.15f, 0.4f)] private float previewWidthFraction = 0.24f;
 
-    public bool HasScreenPoint => source != null && source.isActiveAndEnabled && source.HasHandPosition;
-    // Intentionally not clamped: the mapped point can be outside the screen.
-    public Vector2 ScreenPoint { get; private set; }
+    private bool HasScreenPoint => source != null && source.isActiveAndEnabled && source.HasHandPosition;
 
     private WebcamPoseInput source;
     private GameObject overlay;
@@ -48,7 +46,7 @@ public sealed class WebcamPreview : MonoBehaviour
         labelRect.pivot = new Vector2(0.5f, 1f);
         labelRect.sizeDelta = new Vector2(-12f, 26f);
         status = labelRect.gameObject.AddComponent<Text>();
-        status.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        status.font = RuntimeUiUtility.GetFont();
         status.fontSize = 13;
         status.alignment = TextAnchor.MiddleLeft;
         status.color = Color.white;
@@ -98,11 +96,7 @@ public sealed class WebcamPreview : MonoBehaviour
         previewMarker.anchoredPosition = Vector2.zero;
 
         // Rotate normalized camera coordinates exactly as the preview is rotated.
-        Vector2 centered = point - Vector2.one * 0.5f;
-        Vector3 rotated = Quaternion.Euler(0f, 0f, -angle) * new Vector3(centered.x, centered.y, 0f);
-        Vector2 oriented = new Vector2(rotated.x, rotated.y) + Vector2.one * 0.5f;
-        Vector2 mapped = MapToViewport(oriented, mappingScale);
-        ScreenPoint = Vector2.Scale(mapped, new Vector2(Screen.width, Screen.height));
+        Vector2 mapped = MapHandToViewport(source.HandPosition, mappingScale, angle, flipY);
         screenMarker.anchorMin = screenMarker.anchorMax = mapped;
         screenMarker.anchoredPosition = Vector2.zero;
     }
@@ -110,6 +104,30 @@ public sealed class WebcamPreview : MonoBehaviour
     public static Vector2 MapToViewport(Vector2 cameraPoint, float scale)
     {
         return Vector2.one * 0.5f + (cameraPoint - Vector2.one * 0.5f) * scale;
+    }
+
+    public bool TryGetMappedHandViewport(out Vector2 viewportPoint)
+    {
+        viewportPoint = Vector2.zero;
+        WebCamTexture cameraTexture = source != null ? source.PreviewTexture : null;
+        if (!HasScreenPoint || cameraTexture == null || !cameraTexture.isPlaying)
+            return false;
+
+        viewportPoint = MapHandToViewport(
+            source.HandPosition,
+            mappingScale,
+            cameraTexture.videoRotationAngle,
+            cameraTexture.videoVerticallyMirrored);
+        return true;
+    }
+
+    private static Vector2 MapHandToViewport(Vector2 point, float scale, float angle, bool flipY)
+    {
+        if (flipY) point.y = 1f - point.y;
+        Vector2 centered = point - Vector2.one * 0.5f;
+        Vector3 rotated = Quaternion.Euler(0f, 0f, -angle) * new Vector3(centered.x, centered.y, 0f);
+        Vector2 oriented = new Vector2(rotated.x, rotated.y) + Vector2.one * 0.5f;
+        return MapToViewport(oriented, scale);
     }
 
     private static RectTransform CreateRect(string name, Transform parent)

@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 /// <summary>Builds the Stage 2 turret encounter and handles its result UI.</summary>
 public class Stage2TurretEncounter : MonoBehaviour
@@ -19,7 +18,6 @@ public class Stage2TurretEncounter : MonoBehaviour
     private Canvas overlayCanvas;
     private Text overlayText;
     private Button retryButton;
-    private Stage2PlayerHealth playerHealth;
     private Stage2ArtReferences artReferences;
 
     private void Start()
@@ -31,8 +29,8 @@ public class Stage2TurretEncounter : MonoBehaviour
             return;
         }
 
-        playerHealth = player.GetComponent<Stage2PlayerHealth>();
-        if (playerHealth == null) playerHealth = player.AddComponent<Stage2PlayerHealth>();
+        if (player.GetComponent<Stage2PlayerHealth>() == null)
+            player.AddComponent<Stage2PlayerHealth>();
         artReferences = FindAnyObjectByType<Stage2ArtReferences>();
         BuildHud();
         StartCoroutine(SpawnTurretsAfterPlayerWalks(player.transform));
@@ -136,87 +134,47 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private void BuildHud()
     {
-        GameObject canvasGO = new GameObject("Stage2 HUD");
-        Canvas canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100;
-        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        canvasGO.AddComponent<GraphicRaycaster>();
+        Canvas canvas = RuntimeUiUtility.CreateOverlayCanvas(
+            "Stage2 HUD", 100, new Vector2(1920f, 1080f));
+        RuntimeUiUtility.EnsureEventSystem();
+        GameObject canvasGO = canvas.gameObject;
 
-        GameObject hudGO = new GameObject("Encounter Status", typeof(RectTransform));
-        hudGO.transform.SetParent(canvasGO.transform, false);
-        RectTransform hudRect = hudGO.GetComponent<RectTransform>();
+        RectTransform hudRect = RuntimeUiUtility.CreateRect("Encounter Status", canvasGO.transform);
         hudRect.anchorMin = new Vector2(0f, 1f);
         hudRect.anchorMax = new Vector2(0f, 1f);
         hudRect.pivot = new Vector2(0f, 1f);
         hudRect.anchoredPosition = new Vector2(32f, -24f);
         hudRect.sizeDelta = new Vector2(720f, 64f);
-        hudText = hudGO.AddComponent<Text>();
-        hudText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        hudText.fontSize = 32;
-        hudText.fontStyle = FontStyle.Bold;
-        hudText.alignment = TextAnchor.MiddleLeft;
-        hudText.color = Color.white;
+        hudText = RuntimeUiUtility.CreateText(
+            "Status Text", hudRect, null, 32, TextAnchor.MiddleLeft,
+            Color.white, FontStyle.Bold);
 
-        GameObject overlayGO = new GameObject("Encounter Result", typeof(RectTransform));
-        overlayGO.transform.SetParent(canvasGO.transform, false);
+        RectTransform overlayRect = RuntimeUiUtility.CreateRect("Encounter Result", canvasGO.transform);
+        GameObject overlayGO = overlayRect.gameObject;
         Image backdrop = overlayGO.AddComponent<Image>();
         backdrop.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
         backdrop.color = new Color(0f, 0f, 0f, 0.82f);
-        RectTransform overlayRect = overlayGO.GetComponent<RectTransform>();
         overlayRect.anchorMin = Vector2.zero;
         overlayRect.anchorMax = Vector2.one;
         overlayRect.offsetMin = Vector2.zero;
         overlayRect.offsetMax = Vector2.zero;
-        GameObject textGO = new GameObject("Result Text", typeof(RectTransform));
-        textGO.transform.SetParent(overlayGO.transform, false);
-        RectTransform textRect = textGO.GetComponent<RectTransform>();
+        overlayText = RuntimeUiUtility.CreateText(
+            "Result Text", overlayGO.transform, hudText.font, 64,
+            TextAnchor.MiddleCenter, new Color(1f, 0.9f, 0.35f, 1f), FontStyle.Bold);
+        RectTransform textRect = overlayText.rectTransform;
         textRect.anchorMin = new Vector2(0.1f, 0.35f);
         textRect.anchorMax = new Vector2(0.9f, 0.65f);
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
-        overlayText = textGO.AddComponent<Text>();
-        overlayText.font = hudText.font;
-        overlayText.fontSize = 64;
-        overlayText.fontStyle = FontStyle.Bold;
-        overlayText.alignment = TextAnchor.MiddleCenter;
-        overlayText.color = new Color(1f, 0.9f, 0.35f, 1f);
-
-        GameObject buttonGO = new GameObject("Retry Button", typeof(RectTransform), typeof(Image), typeof(Button));
-        buttonGO.transform.SetParent(overlayGO.transform, false);
-        RectTransform buttonRect = buttonGO.GetComponent<RectTransform>();
+        retryButton = RuntimeUiUtility.CreateButton(
+            "Retry Button", overlayGO.transform, "RETRY", 36,
+            new Color(0.18f, 0.42f, 0.72f, 1f), Color.white, new Vector2(300f, 88f));
+        RectTransform buttonRect = retryButton.GetComponent<RectTransform>();
         buttonRect.anchorMin = new Vector2(0.5f, 0.22f);
         buttonRect.anchorMax = new Vector2(0.5f, 0.22f);
-        buttonRect.sizeDelta = new Vector2(300f, 88f);
-        Image buttonImage = buttonGO.GetComponent<Image>();
-        buttonImage.color = new Color(0.18f, 0.42f, 0.72f, 1f);
-        retryButton = buttonGO.GetComponent<Button>();
-        retryButton.targetGraphic = buttonImage;
         retryButton.onClick.AddListener(RetryStage);
-        GameObject buttonTextGO = new GameObject("Retry Label", typeof(RectTransform));
-        buttonTextGO.transform.SetParent(buttonGO.transform, false);
-        RectTransform buttonTextRect = buttonTextGO.GetComponent<RectTransform>();
-        buttonTextRect.anchorMin = Vector2.zero;
-        buttonTextRect.anchorMax = Vector2.one;
-        buttonTextRect.offsetMin = Vector2.zero;
-        buttonTextRect.offsetMax = Vector2.zero;
-        Text buttonText = buttonTextGO.AddComponent<Text>();
-        buttonText.font = hudText.font;
-        buttonText.fontSize = 36;
-        buttonText.fontStyle = FontStyle.Bold;
-        buttonText.alignment = TextAnchor.MiddleCenter;
-        buttonText.color = Color.white;
-        buttonText.text = "RETRY";
         retryButton.gameObject.SetActive(false);
 
-        if (EventSystem.current == null)
-        {
-            GameObject eventSystemGO = new GameObject("EventSystem");
-            eventSystemGO.AddComponent<EventSystem>();
-            eventSystemGO.AddComponent<StandaloneInputModule>();
-        }
         overlayGO.SetActive(false);
         overlayCanvas = canvas;
     }

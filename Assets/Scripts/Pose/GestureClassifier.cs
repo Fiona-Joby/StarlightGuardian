@@ -121,7 +121,13 @@ public static class GestureClassifier
     /// </summary>
     public static string Classify(HandData[] hands)
     {
-        if (hands == null || hands.Length == 0)
+        return Classify(hands, hands != null ? hands.Length : 0);
+    }
+
+    public static string Classify(HandData[] hands, int handCount)
+    {
+        handCount = ClampHandCount(hands, handCount);
+        if (handCount == 0)
             return "idle";
 
         // MediaPipe labels are from the camera's perspective (mirrored webcam):
@@ -130,14 +136,14 @@ public static class GestureClassifier
         LandmarkPoint[] leftLm = null;
         LandmarkPoint[] rightLm = null;
 
-        for (int i = 0; i < hands.Length; i++)
+        for (int i = 0; i < handCount; i++)
         {
             if (hands[i].label == "Left") leftLm = hands[i].landmarks;
             else if (hands[i].label == "Right") rightLm = hands[i].landmarks;
         }
 
         // Rule 1: both hands open & raised → "reach"
-        if (leftLm != null && rightLm != null &&
+        if (IsValidHand(leftLm) && IsValidHand(rightLm) &&
             IsHandOpen(leftLm) && IsHandRaised(leftLm) &&
             IsHandOpen(rightLm) && IsHandRaised(rightLm))
         {
@@ -145,22 +151,22 @@ public static class GestureClassifier
         }
 
         // One open palm → "collect"
-        if ((leftLm != null && IsHandOpen(leftLm)) ||
-            (rightLm != null && IsHandOpen(rightLm)))
+        if ((IsValidHand(leftLm) && IsHandOpen(leftLm)) ||
+            (IsValidHand(rightLm) && IsHandOpen(rightLm)))
         {
             return "collect";
         }
 
         // Rule 2: MediaPipe "Right" (player's LEFT) index only → run LEFT
-        if (rightLm != null && IsIndexOnly(rightLm) &&
-            !(leftLm != null && IsIndexOnly(leftLm)))
+        if (IsValidHand(rightLm) && IsIndexOnly(rightLm) &&
+            !(IsValidHand(leftLm) && IsIndexOnly(leftLm)))
         {
             return "left";
         }
 
         // Rule 3: MediaPipe "Left" (player's RIGHT) index only → run RIGHT
-        if (leftLm != null && IsIndexOnly(leftLm) &&
-            !(rightLm != null && IsIndexOnly(rightLm)))
+        if (IsValidHand(leftLm) && IsIndexOnly(leftLm) &&
+            !(IsValidHand(rightLm) && IsIndexOnly(rightLm)))
         {
             return "right";
         }
@@ -170,16 +176,26 @@ public static class GestureClassifier
 
     public static bool HasJumpGesture(HandData[] hands)
     {
-        if (hands == null) return false;
-        for (int i = 0; i < hands.Length; i++)
+        return HasJumpGesture(hands, hands != null ? hands.Length : 0);
+    }
+
+    public static bool HasJumpGesture(HandData[] hands, int handCount)
+    {
+        handCount = ClampHandCount(hands, handCount);
+        for (int i = 0; i < handCount; i++)
             if (IsVictorySign(hands[i].landmarks) && !IsShootGesture(hands[i].landmarks)) return true;
         return false;
     }
 
     public static bool HasShootGesture(HandData[] hands)
     {
-        if (hands == null) return false;
-        for (int i = 0; i < hands.Length; i++)
+        return HasShootGesture(hands, hands != null ? hands.Length : 0);
+    }
+
+    public static bool HasShootGesture(HandData[] hands, int handCount)
+    {
+        handCount = ClampHandCount(hands, handCount);
+        for (int i = 0; i < handCount; i++)
             if (IsShootGesture(hands[i].landmarks)) return true;
         return false;
     }
@@ -187,9 +203,22 @@ public static class GestureClassifier
     /// <summary>True when at least one hand is making a fist (all fingers curled).</summary>
     public static bool HasFistGesture(HandData[] hands)
     {
-        if (hands == null) return false;
-        for (int i = 0; i < hands.Length; i++)
+        return HasFistGesture(hands, hands != null ? hands.Length : 0);
+    }
+
+    public static bool HasFistGesture(HandData[] hands, int handCount)
+    {
+        handCount = ClampHandCount(hands, handCount);
+        for (int i = 0; i < handCount; i++)
             if (IsFist(hands[i].landmarks)) return true;
         return false;
+    }
+
+    private static bool IsValidHand(LandmarkPoint[] landmarks) => landmarks != null && landmarks.Length >= 21;
+
+    private static int ClampHandCount(HandData[] hands, int handCount)
+    {
+        if (hands == null || handCount <= 0) return 0;
+        return handCount > hands.Length ? hands.Length : handCount;
     }
 }

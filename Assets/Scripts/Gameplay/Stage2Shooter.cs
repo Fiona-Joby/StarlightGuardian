@@ -10,6 +10,7 @@ public class Stage2Shooter : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     private Animator animator;
+    private PlayerInput playerInput;
     private Sprite idleSprite;
     private Sprite[] attackFrames;
     private Sprite beamSprite;
@@ -23,6 +24,7 @@ public class Stage2Shooter : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        playerInput = GetComponent<PlayerInput>();
         idleSprite = spriteRenderer != null ? spriteRenderer.sprite : null;
         Stage2ArtReferences art = FindAnyObjectByType<Stage2ArtReferences>();
         attackFrames = art != null ? art.AttackFrames : null;
@@ -51,9 +53,8 @@ public class Stage2Shooter : MonoBehaviour
                 EndShootingAnimation();
         }
 
-        PlayerInput input = GetComponent<PlayerInput>();
-        if (input != null && input.ShootPressed && cooldownTimer <= 0f && !isShooting)
-            Shoot(input.FacingRight);
+        if (playerInput != null && playerInput.ShootPressed && cooldownTimer <= 0f && !isShooting)
+            Shoot(playerInput.FacingRight);
     }
 
     private void Shoot(bool faceRight)

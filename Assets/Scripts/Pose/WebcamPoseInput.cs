@@ -27,6 +27,8 @@ using Mediapipe.Unity.Experimental;
 [DefaultExecutionOrder(-200)]
 public class WebcamPoseInput : MonoBehaviour
 {
+    private const float JumpGestureReleaseGrace = 0.1f;
+
     // ------------------------------------------------------------------ //
     //  Inspector settings
     // ------------------------------------------------------------------ //
@@ -80,6 +82,8 @@ public class WebcamPoseInput : MonoBehaviour
     private long frameTimestampMs;
     private string currentGesture = "idle";
     private GestureClassifier.HandData[] handDataBuffer;
+    private bool detectedJumpGesture;
+    private float lastJumpGestureTime = float.NegativeInfinity;
 
     // Pre-allocated result struct to avoid GC pressure.
     private HandLandmarkerResult cachedResult;
@@ -189,6 +193,7 @@ public class WebcamPoseInput : MonoBehaviour
         initialized = true;
         IsActive = true;
         frameTimestampMs = 0;
+        lastJumpGestureTime = float.NegativeInfinity;
 
         Debug.Log("[WebcamPoseInput] MediaPipe HandLandmarker initialised — webcam pose active.");
     }
@@ -207,9 +212,7 @@ public class WebcamPoseInput : MonoBehaviour
         {
             Debug.LogError($"[WebcamPoseInput] Detection error: {ex.Message}");
             // If detection keeps failing, disable webcam so keyboard takes over.
-            initialized = false;
-            IsActive = false;
-            HasHandPosition = false;
+            Cleanup();
         }
     }
 
@@ -241,6 +244,17 @@ public class WebcamPoseInput : MonoBehaviour
             webcamTexture.Stop();
             webcamTexture = null;
         }
+
+        HorizontalAxis = 0f;
+        IsReaching = false;
+        IsCollecting = false;
+        jumpGestureHeld = false;
+        fistGestureHeld = false;
+        shootGestureHeld = false;
+        detectedJumpGesture = false;
+        lastJumpGestureTime = float.NegativeInfinity;
+        currentGesture = "idle";
+        trackedHandLabel = null;
     }
 
     // ------------------------------------------------------------------ //
@@ -249,7 +263,7 @@ public class WebcamPoseInput : MonoBehaviour
 
     private void RunDetection()
     {
-        jumpGestureHeld = false;
+        detectedJumpGesture = false;
         fistGestureHeld = false;
         HasHandPosition = false;
         // Copy webcam pixels into the TextureFrame (CPU path).
@@ -275,6 +289,9 @@ public class WebcamPoseInput : MonoBehaviour
                 currentGesture = "idle";
             }
         }
+
+        jumpGestureHeld = detectedJumpGesture ||
+                          Time.unscaledTime - lastJumpGestureTime <= JumpGestureReleaseGrace;
     }
 
     private string ExtractGesture(HandLandmarkerResult result)
@@ -307,7 +324,7 @@ public class WebcamPoseInput : MonoBehaviour
             HasHandPosition = true;
         }
         if (handDataBuffer.Length < handCount)
-            handDataBuffer = new GestureClassifier.HandData[handCount];
+            System.Array.Resize(ref handDataBuffer, handCount);
 
         for (int h = 0; h < handCount; h++)
         {
@@ -318,7 +335,9 @@ public class WebcamPoseInput : MonoBehaviour
                 ? categories[0].categoryName
                 : "Unknown";
 
-            var points = new GestureClassifier.LandmarkPoint[landmarks.Count];
+            var points = handDataBuffer[h].landmarks;
+            if (points == null || points.Length != landmarks.Count)
+                points = new GestureClassifier.LandmarkPoint[landmarks.Count];
             for (int i = 0; i < landmarks.Count; i++)
             {
                 points[i].x = landmarks[i].x;
@@ -332,12 +351,12 @@ public class WebcamPoseInput : MonoBehaviour
             };
         }
 
-        var slice = new GestureClassifier.HandData[handCount];
-        System.Array.Copy(handDataBuffer, slice, handCount);
-        jumpGestureHeld = GestureClassifier.HasJumpGesture(slice);
-        fistGestureHeld = GestureClassifier.HasFistGesture(slice);
-        shootGestureHeld = GestureClassifier.HasShootGesture(slice);
-        return GestureClassifier.Classify(slice);
+        detectedJumpGesture = GestureClassifier.HasJumpGesture(handDataBuffer, handCount);
+        if (detectedJumpGesture)
+            lastJumpGestureTime = Time.unscaledTime;
+        fistGestureHeld = GestureClassifier.HasFistGesture(handDataBuffer, handCount);
+        shootGestureHeld = GestureClassifier.HasShootGesture(handDataBuffer, handCount);
+        return GestureClassifier.Classify(handDataBuffer, handCount);
     }
 
     // ------------------------------------------------------------------ //

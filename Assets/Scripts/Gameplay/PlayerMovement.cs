@@ -56,8 +56,6 @@ public class PlayerMovement : MonoBehaviour
     private float airborneSpeed;
     private float airborneControlSpeed;
 
-    public bool IsGrounded => !isJumping;
-    private float groundY;
     private float baseGroundY; // The original ground level (no platform).
     private float verticalSpeed;
     private float jumpHoldTime;
@@ -67,6 +65,9 @@ public class PlayerMovement : MonoBehaviour
     private Collider2D currentPlatform;
     private Vector3 currentPlatformPosition;
     private Collider2D playerCollider;
+    private Collider2D[] platformQueryBuffer = new Collider2D[16];
+
+    private static readonly ContactFilter2D PlatformQueryFilter = ContactFilter2D.noFilter;
 
     private PlayerInput playerInput;
     private Animator animator;
@@ -91,8 +92,7 @@ public class PlayerMovement : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         playerCollider = GetComponent<Collider2D>();
         // The existing kinematic player moves along a flat ground baseline.
-        groundY = transform.position.y;
-        baseGroundY = groundY;
+        baseGroundY = transform.position.y;
 
         // Find the CatchZone on a child object.
         catchZone = GetComponentInChildren<CatchZone>();
@@ -185,8 +185,25 @@ public class PlayerMovement : MonoBehaviour
         // --- Platform edge detection while grounded ---
         if (!isJumping && onPlatform)
         {
-            // Check if we've walked off the platform edge.
-            if (!CheckPlatformBelow(transform.position))
+            Vector3 groundedPosition = transform.position;
+            float feetY = groundedPosition.y - GetPlayerHalfHeight();
+            float queryHalfWidth = GetPlayerHalfWidth() + platformRaySpread;
+            if (FindPlatformInVerticalRange(
+                    groundedPosition.x,
+                    feetY - platformRayLength,
+                    feetY + 0.05f,
+                    queryHalfWidth,
+                    out float platformTopY,
+                    out Collider2D supportingPlatform))
+            {
+                // Keep the feet at the platform top. Small collider gaps or
+                // query timing differences must not drop a grounded player.
+                groundedPosition.y = platformTopY + GetPlayerHalfHeight() + platformLandingLift;
+                transform.position = groundedPosition;
+                currentPlatform = supportingPlatform;
+                currentPlatformPosition = supportingPlatform.transform.position;
+            }
+            else
             {
                 // Walked off — start falling to base ground.
                 onPlatform = false;
@@ -194,7 +211,6 @@ public class PlayerMovement : MonoBehaviour
                 isJumping = true;
                 verticalSpeed = 0f;
                 jumpBoostEnded = true;
-                groundY = baseGroundY;
             }
         }
 
@@ -232,8 +248,9 @@ public class PlayerMovement : MonoBehaviour
                 ? launchSpeed * takeoffSpeedMultiplier + Mathf.Sign(launchSpeed) * takeoffForwardBoost
                 : 0f;
             airborneControlSpeed = Mathf.Max(moveSpeed, Mathf.Abs(airborneSpeed));
-            groundY = transform.position.y;
             isJumping = true;
+            onPlatform = false;
+            currentPlatform = null;
             verticalSpeed = jumpSpeed;
             jumpHoldTime = 0f;
             jumpBoostEnded = false;
@@ -251,6 +268,8 @@ public class PlayerMovement : MonoBehaviour
         displacement += AdvanceVertical(normalTime, jumpGravity);
         jumpHoldTime += boostTime;
 
+        float playerHalfHeight = GetPlayerHalfHeight();
+        float previousFeetY = transform.position.y - playerHalfHeight;
         Vector3 position = transform.position;
         position.y += displacement;
 
@@ -259,21 +278,25 @@ public class PlayerMovement : MonoBehaviour
         {
             float platformTopY;
             Collider2D platformCollider;
-            if (CheckPlatformBelow(position, out platformTopY, out platformCollider))
+            float predictedFeetY = position.y - playerHalfHeight;
+            float landingTolerance = Mathf.Max(0.05f, platformLandingLift);
+            if (predictedFeetY <= previousFeetY &&
+                FindPlatformInVerticalRange(
+                    position.x,
+                    predictedFeetY - landingTolerance,
+                    previousFeetY + landingTolerance,
+                    GetPlayerHalfWidth() + platformRaySpread,
+                    out platformTopY,
+                    out platformCollider) &&
+                platformTopY <= previousFeetY + landingTolerance &&
+                platformTopY >= predictedFeetY - landingTolerance)
             {
-                // Land if the player's feet are at or below the platform top.
-                // This catches fast-falling frames that would skip past the surface.
-                float feetY = position.y - GetPlayerHalfHeight();
-                if (feetY <= platformTopY + 0.15f)
-                {
-                    position.y = platformTopY + GetPlayerHalfHeight() + platformLandingLift;
-                    verticalSpeed = 0f;
-                    isJumping = false;
-                    groundY = position.y;
-                    onPlatform = true;
-                    currentPlatform = platformCollider;
-                    currentPlatformPosition = currentPlatform.transform.position;
-                }
+                position.y = platformTopY + playerHalfHeight + platformLandingLift;
+                verticalSpeed = 0f;
+                isJumping = false;
+                onPlatform = true;
+                currentPlatform = platformCollider;
+                currentPlatformPosition = currentPlatform.transform.position;
             }
 
             if (isJumping && position.y <= baseGroundY)
@@ -282,7 +305,6 @@ public class PlayerMovement : MonoBehaviour
                 position.y = baseGroundY;
                 verticalSpeed = 0f;
                 isJumping = false;
-                groundY = baseGroundY;
                 onPlatform = false;
                 currentPlatform = null;
             }
@@ -317,69 +339,46 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ //
-    //  Platform raycast helpers
+    //  Platform overlap helpers
     // ------------------------------------------------------------------ //
 
-    /// <summary>
-    /// Checks if there is a platform directly below the given position.
-    /// </summary>
-    private bool CheckPlatformBelow(Vector3 pos)
+    private bool FindPlatformInVerticalRange(
+        float x, float minY, float maxY, float halfWidth,
+        out float platformTopY, out Collider2D platformCollider)
     {
-        float dummy;
-        return CheckPlatformBelow(pos, out dummy);
-    }
-
-    /// <summary>
-    /// Casts rays downward from the player's feet to find a platform tagged
-    /// "Platform". Uses RaycastAll so the player's own collider (which the
-    /// ray may start inside) doesn't block detection.
-    /// Returns true if found, and outputs the top Y of the platform collider.
-    /// </summary>
-    private bool CheckPlatformBelow(Vector3 pos, out float platformTopY)
-    {
-        Collider2D ignored;
-        return CheckPlatformBelow(pos, out platformTopY, out ignored);
-    }
-
-    private bool CheckPlatformBelow(Vector3 pos, out float platformTopY, out Collider2D platformCollider)
-    {
-        platformTopY = baseGroundY;
+        platformTopY = float.NegativeInfinity;
         platformCollider = null;
+        if (maxY <= minY) return false;
 
-        // Start rays from the player's feet (bottom of collider) to avoid
-        // self-intersection with the player's own BoxCollider2D.
-        float feetY = pos.y - GetPlayerHalfHeight();
-        float[] offsets = { 0f, -platformRaySpread, platformRaySpread };
-
-        float bestY = float.NegativeInfinity;
-        bool found = false;
-
-        foreach (float xOff in offsets)
+        Vector2 areaMin = new Vector2(x - halfWidth, minY);
+        Vector2 areaMax = new Vector2(x + halfWidth, maxY);
+        int count = Physics2D.OverlapArea(areaMin, areaMax, PlatformQueryFilter, platformQueryBuffer);
+        while (count == platformQueryBuffer.Length)
         {
-            Vector2 rayOrigin = new Vector2(pos.x + xOff, feetY);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(rayOrigin, Vector2.down, platformRayLength);
-
-            foreach (var hit in hits)
-            {
-                if (hit.collider != null && hit.collider.CompareTag("Platform"))
-                {
-                    float topY = hit.collider.bounds.max.y;
-                    if (topY > bestY)
-                    {
-                        bestY = topY;
-                        found = true;
-                        platformCollider = hit.collider;
-                    }
-                }
-            }
+            System.Array.Resize(ref platformQueryBuffer, platformQueryBuffer.Length * 2);
+            count = Physics2D.OverlapArea(areaMin, areaMax, PlatformQueryFilter, platformQueryBuffer);
         }
 
-        if (found)
+        for (int i = 0; i < count; i++)
         {
-            platformTopY = bestY;
-            return true;
+            Collider2D candidate = platformQueryBuffer[i];
+            if (candidate == null || !candidate.CompareTag("Platform")) continue;
+
+            Bounds bounds = candidate.bounds;
+            if (bounds.max.x < areaMin.x || bounds.min.x > areaMax.x) continue;
+            float topY = bounds.max.y;
+            if (topY < minY || topY > maxY || topY <= platformTopY) continue;
+
+            platformTopY = topY;
+            platformCollider = candidate;
         }
-        return false;
+
+        return platformCollider != null;
+    }
+
+    private float GetPlayerHalfWidth()
+    {
+        return playerCollider != null ? playerCollider.bounds.extents.x : 0.5f;
     }
 
     private float GetPlayerHalfHeight()

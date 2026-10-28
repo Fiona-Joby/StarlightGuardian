@@ -41,7 +41,7 @@ public class PlayerShield : MonoBehaviour
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
         timerBgTex = MakeTex(new Color(0.05f, 0.05f, 0.15f, 0.7f));
-        timerFillTex = MakeTex(new Color(0.3f, 0.75f, 1f, 0.9f));
+        timerFillTex = MakeTex(Color.white);
     }
 
     private void Update()
@@ -66,6 +66,12 @@ public class PlayerShield : MonoBehaviour
         // Shield expired.
         if (shieldTimer <= 0f)
             DeactivateShield();
+    }
+
+    private void OnDestroy()
+    {
+        if (timerBgTex != null) Destroy(timerBgTex);
+        if (timerFillTex != null) Destroy(timerFillTex);
     }
 
     private void ActivateShield()
@@ -125,9 +131,11 @@ public class PlayerShield : MonoBehaviour
             new Color(1f, 0.3f, 0.3f, 0.9f),   // red when nearly out
             new Color(0.3f, 0.75f, 1f, 0.9f),   // cyan when full
             fill);
-        SetTexColor(timerFillTex, fillCol);
         Rect fillRect = new Rect(bgRect.x + 2, bgRect.y + 2, (bgRect.width - 4) * fill, bgRect.height - 4);
+        Color previousGuiColor = GUI.color;
+        GUI.color = fillCol;
         GUI.DrawTexture(fillRect, timerFillTex);
+        GUI.color = previousGuiColor;
 
         // Label.
         GUI.Label(bgRect, $"Shield: {shieldTimer:F1}s", timerStyle);
@@ -145,9 +153,4 @@ public class PlayerShield : MonoBehaviour
         return tex;
     }
 
-    private static void SetTexColor(Texture2D tex, Color col)
-    {
-        tex.SetPixel(0, 0, col);
-        tex.Apply();
-    }
 }

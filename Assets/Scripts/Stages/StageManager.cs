@@ -45,6 +45,7 @@ public class StageManager : MonoBehaviour
     {
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.StageGoalReached -= OnGoalReached;
+        subscribedToGoal = false;
     }
 
     private void OnGoalReached()
@@ -90,15 +91,10 @@ public class StageManager : MonoBehaviour
     private void BuildOverlay()
     {
         // --- Canvas ---
-        GameObject canvasGO = new GameObject("CompletionOverlay");
-        canvasGO.transform.SetParent(transform);
-        overlayCanvas = canvasGO.AddComponent<Canvas>();
-        overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        overlayCanvas.sortingOrder = 200;
-        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        canvasGO.AddComponent<GraphicRaycaster>();
+        overlayCanvas = RuntimeUiUtility.CreateOverlayCanvas(
+            "CompletionOverlay", 200, new Vector2(1920f, 1080f));
+        GameObject canvasGO = overlayCanvas.gameObject;
+        canvasGO.transform.SetParent(transform, false);
 
         // CanvasGroup for fade.
         overlayGroup = canvasGO.AddComponent<CanvasGroup>();
@@ -106,7 +102,7 @@ public class StageManager : MonoBehaviour
         overlayGroup.blocksRaycasts = true;
 
         // --- Dark backdrop ---
-        GameObject bgGO = CreateRect("Backdrop", canvasGO.transform);
+        GameObject bgGO = RuntimeUiUtility.CreateRect("Backdrop", canvasGO.transform).gameObject;
         RectTransform bgRT = bgGO.GetComponent<RectTransform>();
         bgRT.anchorMin = Vector2.zero;
         bgRT.anchorMax = Vector2.one;
@@ -116,48 +112,25 @@ public class StageManager : MonoBehaviour
         bgImg.color = new Color(0.02f, 0.02f, 0.08f, 0.85f);
 
         // --- "Level 1 Completed!" label ---
-        GameObject labelGO = CreateRect("CompletionLabel", canvasGO.transform);
-        RectTransform labelRT = labelGO.GetComponent<RectTransform>();
+        completionLabel = RuntimeUiUtility.CreateText(
+            "CompletionLabel", canvasGO.transform, null, 64,
+            TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.4f, 1f), FontStyle.Bold);
+        RectTransform labelRT = completionLabel.rectTransform;
         labelRT.anchorMin = new Vector2(0f, 0.4f);
         labelRT.anchorMax = new Vector2(1f, 0.7f);
         labelRT.offsetMin = Vector2.zero;
         labelRT.offsetMax = Vector2.zero;
-        completionLabel = labelGO.AddComponent<Text>();
         completionLabel.text = "Level 1 Completed!";
-        completionLabel.font = GetFont();
-        completionLabel.fontSize = 64;
-        completionLabel.fontStyle = FontStyle.Bold;
-        completionLabel.alignment = TextAnchor.MiddleCenter;
-        completionLabel.color = new Color(1f, 0.92f, 0.4f, 1f); // gold
 
         // --- Sub-label ---
-        GameObject subGO = CreateRect("SubLabel", canvasGO.transform);
-        RectTransform subRT = subGO.GetComponent<RectTransform>();
+        subLabel = RuntimeUiUtility.CreateText(
+            "SubLabel", canvasGO.transform, completionLabel.font, 28,
+            TextAnchor.MiddleCenter, new Color(0.8f, 0.85f, 1f, 0.8f));
+        RectTransform subRT = subLabel.rectTransform;
         subRT.anchorMin = new Vector2(0f, 0.28f);
         subRT.anchorMax = new Vector2(1f, 0.42f);
         subRT.offsetMin = Vector2.zero;
         subRT.offsetMax = Vector2.zero;
-        subLabel = subGO.AddComponent<Text>();
         subLabel.text = "Transitioning to Stage 2...";
-        subLabel.font = GetFont();
-        subLabel.fontSize = 28;
-        subLabel.alignment = TextAnchor.MiddleCenter;
-        subLabel.color = new Color(0.8f, 0.85f, 1f, 0.8f);
-    }
-
-    /// <summary>Returns a usable font with cascading fallback for all Unity versions.</summary>
-    private static Font GetFont()
-    {
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        if (font == null) font = Font.CreateDynamicFontFromOSFont("Arial", 14);
-        return font;
-    }
-
-    private static GameObject CreateRect(string name, Transform parent)
-    {
-        GameObject go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        return go;
     }
 }

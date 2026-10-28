@@ -17,6 +17,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer))]
 public class StarMovement : MonoBehaviour
 {
+    private static readonly ContactFilter2D PlatformOverlapFilter = ContactFilter2D.noFilter;
+
     [Header("Motion")]
     [SerializeField, Min(0f)] private float speed = 3f;
     [SerializeField, Min(0f)] private float downwardSpeed = 1.5f;
@@ -37,9 +39,9 @@ public class StarMovement : MonoBehaviour
     private Collider2D landingPlatform;
     private float landedAtTime;
     private Collider2D starCollider;
+    private Collider2D[] platformOverlapBuffer = new Collider2D[16];
 
     public StarType Type => starType;
-    public bool IsLanded => landed;
     public bool CanBeCaughtBy(PlayerMovement player)
     {
         return landingPlatform == null || (player != null && player.IsOnPlatform(landingPlatform));
@@ -189,15 +191,21 @@ public class StarMovement : MonoBehaviour
         Vector2 areaMax = new Vector2(
             Mathf.Max(body.position.x, nextPosition.x) + halfWidth,
             currentBottom + 0.02f);
-        Collider2D[] candidates = Physics2D.OverlapAreaAll(areaMin, areaMax);
+        int candidateCount = Physics2D.OverlapArea(areaMin, areaMax, PlatformOverlapFilter, platformOverlapBuffer);
+        while (candidateCount == platformOverlapBuffer.Length)
+        {
+            System.Array.Resize(ref platformOverlapBuffer, platformOverlapBuffer.Length * 2);
+            candidateCount = Physics2D.OverlapArea(areaMin, areaMax, PlatformOverlapFilter, platformOverlapBuffer);
+        }
 
         Collider2D landingSurface = null;
         float landingY = float.NegativeInfinity;
         float landingX = nextPosition.x;
         float earliestCrossing = float.PositiveInfinity;
 
-        foreach (Collider2D candidate in candidates)
+        for (int i = 0; i < candidateCount; i++)
         {
+            Collider2D candidate = platformOverlapBuffer[i];
             if (candidate == null || !candidate.CompareTag("Platform")) continue;
 
             Bounds platformBounds = candidate.bounds;

@@ -24,7 +24,6 @@ public class ScoreProgressBar : MonoBehaviour
     // Textures created once at runtime for GUI drawing.
     private Texture2D bgTex;
     private Texture2D fillTex;
-    private Texture2D multiplierTex;
     private GUIStyle labelStyle;
     private GUIStyle multiplierStyle;
     private bool subscribedToScore;
@@ -33,8 +32,7 @@ public class ScoreProgressBar : MonoBehaviour
     {
         // Create solid-colour textures for the bar.
         bgTex = MakeTex(1, 1, new Color(0.06f, 0.06f, 0.15f, 0.8f));
-        fillTex = MakeTex(1, 1, new Color(1f, 0.85f, 0.2f, 1f));
-        multiplierTex = MakeTex(1, 1, new Color(1f, 0.4f, 0.9f, 0.9f));
+        fillTex = MakeTex(1, 1, Color.white);
     }
 
     private void OnEnable()
@@ -48,6 +46,13 @@ public class ScoreProgressBar : MonoBehaviour
         ScoreMultiplier.MultiplierChanged -= OnMultiplierChanged;
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.ScoreChanged -= OnScoreChanged;
+        subscribedToScore = false;
+    }
+
+    private void OnDestroy()
+    {
+        if (bgTex != null) Destroy(bgTex);
+        if (fillTex != null) Destroy(fillTex);
     }
 
     private void Update()
@@ -96,9 +101,11 @@ public class ScoreProgressBar : MonoBehaviour
             new Color(0.3f, 0.85f, 1f, 1f),
             animatedFill
         );
-        SetTexColor(fillTex, fillCol);
         Rect fillRect = new Rect(bgRect.x + 2, bgRect.y + 2, (bgRect.width - 4) * animatedFill, bgRect.height - 4);
+        Color previousGuiColor = GUI.color;
+        GUI.color = fillCol;
         GUI.DrawTexture(fillRect, fillTex);
+        GUI.color = previousGuiColor;
 
         // Score label.
         int goal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : 35;
@@ -148,9 +155,4 @@ public class ScoreProgressBar : MonoBehaviour
         return tex;
     }
 
-    private static void SetTexColor(Texture2D tex, Color col)
-    {
-        tex.SetPixel(0, 0, col);
-        tex.Apply();
-    }
 }

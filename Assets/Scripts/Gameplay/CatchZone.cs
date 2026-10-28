@@ -16,6 +16,8 @@ public class CatchZone : MonoBehaviour
     private readonly HashSet<StarMovement> overlappingStars = new HashSet<StarMovement>();
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
+    private WebcamPreview webcamPreview;
+    private Vector3 defaultLocalPosition;
 
     private void Awake()
     {
@@ -24,6 +26,28 @@ public class CatchZone : MonoBehaviour
         col.isTrigger = true;
         playerInput = GetComponentInParent<PlayerInput>();
         playerMovement = GetComponentInParent<PlayerMovement>();
+        webcamPreview = GetComponentInParent<WebcamPreview>();
+        defaultLocalPosition = transform.localPosition;
+    }
+
+    private void LateUpdate()
+    {
+        if (webcamPreview == null)
+            webcamPreview = GetComponentInParent<WebcamPreview>();
+
+        if (webcamPreview == null || Camera.main == null ||
+            !webcamPreview.TryGetMappedHandViewport(out Vector2 viewportPoint))
+        {
+            transform.localPosition = defaultLocalPosition;
+            return;
+        }
+
+        Camera camera = Camera.main;
+        float cameraDepth = Mathf.Abs(transform.position.z - camera.transform.position.z);
+        Vector3 worldPoint = camera.ViewportToWorldPoint(
+            new Vector3(viewportPoint.x, viewportPoint.y, cameraDepth));
+        worldPoint.z = transform.position.z;
+        transform.position = worldPoint;
     }
 
     private void Update()

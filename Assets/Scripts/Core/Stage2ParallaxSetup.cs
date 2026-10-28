@@ -26,22 +26,7 @@ public class Stage2ParallaxSetup : MonoBehaviour
 
     private Transform cam;
     private float camStartX;
-    private LoopingLayer[] layers;
-
-    /// <summary>
-    /// Holds the three tiled transforms for a single parallax layer,
-    /// plus the data needed to scroll and wrap them.
-    /// </summary>
-    private struct LoopingLayer
-    {
-        /// <summary>Parent transform that receives the parallax offset.</summary>
-        public Transform root;
-        /// <summary>The three tile transforms (children of root).</summary>
-        public Transform[] tiles;     // length 3: left, center, right
-        public float parallax;
-        public float tileWorldWidth;   // width of one tile in world units
-        public float rootStartX;
-    }
+    private LoopingParallaxUtility.Layer[] layers;
 
     private void Start()
     {
@@ -55,7 +40,7 @@ public class Stage2ParallaxSetup : MonoBehaviour
         camStartX = cam.position.x;
 
         // Disable the old Background SpriteRenderer so it doesn't block us.
-        DisableOldBackground();
+        LoopingParallaxUtility.DisablePlaceholderBackground(nameof(Stage2ParallaxSetup));
 
         // Auto-load sprites in the Editor if not already assigned.
         LoadSpritesInEditor();
@@ -63,104 +48,18 @@ public class Stage2ParallaxSetup : MonoBehaviour
         // Sorting orders: -9 to -7 so they render behind gameplay sprites (0+).
         bool isStage3 = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Stage3";
         string stagePrefix = isStage3 ? "S3" : "S2";
-        layers = new LoopingLayer[3];
-        layers[0] = MakeLayer($"BG_{stagePrefix}_L1_Sky", layer1Sky, speed1, 1f, -9);
-        layers[1] = MakeLayer($"BG_{stagePrefix}_L2_Buildings", layer2Buildings, speed2, 2f, -8);
-        layers[2] = MakeLayer(isStage3 ? "BG_S3_L3_Railings" : "BG_S2_L3_Fence", layer3Fence, speed3, 3f, -7);
+        Camera mainCamera = Camera.main;
+        layers = new LoopingParallaxUtility.Layer[3];
+        layers[0] = LoopingParallaxUtility.CreateLayer(transform, mainCamera, $"BG_{stagePrefix}_L1_Sky", layer1Sky, speed1, 1f, -9, nameof(Stage2ParallaxSetup));
+        layers[1] = LoopingParallaxUtility.CreateLayer(transform, mainCamera, $"BG_{stagePrefix}_L2_Buildings", layer2Buildings, speed2, 2f, -8, nameof(Stage2ParallaxSetup));
+        layers[2] = LoopingParallaxUtility.CreateLayer(transform, mainCamera, isStage3 ? "BG_S3_L3_Railings" : "BG_S2_L3_Fence", layer3Fence, speed3, 3f, -7, nameof(Stage2ParallaxSetup));
 
         Debug.Log("[Stage2ParallaxSetup] Background layers created (looping).");
     }
 
-    private void LateUpdate()
-    {
-        if (cam == null || layers == null) return;
-
-        for (int i = 0; i < layers.Length; i++)
-        {
-            ref LoopingLayer l = ref layers[i];
-            if (l.root == null) continue;
-
-            // 1) Apply parallax offset to the root.
-            float dx = cam.position.x - camStartX;
-            float rootX = l.rootStartX + dx * l.parallax;
-            l.root.position = new Vector3(rootX, l.root.position.y, l.root.position.z);
-
-            // 2) Wrap tiles so one always covers the camera.
-            float camRelX = cam.position.x - rootX;
-            float w = l.tileWorldWidth;
-
-            float centerSlot = Mathf.Round(camRelX / w);
-
-            for (int t = 0; t < l.tiles.Length; t++)
-            {
-                float slotOffset = (t - 1) + centerSlot;
-                l.tiles[t].localPosition = new Vector3(slotOffset * w, 0f, 0f);
-            }
-        }
-    }
+    private void LateUpdate() => LoopingParallaxUtility.UpdateLayers(cam, camStartX, layers);
 
     // ------------------------------------------------------------------ //
-
-    private void DisableOldBackground()
-    {
-        var old = GameObject.Find("Background");
-        if (old != null)
-        {
-            var sr = old.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.enabled = false;
-                Debug.Log("[Stage2ParallaxSetup] Disabled old Background SpriteRenderer.");
-            }
-        }
-    }
-
-    private LoopingLayer MakeLayer(string name, Sprite sprite, float parallax, float z, int order)
-    {
-        LoopingLayer ll = new LoopingLayer { parallax = parallax };
-
-        if (sprite == null)
-        {
-            Debug.LogWarning($"[Stage2ParallaxSetup] {name} sprite is null — skipping.");
-            return ll;
-        }
-
-        var root = new GameObject(name);
-        root.transform.SetParent(transform);
-        root.transform.position = new Vector3(cam.position.x, cam.position.y, z);
-
-        float camH = Camera.main.orthographicSize * 2f;
-        float spriteH = sprite.bounds.size.y;
-        float scale = camH / spriteH;
-
-        float tileWorldWidth = sprite.bounds.size.x * scale;
-
-        Transform[] tiles = new Transform[3];
-        for (int t = 0; t < 3; t++)
-        {
-            float offset = (t - 1) * tileWorldWidth;
-            var tile = new GameObject($"{name}_Tile{t}");
-            tile.transform.SetParent(root.transform);
-            tile.transform.localPosition = new Vector3(offset, 0f, 0f);
-            tile.transform.localScale = new Vector3(scale, scale, 1f);
-
-            var sr = tile.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.sortingOrder = order;
-            sr.color = Color.white;
-
-            tiles[t] = tile.transform;
-        }
-
-        ll.root = root.transform;
-        ll.tiles = tiles;
-        ll.tileWorldWidth = tileWorldWidth;
-        ll.rootStartX = root.transform.position.x;
-
-        Debug.Log($"[Stage2ParallaxSetup] {name}: pos=({root.transform.position.x:F1},{root.transform.position.y:F1},{z}), scale={scale:F2}, tileW={tileWorldWidth:F2}, sortOrder={order}");
-
-        return ll;
-    }
 
     // ------------------------------------------------------------------ //
     //  Editor-only sprite loading
@@ -190,7 +89,8 @@ public class Stage2ParallaxSetup : MonoBehaviour
 
         Debug.Log($"[Stage2ParallaxSetup] Sprites loaded — Sky:{layer1Sky != null} Buildings:{layer2Buildings != null} Fence:{layer3Fence != null}");
 #else
-        Debug.LogWarning("[Stage2ParallaxSetup] Not in Editor — sprites must be assigned in Inspector.");
+        if (layer1Sky == null || layer2Buildings == null || layer3Fence == null)
+            Debug.LogWarning("[Stage2ParallaxSetup] Background sprites must be assigned in the scene for builds.");
 #endif
     }
 }

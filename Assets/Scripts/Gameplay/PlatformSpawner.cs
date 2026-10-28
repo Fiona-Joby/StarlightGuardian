@@ -166,13 +166,22 @@ public class PlatformSpawner : MonoBehaviour
                 longSpritePath);
             var loadedLongSprites = new System.Collections.Generic.List<Sprite>();
             foreach (Object asset in longAssets)
-                if (asset is Sprite sprite)
+                if (asset is Sprite sprite && (isStage2 || sprite.name == "PlatformLong_1"))
                     loadedLongSprites.Add(sprite);
             platformLongSprites = loadedLongSprites.ToArray();
         }
         if (platformShortSprite == null)
-            platformShortSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                shortSpritePath);
+        {
+            if (isStage2)
+                platformShortSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(shortSpritePath);
+            else
+                foreach (Object asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(shortSpritePath))
+                    if (asset is Sprite sprite && sprite.name == "PlatformShort_0")
+                    {
+                        platformShortSprite = sprite;
+                        break;
+                    }
+        }
 
         Debug.Log($"[PlatformSpawner] Sprites loaded — Long:{platformLongSprites.Length} Short:{platformShortSprite != null}");
 #else
