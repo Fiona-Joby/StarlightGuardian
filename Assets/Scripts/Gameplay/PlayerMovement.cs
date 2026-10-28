@@ -65,6 +65,7 @@ public class PlayerMovement : MonoBehaviour
     private bool jumpBoostEnded;
     private bool onPlatform; // True when grounded on a platform (not base ground).
     private Collider2D currentPlatform;
+    private Vector3 currentPlatformPosition;
     private Collider2D playerCollider;
 
     private PlayerInput playerInput;
@@ -128,6 +129,10 @@ public class PlayerMovement : MonoBehaviour
     {
         if (playerInput == null) return;
 
+        Vector3 platformDelta = Vector3.zero;
+        if (!isJumping && onPlatform && currentPlatform != null)
+            platformDelta = currentPlatform.transform.position - currentPlatformPosition;
+
         // --- Reach from pose gesture (both hands open) ---
         if (playerInput.IsReaching)
             StartReach();
@@ -162,7 +167,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         float previousX = transform.position.x;
-        transform.position += Vector3.right * horizontalSpeed * Time.deltaTime;
+        transform.position += platformDelta + Vector3.right * horizontalSpeed * Time.deltaTime;
 
         Vector3 pos = transform.position;
         pos.x = Mathf.Clamp(pos.x, leftBoundary, rightBoundary);
@@ -192,6 +197,9 @@ public class PlayerMovement : MonoBehaviour
                 groundY = baseGroundY;
             }
         }
+
+        if (!isJumping && onPlatform && currentPlatform != null)
+            currentPlatformPosition = currentPlatform.transform.position;
 
         // Drive animation state.
         bool moving = Mathf.Abs(horizontalSpeed) > 0.01f;
@@ -264,6 +272,7 @@ public class PlayerMovement : MonoBehaviour
                     groundY = position.y;
                     onPlatform = true;
                     currentPlatform = platformCollider;
+                    currentPlatformPosition = currentPlatform.transform.position;
                 }
             }
 

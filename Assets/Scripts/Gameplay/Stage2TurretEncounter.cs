@@ -20,6 +20,7 @@ public class Stage2TurretEncounter : MonoBehaviour
     private Text overlayText;
     private Button retryButton;
     private Stage2PlayerHealth playerHealth;
+    private Stage2ArtReferences artReferences;
 
     private void Start()
     {
@@ -32,6 +33,7 @@ public class Stage2TurretEncounter : MonoBehaviour
 
         playerHealth = player.GetComponent<Stage2PlayerHealth>();
         if (playerHealth == null) playerHealth = player.AddComponent<Stage2PlayerHealth>();
+        artReferences = FindAnyObjectByType<Stage2ArtReferences>();
         BuildHud();
         StartCoroutine(SpawnTurretsAfterPlayerWalks(player.transform));
         RefreshHud();
@@ -48,12 +50,12 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private void SpawnTurrets()
     {
-        Sprite shortSprite = Resources.Load<Sprite>("Turrets/Turret Short");
-        Sprite tallSprite = Resources.Load<Sprite>("Turrets/Turret Tall");
-        Sprite beamSprite = Resources.Load<Sprite>("Turrets/Turret Beam");
+        Sprite shortSprite = artReferences != null ? artReferences.TurretShort : null;
+        Sprite tallSprite = artReferences != null ? artReferences.TurretTall : null;
+        Sprite beamSprite = artReferences != null ? artReferences.TurretBeam : null;
         if (shortSprite == null || tallSprite == null || beamSprite == null)
         {
-            Debug.LogError("[Stage2TurretEncounter] Turret sprites are missing from Resources/Turrets.");
+            Debug.LogError("[Stage2TurretEncounter] Turret sprites are not assigned on Stage2ArtReferences.");
             return;
         }
 

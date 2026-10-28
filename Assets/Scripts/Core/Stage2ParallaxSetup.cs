@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Multi-layer parallax background for Stage 2.
+/// Multi-layer parallax background for Stage 2 and Stage 3.
 ///
 /// Creates 3 SpriteRenderer layers at runtime from the Stage 2 background
 /// art (Sky, Buildings, Fence), each moving at a different fraction of
@@ -61,10 +61,12 @@ public class Stage2ParallaxSetup : MonoBehaviour
         LoadSpritesInEditor();
 
         // Sorting orders: -9 to -7 so they render behind gameplay sprites (0+).
+        bool isStage3 = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Stage3";
+        string stagePrefix = isStage3 ? "S3" : "S2";
         layers = new LoopingLayer[3];
-        layers[0] = MakeLayer("BG_S2_L1_Sky",       layer1Sky,       speed1, 1f, -9);
-        layers[1] = MakeLayer("BG_S2_L2_Buildings",  layer2Buildings,  speed2, 2f, -8);
-        layers[2] = MakeLayer("BG_S2_L3_Fence",     layer3Fence,     speed3, 3f, -7);
+        layers[0] = MakeLayer($"BG_{stagePrefix}_L1_Sky", layer1Sky, speed1, 1f, -9);
+        layers[1] = MakeLayer($"BG_{stagePrefix}_L2_Buildings", layer2Buildings, speed2, 2f, -8);
+        layers[2] = MakeLayer(isStage3 ? "BG_S3_L3_Railings" : "BG_S2_L3_Fence", layer3Fence, speed3, 3f, -7);
 
         Debug.Log("[Stage2ParallaxSetup] Background layers created (looping).");
     }
@@ -166,6 +168,18 @@ public class Stage2ParallaxSetup : MonoBehaviour
 
     private void LoadSpritesInEditor()
     {
+        bool isStage3 = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Stage3";
+        if (isStage3)
+        {
+#if UNITY_EDITOR
+            if (layer1Sky == null) layer1Sky = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage3/Layer 1_Sky Stars Background.png");
+            if (layer2Buildings == null) layer2Buildings = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage3/Layer 2_Buildings Midground.png");
+            if (layer3Fence == null) layer3Fence = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage3/Layer 3_Railings Foreground.png");
+#endif
+            Debug.Log($"[Stage2ParallaxSetup] Stage3 sprites loaded — Sky:{layer1Sky != null} Buildings:{layer2Buildings != null} Railings:{layer3Fence != null}");
+            return;
+        }
+
 #if UNITY_EDITOR
         if (layer1Sky == null)
             layer1Sky = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/Stage2/Layer1_Sky.png");

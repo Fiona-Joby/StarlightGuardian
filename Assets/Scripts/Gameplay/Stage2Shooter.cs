@@ -24,16 +24,12 @@ public class Stage2Shooter : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         idleSprite = spriteRenderer != null ? spriteRenderer.sprite : null;
-        attackFrames = new[]
-        {
-            Resources.Load<Sprite>("Attacking/Attack 1"),
-            Resources.Load<Sprite>("Attacking/Attack 2"),
-            Resources.Load<Sprite>("Attacking/Attack 3"),
-            Resources.Load<Sprite>("Attacking/Attack 4")
-        };
-        beamSprite = Resources.Load<Sprite>("Attacking/Attack Beam");
-        if (beamSprite == null || System.Array.Exists(attackFrames, frame => frame == null))
-            Debug.LogError("[Stage2Shooter] An attack frame or Attack Beam is missing from Resources/Attacking.");
+        Stage2ArtReferences art = FindAnyObjectByType<Stage2ArtReferences>();
+        attackFrames = art != null ? art.AttackFrames : null;
+        beamSprite = art != null ? art.AttackBeam : null;
+        if (attackFrames == null || attackFrames.Length < 4 || beamSprite == null ||
+            System.Array.Exists(attackFrames, frame => frame == null))
+            Debug.LogError("[Stage2Shooter] Stage 2 attack sprites are not assigned on Stage2ArtReferences.");
     }
 
     private void Update()
@@ -41,6 +37,7 @@ public class Stage2Shooter : MonoBehaviour
         cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
         if (isShooting)
         {
+            if (attackFrames == null || attackFrames.Length == 0) return;
             attackAnimationTimer += Time.deltaTime;
             int frame = Mathf.Min(attackFrames.Length - 1,
                 Mathf.FloorToInt(attackAnimationTimer / attackFrameDuration));
@@ -61,7 +58,8 @@ public class Stage2Shooter : MonoBehaviour
 
     private void Shoot(bool faceRight)
     {
-        if (beamSprite == null || System.Array.Exists(attackFrames, frame => frame == null)) return;
+        if (attackFrames == null || attackFrames.Length < 4 || beamSprite == null ||
+            System.Array.Exists(attackFrames, frame => frame == null)) return;
         facingRight = faceRight;
         if (spriteRenderer != null)
         {

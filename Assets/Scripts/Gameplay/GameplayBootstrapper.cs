@@ -33,6 +33,12 @@ public static class GameplayBootstrapper
         bool usesStage2World = isStage2 || isStage3;
         Time.timeScale = 1f;
 
+        if ((sceneName == "MainScene" || isStage2 || isStage3) && Object.FindAnyObjectByType<StageQuitButton>() == null)
+        {
+            var quitButtonGO = new GameObject("Stage Quit Button");
+            quitButtonGO.AddComponent<StageQuitButton>();
+        }
+
         if (isStage2)
         {
             var encounterGO = new GameObject("Stage2TurretEncounter");

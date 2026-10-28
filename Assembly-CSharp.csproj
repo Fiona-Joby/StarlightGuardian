@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Gameplay\StarMovement.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\PlatformMover.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarType.cs" />
     <Compile Include="Assets\Scripts\Stages\StageManager.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2TurretEncounter.cs" />
@@ -58,8 +59,10 @@
     <Compile Include="Assets\Scripts\Gameplay\StarEvents.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlatformSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreManager.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\StageQuitButton.cs" />
     <Compile Include="Assets\Scripts\Core\CameraFollow.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerShield.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2ArtReferences.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\CatchZone.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameplayBootstrapper.cs" />

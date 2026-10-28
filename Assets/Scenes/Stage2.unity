@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 2008550235}
   - component: {fileID: 2008550238}
   - component: {fileID: 2008550239}
+  - component: {fileID: 2008550240}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -270,6 +271,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   player: {fileID: 3005530577}
+--- !u!114 &2008550240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008550234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bbd3bba092e46c39c49bf9be1189001, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Stage2ArtReferences
+  attackFrames:
+  - {fileID: 21300000, guid: f9d6eac321875c14b3258b9e1d42fa63, type: 3}
+  - {fileID: 21300000, guid: 0ae7fbd432986d25c4369caf2e530b74, type: 3}
+  - {fileID: 21300000, guid: 1bf80ce543a97e36d547adb03f641c85, type: 3}
+  - {fileID: 21300000, guid: d7b4c8a19e564af2a1036f7b9c20d841, type: 3}
+  attackBeam: {fileID: 21300000, guid: e8c5d9b20f675b03a2147a8c0d31e952, type: 3}
+  turretShort: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667701, type: 3}
+  turretTall: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667702, type: 3}
+  turretBeam: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667703, type: 3}
 --- !u!1 &2100550234
 GameObject:
   m_ObjectHideFlags: 0

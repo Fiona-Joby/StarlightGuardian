@@ -37,6 +37,7 @@ public class PlatformSpawner : MonoBehaviour
     private float nextSpawnX;
     private bool nextPlatformIsLong;
     private bool hasStarLandingDetectors;
+    private int spawnedPlatformCount;
 
     // Start spawning platforms a short distance ahead of initial player position.
     private const float INITIAL_OFFSET = 8f;
@@ -91,6 +92,11 @@ public class PlatformSpawner : MonoBehaviour
         platformGO.tag = "Platform";
         platformGO.transform.position = new Vector3(x, y, 0f);
         platformGO.transform.localScale = new Vector3(platformScale, platformScale, 1f);
+
+        // Make every third platform a gentle side-to-side moving platform.
+        if (spawnedPlatformCount % 3 == 1)
+            platformGO.AddComponent<PlatformMover>();
+        spawnedPlatformCount++;
 
         // Visual sprite.
         SpriteRenderer sr = platformGO.AddComponent<SpriteRenderer>();
