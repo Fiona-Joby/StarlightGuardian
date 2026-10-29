@@ -80,6 +80,9 @@ public class PlayerMovement : MonoBehaviour
     private float reachTimer;
     private bool isReaching;
 
+    /// <summary>True when the player has horizontal movement this frame.</summary>
+    public bool IsHorizontallyMoving { get; private set; }
+
     // Animator parameter hashes for performance.
     private static readonly int IsMoving = Animator.StringToHash("isMoving");
     private static readonly int IsReaching = Animator.StringToHash("isReaching");
@@ -219,6 +222,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Drive animation state.
         bool moving = Mathf.Abs(horizontalSpeed) > 0.01f;
+        IsHorizontallyMoving = moving;
         if (animator != null)
         {
             animator.SetBool(IsMoving, moving && !isJumping && !isReaching);

@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>A one-hit turret that fires left from its muzzle at the player.</summary>
 public class Stage2Turret : MonoBehaviour
 {
-    [SerializeField, Min(0.2f)] private float shotInterval = 4.5f;
+    [SerializeField, Min(0.2f)] private float shotInterval = 5f;
     [SerializeField, Min(0.1f)] private float projectileSpeed = 12f;
     [SerializeField, Min(0.1f)] private float projectileLifetime = 15f;
 

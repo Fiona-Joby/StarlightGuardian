@@ -24,6 +24,13 @@ public class PlayerShield : MonoBehaviour
 
     private Animator animator;
     private PlayerInput playerInput;
+    private PlayerMovement playerMovement;
+    private SpriteRenderer spriteRenderer;
+    private Sprite[] shieldRunFrames;
+    private bool isPlayingShieldRun;
+    private float shieldRunFrameTimer;
+    private int shieldRunFrameIndex;
+    private const float ShieldRunFrameDuration = 0.1f;
 
     private float shieldTimer;
     private float cooldownTimer;
@@ -40,6 +47,11 @@ public class PlayerShield : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
+        playerMovement = GetComponent<PlayerMovement>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        shieldRunFrames = new Sprite[6];
+        for (int i = 0; i < shieldRunFrames.Length; i++)
+            shieldRunFrames[i] = Resources.Load<Sprite>($"ShieldingRun/Shielding 3.{i + 1}");
         timerBgTex = MakeTex(new Color(0.05f, 0.05f, 0.15f, 0.7f));
         timerFillTex = MakeTex(Color.white);
     }
@@ -72,6 +84,37 @@ public class PlayerShield : MonoBehaviour
     {
         if (timerBgTex != null) Destroy(timerBgTex);
         if (timerFillTex != null) Destroy(timerFillTex);
+    }
+
+    private void LateUpdate()
+    {
+        bool shouldPlayRun = IsShielding && playerMovement != null && playerMovement.IsHorizontallyMoving &&
+            spriteRenderer != null && animator != null && AllRunFramesLoaded();
+
+        if (shouldPlayRun != isPlayingShieldRun)
+        {
+            isPlayingShieldRun = shouldPlayRun;
+            animator.enabled = !isPlayingShieldRun;
+            shieldRunFrameTimer = 0f;
+            shieldRunFrameIndex = 0;
+        }
+
+        if (!isPlayingShieldRun) return;
+
+        shieldRunFrameTimer += Time.deltaTime;
+        while (shieldRunFrameTimer >= ShieldRunFrameDuration)
+        {
+            shieldRunFrameTimer -= ShieldRunFrameDuration;
+            shieldRunFrameIndex = (shieldRunFrameIndex + 1) % shieldRunFrames.Length;
+        }
+        spriteRenderer.sprite = shieldRunFrames[shieldRunFrameIndex];
+    }
+
+    private bool AllRunFramesLoaded()
+    {
+        for (int i = 0; i < shieldRunFrames.Length; i++)
+            if (shieldRunFrames[i] == null) return false;
+        return true;
     }
 
     private void ActivateShield()

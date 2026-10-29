@@ -6,10 +6,10 @@ using UnityEngine.UI;
 /// <summary>Builds the Stage 2 turret encounter and handles its result UI.</summary>
 public class Stage2TurretEncounter : MonoBehaviour
 {
-    private const int TurretGoal = 5;
+    private const int TurretGoal = 6;
     private const int HitLimit = 3;
     private const float TurretSpawnWalkDistance = 4f;
-    private static readonly float[] TurretXs = { 5f, 15f, 25f, 35f, 45f };
+    private static readonly float[] TurretXs = { 5f, 17f, 29f, 41f, 53f, 65f };
 
     private int destroyedTurrets;
     private int playerHits;
@@ -105,7 +105,7 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (destroyedTurrets >= TurretGoal)
         {
             finished = true;
-            ShowOverlay("SUCCESS!\n5 TURRETS DESTROYED");
+            ShowOverlay("SUCCESS!\n6 TURRETS DESTROYED");
             Time.timeScale = 0f;
             StartCoroutine(LoadStage3());
         }
