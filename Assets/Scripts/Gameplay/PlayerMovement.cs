@@ -195,7 +195,7 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 groundedPosition = transform.position;
             float feetY = groundedPosition.y - GetPlayerHalfHeight();
-            float queryHalfWidth = GetPlayerHalfWidth() + platformRaySpread;
+            float queryHalfWidth = GetPlayerHalfWidth();
             if (FindPlatformInVerticalRange(
                     groundedPosition.x,
                     feetY - platformRayLength,
@@ -295,7 +295,7 @@ public class PlayerMovement : MonoBehaviour
                     position.x,
                     predictedFeetY - landingTolerance,
                     previousFeetY + landingTolerance,
-                    GetPlayerHalfWidth() + platformRaySpread,
+                    GetPlayerHalfWidth(),
                     out platformTopY,
                     out platformCollider) &&
                 platformTopY <= previousFeetY + landingTolerance &&

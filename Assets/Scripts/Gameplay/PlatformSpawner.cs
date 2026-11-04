@@ -44,7 +44,10 @@ public class PlatformSpawner : MonoBehaviour
 
     private void Start()
     {
-        hasStarLandingDetectors = SceneManager.GetActiveScene().name != "Stage2";
+        string activeScene = SceneManager.GetActiveScene().name;
+        hasStarLandingDetectors = activeScene != "Stage2";
+        if (activeScene == "Stage3")
+            maxHeight = 1.5f;
         // Find the player.
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
         if (playerGO != null)
@@ -115,14 +118,16 @@ public class PlatformSpawner : MonoBehaviour
         Vector2 spriteSize = sprite.bounds.size;
         if (hasStarLandingDetectors)
         {
-            col.size = new Vector2(spriteSize.x * 0.95f, spriteSize.y * 0.25f);
+            bool isStage3ShortPlatform = SceneManager.GetActiveScene().name == "Stage3" && !isLong;
+            float colliderWidth = isStage3ShortPlatform ? 0.47f : 0.9f;
+            col.size = new Vector2(spriteSize.x * colliderWidth, spriteSize.y * 0.25f);
             col.offset = new Vector2(0f, spriteSize.y * 0.15f);
         }
         else
         {
             // Stage 2's platform art is trimmed to its visible strip and uses
             // a centered pivot. Put the collider's top edge at the sprite top.
-            col.size = new Vector2(spriteSize.x * 0.95f, spriteSize.y * 0.15f);
+            col.size = new Vector2(spriteSize.x * 0.9f, spriteSize.y * 0.15f);
             col.offset = new Vector2(0f, spriteSize.y * 0.425f);
         }
 
@@ -152,13 +157,19 @@ public class PlatformSpawner : MonoBehaviour
     private void LoadSpritesInEditor()
     {
 #if UNITY_EDITOR
-        bool isStage2 = SceneManager.GetActiveScene().name == "Stage2";
+        string activeScene = SceneManager.GetActiveScene().name;
+        bool isStage2 = activeScene == "Stage2";
+        bool isStage3 = activeScene == "Stage3";
         string longSpritePath = isStage2
             ? "Assets/Art/Backgrounds/Stage2/PlatformLong.png"
-            : "Assets/Art/Backgrounds/Stage1/PlatformLong.png";
+            : isStage3
+                ? "Assets/Art/Backgrounds/Stage3/PlatformLong.png"
+                : "Assets/Art/Backgrounds/Stage1/PlatformLong.png";
         string shortSpritePath = isStage2
             ? "Assets/Art/Backgrounds/Stage2/PlatformShort.png"
-            : "Assets/Art/Backgrounds/Stage1/PlatformShort.png";
+            : isStage3
+                ? "Assets/Art/Backgrounds/Stage3/PlatformShort.png"
+                : "Assets/Art/Backgrounds/Stage1/PlatformShort.png";
 
         if (platformLongSprites == null || platformLongSprites.Length == 0)
         {
@@ -166,13 +177,13 @@ public class PlatformSpawner : MonoBehaviour
                 longSpritePath);
             var loadedLongSprites = new System.Collections.Generic.List<Sprite>();
             foreach (Object asset in longAssets)
-                if (asset is Sprite sprite && (isStage2 || sprite.name == "PlatformLong_1"))
+                if (asset is Sprite sprite && (isStage2 || isStage3 || sprite.name == "PlatformLong_1"))
                     loadedLongSprites.Add(sprite);
             platformLongSprites = loadedLongSprites.ToArray();
         }
         if (platformShortSprite == null)
         {
-            if (isStage2)
+            if (isStage2 || isStage3)
                 platformShortSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(shortSpritePath);
             else
                 foreach (Object asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(shortSpritePath))
