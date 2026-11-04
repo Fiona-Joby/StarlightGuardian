@@ -9,12 +9,13 @@ public class Stage2TurretEncounter : MonoBehaviour
     private const int TurretGoal = 6;
     private const int HitLimit = 3;
     private const float TurretSpawnWalkDistance = 4f;
-    private static readonly float[] TurretXs = { 5f, 17f, 29f, 41f, 53f, 65f };
+    private static readonly float[] TurretXs = { 10f, 22f, 34f, 46f, 58f, 70f };
 
     private int destroyedTurrets;
     private int playerHits;
     private bool finished;
     private Text hudText;
+    private readonly Image[] lifeIcons = new Image[HitLimit];
     private Canvas overlayCanvas;
     private Text overlayText;
     private Button retryButton;
@@ -91,7 +92,7 @@ public class Stage2TurretEncounter : MonoBehaviour
                 : new Vector3(-0.97f, 0.39f, 0f);
 
             Stage2Turret turret = turretGO.AddComponent<Stage2Turret>();
-            turret.Initialize(this, muzzle.transform, beamSprite, i * 0.45f + 0.7f);
+            turret.Initialize(this, muzzle.transform, beamSprite, i * 0.45f + 0.7f, tall);
         }
     }
 
@@ -144,10 +145,33 @@ public class Stage2TurretEncounter : MonoBehaviour
         hudRect.anchorMax = new Vector2(0f, 1f);
         hudRect.pivot = new Vector2(0f, 1f);
         hudRect.anchoredPosition = new Vector2(32f, -24f);
-        hudRect.sizeDelta = new Vector2(720f, 64f);
+        hudRect.sizeDelta = new Vector2(720f, 72f);
         hudText = RuntimeUiUtility.CreateText(
-            "Status Text", hudRect, null, 32, TextAnchor.MiddleLeft,
+            "Turrets Destroyed", hudRect, null, 32, TextAnchor.MiddleLeft,
             Color.white, FontStyle.Bold);
+        hudText.rectTransform.anchorMin = new Vector2(0f, 0f);
+        hudText.rectTransform.anchorMax = new Vector2(0f, 1f);
+        hudText.rectTransform.pivot = new Vector2(0f, 0.5f);
+        hudText.rectTransform.anchoredPosition = new Vector2(260f, 0f);
+        hudText.rectTransform.sizeDelta = new Vector2(400f, 0f);
+
+        Sprite heartSprite = artReferences != null ? artReferences.Heart : null;
+        if (heartSprite == null)
+            Debug.LogError("[Stage2TurretEncounter] Heart sprite is not assigned on Stage2ArtReferences.");
+        for (int i = 0; i < lifeIcons.Length; i++)
+        {
+            GameObject heart = new GameObject($"Life {i + 1}", typeof(RectTransform), typeof(Image));
+            heart.transform.SetParent(hudRect, false);
+            RectTransform heartRect = heart.GetComponent<RectTransform>();
+            heartRect.anchorMin = new Vector2(0f, 0.5f);
+            heartRect.anchorMax = new Vector2(0f, 0.5f);
+            heartRect.pivot = new Vector2(0f, 0.5f);
+            heartRect.anchoredPosition = new Vector2(i * 72f, 0f);
+            heartRect.sizeDelta = new Vector2(96f, 96f);
+            lifeIcons[i] = heart.GetComponent<Image>();
+            lifeIcons[i].sprite = heartSprite;
+            lifeIcons[i].preserveAspect = true;
+        }
 
         RectTransform overlayRect = RuntimeUiUtility.CreateRect("Encounter Result", canvasGO.transform);
         GameObject overlayGO = overlayRect.gameObject;
@@ -188,7 +212,11 @@ public class Stage2TurretEncounter : MonoBehaviour
     private void RefreshHud()
     {
         if (hudText != null)
-            hudText.text = $"Hits: {playerHits}/{HitLimit}     Turrets: {destroyedTurrets}/{TurretGoal}";
+            hudText.text = $"Turrets: {destroyedTurrets}/{TurretGoal}";
+        int livesRemaining = Mathf.Max(0, HitLimit - playerHits);
+        for (int i = 0; i < lifeIcons.Length; i++)
+            if (lifeIcons[i] != null)
+                lifeIcons[i].gameObject.SetActive(i < livesRemaining);
     }
 
     private void ShowOverlay(string message)

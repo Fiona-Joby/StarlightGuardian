@@ -8,10 +8,12 @@ public class Stage2ArtReferences : MonoBehaviour
     [SerializeField] private Sprite turretShort;
     [SerializeField] private Sprite turretTall;
     [SerializeField] private Sprite turretBeam;
+    [SerializeField] private Sprite heart;
 
     public Sprite[] AttackFrames => attackFrames;
     public Sprite AttackBeam => attackBeam;
     public Sprite TurretShort => turretShort;
     public Sprite TurretTall => turretTall;
     public Sprite TurretBeam => turretBeam;
+    public Sprite Heart => heart;
 }

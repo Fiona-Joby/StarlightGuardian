@@ -231,13 +231,21 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1586116506}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd11ee22ff33aa44bb55cc6677889901, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShield
   shieldDuration: 7
   cooldown: 10
+  shieldRunFrames:
+  - {fileID: 21300000, guid: 03ccb379aa7f4efa88ee67e6662c3429, type: 3}
+  - {fileID: 21300000, guid: 5dfa8a9795de4d22825b307f4e5711f4, type: 3}
+  - {fileID: 21300000, guid: 978a5b4a79ee454493caef0c645f640c, type: 3}
+  - {fileID: 21300000, guid: 28ef5afafdb1496bbf97aa5473680461, type: 3}
+  - {fileID: 21300000, guid: d1090c0024e349c88d66405d293d34b3, type: 3}
+  - {fileID: 21300000, guid: b530178efc7f4975902077c30f108a30, type: 3}
+  shieldJumpSprite: {fileID: 21300000, guid: 30d12a00ff8b424eb4e4615826b1d70e, type: 3}
 --- !u!114 &1586116508
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -6,12 +6,14 @@ public class TurretProjectile : MonoBehaviour
     private Vector2 direction;
     private float speed;
     private float lifetime;
+    private bool requiresPlatform;
 
-    public void Initialize(Vector2 travelDirection, float projectileSpeed, float duration)
+    public void Initialize(Vector2 travelDirection, float projectileSpeed, float duration, bool onlyHitsOnPlatform = false)
     {
         direction = travelDirection.normalized;
         speed = projectileSpeed;
         lifetime = duration;
+        requiresPlatform = onlyHitsOnPlatform;
     }
 
     private void Update()
@@ -32,6 +34,11 @@ public class TurretProjectile : MonoBehaviour
 
         Stage2PlayerHealth health = other.GetComponentInParent<Stage2PlayerHealth>();
         if (health == null) return;
+        if (requiresPlatform)
+        {
+            PlayerMovement movement = other.GetComponentInParent<PlayerMovement>();
+            if (movement == null || !movement.IsGroundedOnPlatform) return;
+        }
         health.TakeHit();
         Destroy(gameObject);
     }

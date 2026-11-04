@@ -29,6 +29,10 @@ public static class GameplayBootstrapper
 
     private static void Bootstrap(string sceneName)
     {
+        // Skip gameplay bootstrapping on the main menu
+        if (sceneName == "MainMenu")
+            return;
+
         bool isStage2 = sceneName == "Stage2";
         bool isStage3 = sceneName == "Stage3";
         bool usesStage2World = isStage2 || isStage3;

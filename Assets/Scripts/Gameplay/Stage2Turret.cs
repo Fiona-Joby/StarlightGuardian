@@ -3,20 +3,22 @@ using UnityEngine;
 /// <summary>A one-hit turret that fires left from its muzzle at the player.</summary>
 public class Stage2Turret : MonoBehaviour
 {
-    [SerializeField, Min(0.2f)] private float shotInterval = 5f;
+    [SerializeField, Min(0.2f)] private float shotInterval = 4f;
     [SerializeField, Min(0.1f)] private float projectileSpeed = 12f;
     [SerializeField, Min(0.1f)] private float projectileLifetime = 15f;
 
     private Stage2TurretEncounter encounter;
     private Transform muzzle;
     private Sprite beamSprite;
+    private bool isTall;
     private bool destroyed;
 
-    public void Initialize(Stage2TurretEncounter owner, Transform muzzleTransform, Sprite projectileSprite, float firstShotDelay)
+    public void Initialize(Stage2TurretEncounter owner, Transform muzzleTransform, Sprite projectileSprite, float firstShotDelay, bool tall)
     {
         encounter = owner;
         muzzle = muzzleTransform;
         beamSprite = projectileSprite;
+        isTall = tall;
         InvokeRepeating(nameof(Fire), firstShotDelay, shotInterval);
     }
 
@@ -58,6 +60,6 @@ public class Stage2Turret : MonoBehaviour
         Rigidbody2D body = shot.AddComponent<Rigidbody2D>();
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
-        shot.AddComponent<TurretProjectile>().Initialize(direction, projectileSpeed, projectileLifetime);
+        shot.AddComponent<TurretProjectile>().Initialize(direction, projectileSpeed, projectileLifetime, isTall);
     }
 }

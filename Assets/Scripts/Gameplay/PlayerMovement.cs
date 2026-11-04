@@ -77,11 +77,16 @@ public class PlayerMovement : MonoBehaviour
     public bool IsOnPlatform(Collider2D platform) =>
         !isJumping && onPlatform && platform != null && currentPlatform == platform;
 
+    public bool IsGroundedOnPlatform => !isJumping && onPlatform;
+
     private float reachTimer;
     private bool isReaching;
 
     /// <summary>True when the player has horizontal movement this frame.</summary>
     public bool IsHorizontallyMoving { get; private set; }
+
+    /// <summary>True while the player is airborne.</summary>
+    public bool IsInAir { get; private set; }
 
     // Animator parameter hashes for performance.
     private static readonly int IsMoving = Animator.StringToHash("isMoving");
@@ -223,6 +228,7 @@ public class PlayerMovement : MonoBehaviour
         // Drive animation state.
         bool moving = Mathf.Abs(horizontalSpeed) > 0.01f;
         IsHorizontallyMoving = moving;
+        IsInAir = isJumping;
         if (animator != null)
         {
             animator.SetBool(IsMoving, moving && !isJumping && !isReaching);

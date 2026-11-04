@@ -19,6 +19,9 @@ public class PlayerShield : MonoBehaviour
     [Tooltip("Cooldown before the shield can be used again (seconds).")]
     [SerializeField, Min(0f)] private float cooldown = 10f;
 
+    [SerializeField] private Sprite[] shieldRunFrames = new Sprite[6];
+    [SerializeField] private Sprite shieldJumpSprite;
+
     /// <summary>True while the shield is active.</summary>
     public bool IsShielding { get; private set; }
 
@@ -26,7 +29,6 @@ public class PlayerShield : MonoBehaviour
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
     private SpriteRenderer spriteRenderer;
-    private Sprite[] shieldRunFrames;
     private bool isPlayingShieldRun;
     private float shieldRunFrameTimer;
     private int shieldRunFrameIndex;
@@ -49,9 +51,6 @@ public class PlayerShield : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         playerMovement = GetComponent<PlayerMovement>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        shieldRunFrames = new Sprite[6];
-        for (int i = 0; i < shieldRunFrames.Length; i++)
-            shieldRunFrames[i] = Resources.Load<Sprite>($"ShieldingRun/Shielding 3.{i + 1}");
         timerBgTex = MakeTex(new Color(0.05f, 0.05f, 0.15f, 0.7f));
         timerFillTex = MakeTex(Color.white);
     }
@@ -88,18 +87,27 @@ public class PlayerShield : MonoBehaviour
 
     private void LateUpdate()
     {
-        bool shouldPlayRun = IsShielding && playerMovement != null && playerMovement.IsHorizontallyMoving &&
-            spriteRenderer != null && animator != null && AllRunFramesLoaded();
+        bool shouldOverrideShieldPose = IsShielding && playerMovement != null &&
+            (playerMovement.IsInAir || (playerMovement.IsHorizontallyMoving && AllRunFramesLoaded())) &&
+            spriteRenderer != null && animator != null;
 
-        if (shouldPlayRun != isPlayingShieldRun)
+        if (shouldOverrideShieldPose != isPlayingShieldRun)
         {
-            isPlayingShieldRun = shouldPlayRun;
+            isPlayingShieldRun = shouldOverrideShieldPose;
             animator.enabled = !isPlayingShieldRun;
             shieldRunFrameTimer = 0f;
             shieldRunFrameIndex = 0;
         }
 
         if (!isPlayingShieldRun) return;
+
+        if (playerMovement.IsInAir && shieldJumpSprite != null)
+        {
+            spriteRenderer.sprite = shieldJumpSprite;
+            return;
+        }
+
+        if (!AllRunFramesLoaded()) return;
 
         shieldRunFrameTimer += Time.deltaTime;
         while (shieldRunFrameTimer >= ShieldRunFrameDuration)
