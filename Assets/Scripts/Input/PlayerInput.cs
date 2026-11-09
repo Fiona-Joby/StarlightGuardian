@@ -2,9 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Unified input hub: reads from keyboard AND from the webcam pose bridge.
-/// Keyboard movement overrides webcam movement while a direction key is held;
-/// webcam gestures remain active when no keyboard direction is pressed.
+/// Unified input hub with a selectable keyboard or webcam gesture mode.
 ///
 /// Properties exposed to consumers (PlayerMovement, etc.):
 ///   HorizontalInput  — [-1, 1] movement axis
@@ -51,14 +49,17 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
+        bool gestureControls = PlayerPrefs.GetInt("GestureControls", 0) == 1;
         bool isStage2 = SceneManager.GetActiveScene().name == "Stage2";
-        bool shootingGesture = isStage2 && poseInput != null && poseInput.IsShooting;
-        ShootPressed = isStage2 && (Input.GetKeyDown(KeyCode.X) || (shootingGesture && !wasShooting));
+        bool shootingGesture = gestureControls && isStage2 && poseInput != null && poseInput.IsShooting;
+        ShootPressed = isStage2 && (gestureControls ? shootingGesture && !wasShooting : Input.GetKeyDown(KeyCode.X));
         wasShooting = shootingGesture;
 
-        float keyboardAxis = Input.GetAxisRaw("Horizontal");
+        float keyboardAxis = gestureControls ? 0f : Input.GetAxisRaw("Horizontal");
 
-        JumpHeld = Input.GetKey(KeyCode.UpArrow) || (poseInput != null && poseInput.IsJumpHeld);
+        JumpHeld = gestureControls
+            ? poseInput != null && poseInput.IsJumpHeld
+            : Input.GetKey(KeyCode.UpArrow);
         JumpPressed = JumpHeld && jumpArmed;
         if (JumpHeld)
         {
@@ -74,17 +75,14 @@ public class PlayerInput : MonoBehaviour
                 jumpArmed = true;
         }
 
-        // ----- Combine keyboard movement with webcam gestures when active -----
-        if (poseInput != null && poseInput.IsActive)
+        // ----- Read the selected input source -----
+        if (gestureControls && poseInput != null && poseInput.IsActive)
         {
-            // A direction key overrides webcam movement and reach locking;
-            // webcam gestures remain available when the keyboard is idle.
-            bool keyboardOverride = Mathf.Abs(keyboardAxis) > 0.01f;
-            HorizontalInput = keyboardOverride ? keyboardAxis : poseInput.HorizontalAxis;
-            IsReaching = !keyboardOverride && poseInput.IsReaching;
+            HorizontalInput = poseInput.HorizontalAxis;
+            IsReaching = poseInput.IsReaching;
             // Keep checking for stars for as long as the open-palm gesture is
             // held. A star may enter the catch zone after the gesture starts.
-            CollectPressed = Input.GetKeyDown(KeyCode.Space) || poseInput.IsCollecting;
+            CollectPressed = poseInput.IsCollecting;
 
             ShieldPressed = poseInput.IsFistHeld && !wasFisting;
             wasFisting = poseInput.IsFistHeld;
@@ -92,9 +90,9 @@ public class PlayerInput : MonoBehaviour
         else
         {
             // ----- Keyboard fallback -----
-            HorizontalInput = Input.GetAxis("Horizontal");
+            HorizontalInput = gestureControls ? 0f : Input.GetAxis("Horizontal");
             IsReaching = false;
-            CollectPressed = Input.GetKeyDown(KeyCode.Space);
+            CollectPressed = !gestureControls && Input.GetKeyDown(KeyCode.Space);
             ShieldPressed = false;
             wasFisting = false;
         }

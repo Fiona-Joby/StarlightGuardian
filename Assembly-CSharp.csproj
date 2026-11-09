@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\Gameplay\StarSpawner.cs" />
     <Compile Include="Assets\Scripts\Gameplay\CatchZone.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameplayBootstrapper.cs" />
+    <Compile Include="Assets\Scripts\UI\MainMenuController.cs" />
     <Compile Include="Assets\Scripts\Pose\GestureClassifier.cs" />
     <Compile Include="Assets\Scripts\Gameplay\TurretProjectile.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2PlayerHealth.cs" />
