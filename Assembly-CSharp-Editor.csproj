@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Assets\Editor\AnimationSetup.cs" />
     <Compile Include="Assets\Editor\SceneSetup.cs" />
+    <Compile Include="Assets\Editor\MainMenuSceneBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

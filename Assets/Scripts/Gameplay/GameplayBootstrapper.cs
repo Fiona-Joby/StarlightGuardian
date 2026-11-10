@@ -40,8 +40,8 @@ public static class GameplayBootstrapper
 
         if ((sceneName == "MainScene" || isStage2 || isStage3) && Object.FindAnyObjectByType<StageQuitButton>() == null)
         {
-            var quitButtonGO = new GameObject("Stage Quit Button");
-            quitButtonGO.AddComponent<StageQuitButton>();
+            var pauseMenuGO = new GameObject("Stage Pause Menu");
+            pauseMenuGO.AddComponent<StageQuitButton>();
         }
 
         if (isStage2)

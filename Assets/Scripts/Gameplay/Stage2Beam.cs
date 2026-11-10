@@ -24,8 +24,17 @@ public class Stage2Beam : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         Stage2Turret turret = other.GetComponentInParent<Stage2Turret>();
-        if (turret == null) return;
-        turret.TakeHit();
-        Destroy(gameObject);
+        if (turret != null)
+        {
+            turret.TakeHit();
+            Destroy(gameObject);
+            return;
+        }
+        Stage2Drone drone = other.GetComponentInParent<Stage2Drone>();
+        if (drone != null)
+        {
+            drone.TakeHit();
+            Destroy(gameObject);
+        }
     }
 }

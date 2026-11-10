@@ -19,8 +19,6 @@ public class PlayerMovement : MonoBehaviour
     [Header("Platform Detection")]
     [Tooltip("How far below the player's feet to cast the platform detection ray.")]
     [SerializeField] private float platformRayLength = 1.5f;
-    [Tooltip("Extra horizontal rays for edge detection.")]
-    [SerializeField] private float platformRaySpread = 0.3f;
     [Tooltip("Half-height of the player collider, used to offset rays to feet.")]
     [SerializeField] private float playerHalfHeight = 0.5f;
     [Tooltip("Extra lift applied only when landing on a platform.")]
@@ -76,6 +74,19 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsOnPlatform(Collider2D platform) =>
         !isJumping && onPlatform && platform != null && currentPlatform == platform;
+
+    /// <summary>Sets the furthest right position allowed by the current stage.</summary>
+    public void SetRightBoundary(float boundary)
+    {
+        rightBoundary = Mathf.Max(leftBoundary, boundary);
+        if (transform.position.x > rightBoundary)
+        {
+            Vector3 position = transform.position;
+            position.x = rightBoundary;
+            transform.position = position;
+            airborneSpeed = 0f;
+        }
+    }
 
     public bool IsGroundedOnPlatform => !isJumping && onPlatform;
 
