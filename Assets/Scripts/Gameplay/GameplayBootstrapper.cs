@@ -58,6 +58,12 @@ public static class GameplayBootstrapper
             }
         }
 
+        if (isStage3)
+        {
+            var encounterGO = new GameObject("Stage3DroneEncounter");
+            encounterGO.AddComponent<Stage3DroneEncounter>();
+        }
+
         // --- ScoreManager ---
         if (Object.FindAnyObjectByType<ScoreManager>() == null)
         {

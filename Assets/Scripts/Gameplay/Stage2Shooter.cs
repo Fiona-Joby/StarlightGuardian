@@ -26,12 +26,13 @@ public class Stage2Shooter : MonoBehaviour
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
         idleSprite = spriteRenderer != null ? spriteRenderer.sprite : null;
-        Stage2ArtReferences art = FindAnyObjectByType<Stage2ArtReferences>();
-        attackFrames = art != null ? art.AttackFrames : null;
-        beamSprite = art != null ? art.AttackBeam : null;
+        Stage2ArtReferences stage2Art = FindAnyObjectByType<Stage2ArtReferences>();
+        Stage3ArtReferences stage3Art = FindAnyObjectByType<Stage3ArtReferences>();
+        attackFrames = stage2Art != null ? stage2Art.AttackFrames : stage3Art != null ? stage3Art.AttackFrames : null;
+        beamSprite = stage2Art != null ? stage2Art.AttackBeam : stage3Art != null ? stage3Art.AttackBeam : null;
         if (attackFrames == null || attackFrames.Length < 4 || beamSprite == null ||
             System.Array.Exists(attackFrames, frame => frame == null))
-            Debug.LogError("[Stage2Shooter] Stage 2 attack sprites are not assigned on Stage2ArtReferences.");
+            Debug.LogError("[Stage2Shooter] Attack sprites are not assigned on the active stage's art references.");
     }
 
     private void Update()

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Moves the Stage 2 beam and removes enemies it hits.</summary>
+/// <summary>Moves the player's beam and removes turrets or Stage 3 drones it hits.</summary>
 public class Stage2Beam : MonoBehaviour
 {
     private float direction;
@@ -30,7 +30,7 @@ public class Stage2Beam : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        Stage2Drone drone = other.GetComponentInParent<Stage2Drone>();
+        Stage3Drone drone = other.GetComponentInParent<Stage3Drone>();
         if (drone != null)
         {
             drone.TakeHit();

@@ -231,7 +231,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1586116506}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd11ee22ff33aa44bb55cc6677889901, type: 3}
   m_Name: 
@@ -304,7 +304,6 @@ MonoBehaviour:
   rightBoundary: 200
   reachDuration: 0.875
   platformRayLength: 1.5
-  platformRaySpread: 0.3
   playerHalfHeight: 0.5
   platformLandingLift: 0.25
   jumpSpeed: 7
@@ -492,6 +491,7 @@ GameObject:
   - component: {fileID: 2008550238}
   - component: {fileID: 2008550239}
   - component: {fileID: 2008550240}
+  - component: {fileID: 2008550242}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -648,6 +648,33 @@ MonoBehaviour:
   speed1: 0.05
   speed2: 0.25
   speed3: 0.55
+--- !u!114 &2008550242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008550234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88b7a62f3d514c04a7ab0ccbe22f8120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Stage3ArtReferences
+  attackFrames:
+  - {fileID: 21300000, guid: f9d6eac321875c14b3258b9e1d42fa63, type: 3}
+  - {fileID: 21300000, guid: 0ae7fbd432986d25c4369caf2e530b74, type: 3}
+  - {fileID: 21300000, guid: 1bf80ce543a97e36d547adb03f641c85, type: 3}
+  - {fileID: 21300000, guid: d7b4c8a19e564af2a1036f7b9c20d841, type: 3}
+  attackBeam: {fileID: 21300000, guid: e8c5d9b20f675b03a2147a8c0d31e952, type: 3}
+  droneBeam: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667703, type: 3}
+  droneFloatFrames:
+  - {fileID: -2793271297603219799, guid: a69212ad6775b5a44a0bf30fffd1b067, type: 3}
+  - {fileID: -4332945358910203139, guid: 2ffd24804138c464d8edb6671b3aabd8, type: 3}
+  - {fileID: 6711199345543734360, guid: 165fd3613ab0457408c6c68a0fa327fd, type: 3}
+  - {fileID: -5964768547269105579, guid: 446c2a67379e0774989fb2557030ec47, type: 3}
+  heart: {fileID: 21300000, guid: 93a34d98634b4b0f96755d8d4f607e12, type: 3}
+  droneGoal: 4
+  lifeLimit: 5
 --- !u!1 &2100550234
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// <summary>Patrols a small area and fires the Stage 2 beam when the player is nearby.</summary>
-public class Stage2Drone : MonoBehaviour
+/// <summary>Patrols a small area and fires a beam when the player is nearby.</summary>
+public class Stage3Drone : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] private float patrolRadius = 2.2f;
     [SerializeField, Min(0.1f)] private float patrolSpeed = 1.4f;
@@ -9,7 +9,7 @@ public class Stage2Drone : MonoBehaviour
     [SerializeField, Min(0.2f)] private float shotInterval = 2.2f;
     [SerializeField, Min(0.1f)] private float projectileSpeed = 12f;
 
-    private Stage2TurretEncounter encounter;
+    private Stage3DroneEncounter encounter;
     private Sprite[] frames;
     private Sprite beamSprite;
     private Vector3 patrolCenter;
@@ -18,7 +18,7 @@ public class Stage2Drone : MonoBehaviour
     private bool destroyed;
     private SpriteRenderer spriteRenderer;
 
-    public void Initialize(Stage2TurretEncounter owner, Sprite[] animationFrames, Sprite projectileSprite, Vector3 center)
+    public void Initialize(Stage3DroneEncounter owner, Sprite[] animationFrames, Sprite projectileSprite, Vector3 center)
     {
         encounter = owner;
         frames = animationFrames;

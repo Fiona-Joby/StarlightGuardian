@@ -50,9 +50,10 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         bool gestureControls = PlayerPrefs.GetInt("GestureControls", 0) == 1;
-        bool isStage2 = SceneManager.GetActiveScene().name == "Stage2";
-        bool shootingGesture = gestureControls && isStage2 && poseInput != null && poseInput.IsShooting;
-        ShootPressed = isStage2 && (gestureControls ? shootingGesture && !wasShooting : Input.GetKeyDown(KeyCode.X));
+        string activeScene = SceneManager.GetActiveScene().name;
+        bool supportsCombat = activeScene == "Stage2" || activeScene == "Stage3";
+        bool shootingGesture = gestureControls && supportsCombat && poseInput != null && poseInput.IsShooting;
+        ShootPressed = supportsCombat && (gestureControls ? shootingGesture && !wasShooting : Input.GetKeyDown(KeyCode.X));
         wasShooting = shootingGesture;
 
         float keyboardAxis = gestureControls ? 0f : Input.GetAxisRaw("Horizontal");

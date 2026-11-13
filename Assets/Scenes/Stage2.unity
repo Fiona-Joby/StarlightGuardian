@@ -293,14 +293,8 @@ MonoBehaviour:
   turretShort: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667701, type: 3}
   turretTall: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667702, type: 3}
   turretBeam: {fileID: 21300000, guid: 22aa1111bb223333cc445555dd667703, type: 3}
-  droneFloatFrames:
-  - {fileID: -2793271297603219799, guid: a69212ad6775b5a44a0bf30fffd1b067, type: 3}
-  - {fileID: -4332945358910203139, guid: 2ffd24804138c464d8edb6671b3aabd8, type: 3}
-  - {fileID: 6711199345543734360, guid: 165fd3613ab0457408c6c68a0fa327fd, type: 3}
-  - {fileID: -5964768547269105579, guid: 446c2a67379e0774989fb2557030ec47, type: 3}
   heart: {fileID: 21300000, guid: 93a34d98634b4b0f96755d8d4f607e12, type: 3}
   turretGoal: 5
-  droneGoal: 4
   lifeLimit: 5
 --- !u!114 &2008550241
 MonoBehaviour:

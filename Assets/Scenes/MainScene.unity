@@ -516,7 +516,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93bb177007924d44eb876e96770117cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
-  stageGoal: 25
+  stageGoal: 10
 --- !u!4 &813047698
 Transform:
   m_ObjectHideFlags: 0
@@ -808,7 +808,6 @@ MonoBehaviour:
   rightBoundary: 200
   reachDuration: 0.875
   platformRayLength: 0.6
-  platformRaySpread: 0.3
   playerHalfHeight: 0.75
   platformLandingLift: 0.3
   jumpSpeed: 7.4

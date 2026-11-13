@@ -8,10 +8,8 @@ public class Stage2TurretEncounter : MonoBehaviour
 {
     private const float TurretSpawnWalkDistance = 4f;
     private static readonly float[] TurretXs = { 10f, 26f, 42f, 58f, 74f, 90f };
-    private static readonly float[] DroneXs = { 18f, 34f, 50f, 66f, 82f };
 
     private int destroyedTurrets;
-    private int destroyedDrones;
     private int playerHits;
     private bool finished;
     private Text hudText;
@@ -47,7 +45,6 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (player != null && !finished)
         {
             SpawnTurrets();
-            SpawnDrones();
             LimitPlayerAtEnd(player);
         }
     }
@@ -55,7 +52,7 @@ public class Stage2TurretEncounter : MonoBehaviour
     private void LimitPlayerAtEnd(Transform player)
     {
         if (player == null) return;
-        float furthestEnemyX = Mathf.Max(GetTurretX(TurretGoal - 1), GetDroneX(DroneGoal - 1) + 2.2f);
+        float furthestEnemyX = GetTurretX(TurretGoal - 1);
         Camera camera = Camera.main;
         float halfViewWidth = camera != null ? camera.orthographicSize * camera.aspect : 9f;
         PlayerMovement movement = player.GetComponent<PlayerMovement>();
@@ -65,37 +62,6 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private static float GetTurretX(int index) =>
         index < TurretXs.Length ? TurretXs[index] : TurretXs[TurretXs.Length - 1] + (index - TurretXs.Length + 1) * 16f;
-
-    private static float GetDroneX(int index) =>
-        index < DroneXs.Length ? DroneXs[index] : DroneXs[DroneXs.Length - 1] + (index - DroneXs.Length + 1) * 16f;
-
-    private void SpawnDrones()
-    {
-        Sprite[] frames = artReferences != null ? artReferences.DroneFloatFrames : null;
-        Sprite beam = artReferences != null ? artReferences.TurretBeam : null;
-        if (frames == null || frames.Length < 4 || frames[0] == null || frames[1] == null || frames[2] == null || frames[3] == null || beam == null)
-        {
-            Debug.LogError("[Stage2TurretEncounter] Drone frames or turret beam are not assigned on Stage2ArtReferences.");
-            return;
-        }
-
-        for (int i = 0; i < DroneGoal; i++)
-        {
-            float droneX = GetDroneX(i);
-            var droneGO = new GameObject("Floating Drone");
-            droneGO.transform.position = new Vector3(droneX, -1.6f + (i % 2) * 0.6f, 0f);
-            var art = new GameObject("Drone Art");
-            art.transform.SetParent(droneGO.transform, false);
-            art.transform.localScale = Vector3.one * 0.1f;
-            var renderer = art.AddComponent<SpriteRenderer>();
-            renderer.sprite = frames[0];
-            renderer.sortingOrder = 8;
-            var collider = droneGO.AddComponent<BoxCollider2D>();
-            collider.isTrigger = true;
-            collider.size = new Vector2(0.8f, 0.65f);
-            droneGO.AddComponent<Stage2Drone>().Initialize(this, frames, beam, droneGO.transform.position);
-        }
-    }
 
     private void SpawnTurrets()
     {
@@ -149,7 +115,6 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     public bool IsFinished => finished;
     public int TurretGoal => artReferences != null ? artReferences.TurretGoal : 6;
-    public int DroneGoal => artReferences != null ? artReferences.DroneGoal : 5;
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
 
     public void OnTurretDestroyed()
@@ -157,22 +122,9 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (finished) return;
         destroyedTurrets++;
         RefreshHud();
-        CheckObjectiveComplete();
-    }
-
-    public void OnDroneDestroyed()
-    {
-        if (finished) return;
-        destroyedDrones++;
-        RefreshHud();
-        CheckObjectiveComplete();
-    }
-
-    private void CheckObjectiveComplete()
-    {
-        if (destroyedTurrets < TurretGoal || destroyedDrones < DroneGoal) return;
+        if (destroyedTurrets < TurretGoal) return;
         finished = true;
-        ShowOverlay("TURRETS AND DRONES\nDESTROYED SUCCESSFULLY", true);
+        ShowOverlay("All turrets destroyed successfully", true);
         Time.timeScale = 0f;
         StartCoroutine(LoadStage3());
     }
@@ -288,7 +240,7 @@ public class Stage2TurretEncounter : MonoBehaviour
     private void RefreshHud()
     {
         if (hudText != null)
-            hudText.text = $"Turrets: {destroyedTurrets}/{TurretGoal}    Drones: {destroyedDrones}/{DroneGoal}";
+            hudText.text = $"Turrets: {destroyedTurrets}/{TurretGoal}";
         int livesRemaining = Mathf.Max(0, LifeLimit - playerHits);
         for (int i = 0; i < lifeIcons.Length; i++)
             if (lifeIcons[i] != null)
