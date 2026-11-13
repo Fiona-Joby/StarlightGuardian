@@ -1,0 +1,598 @@
+fileFormatVersion: 2
+guid: 832e93a275a381a44971e473eec7bc08
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4291557665996174363
+    second: Resume Button_0
+  - first:
+      213: 8966035933672004273
+    second: Resume Button_1
+  - first:
+      213: -1759587538737846510
+    second: Resume Button_2
+  - first:
+      213: -1968373822544650884
+    second: Resume Button_3
+  - first:
+      213: -1205646164601427205
+    second: Resume Button_4
+  - first:
+      213: -2048087281229780992
+    second: Resume Button_5
+  - first:
+      213: 8237002027555354410
+    second: Resume Button_6
+  - first:
+      213: 3569835279109590172
+    second: Resume Button_7
+  - first:
+      213: 9114588383601329616
+    second: Resume Button_8
+  - first:
+      213: 5978537193007317313
+    second: Resume Button_9
+  - first:
+      213: 1101223933023717466
+    second: Resume Button_10
+  - first:
+      213: 6255792774205899841
+    second: Resume Button_11
+  - first:
+      213: 1031800931042098949
+    second: Resume Button_12
+  - first:
+      213: 459517650136024465
+    second: Resume Button_13
+  - first:
+      213: 7967033057472643192
+    second: Resume Button_14
+  - first:
+      213: -2184238069620042191
+    second: Resume Button_15
+  - first:
+      213: -1910075913055065820
+    second: Resume Button_16
+  - first:
+      213: -1681674556954407120
+    second: Resume Button_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Resume Button_0
+      rect:
+        serializedVersion: 2
+        x: 643
+        y: 386
+        width: 402
+        height: 402
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b147ec6a5fcae8b30800000000000000
+      internalID: 4291557665996174363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_1
+      rect:
+        serializedVersion: 2
+        x: 670
+        y: 413
+        width: 580
+        height: 580
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ba58e57d22cd6c70800000000000000
+      internalID: 8966035933672004273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_2
+      rect:
+        serializedVersion: 2
+        x: 875
+        y: 618
+        width: 402
+        height: 402
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 217a35ac470b497e0800000000000000
+      internalID: -1759587538737846510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_3
+      rect:
+        serializedVersion: 2
+        x: 787
+        y: 197
+        width: 44
+        height: 71
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7d5c02ff6eeea4e0800000000000000
+      internalID: -1968373822544650884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_4
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 197
+        width: 53
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfaae1a733fa44fe0800000000000000
+      internalID: -1205646164601427205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_5
+      rect:
+        serializedVersion: 2
+        x: 895
+        y: 197
+        width: 53
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 008ad4d087bb393e0800000000000000
+      internalID: -2048087281229780992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_6
+      rect:
+        serializedVersion: 2
+        x: 953
+        y: 197
+        width: 53
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a27fb9ad3b5bf4270800000000000000
+      internalID: 8237002027555354410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_7
+      rect:
+        serializedVersion: 2
+        x: 1011
+        y: 197
+        width: 54
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9c0cf5c54a9a8130800000000000000
+      internalID: 3569835279109590172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_8
+      rect:
+        serializedVersion: 2
+        x: 1070
+        y: 197
+        width: 63
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d5857ef7d58d7e70800000000000000
+      internalID: 9114588383601329616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_9
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14189a1c6e708f250800000000000000
+      internalID: 5978537193007317313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_10
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5889022555584f00800000000000000
+      internalID: 1101223933023717466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_11
+      rect:
+        serializedVersion: 2
+        x: 819
+        y: 89
+        width: 53
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1448ffe226a01d650800000000000000
+      internalID: 6255792774205899841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_12
+      rect:
+        serializedVersion: 2
+        x: 877
+        y: 89
+        width: 84
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50f7ea5ea71b15e00800000000000000
+      internalID: 1031800931042098949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_13
+      rect:
+        serializedVersion: 2
+        x: 967
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19541604ed8806600800000000000000
+      internalID: 459517650136024465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_14
+      rect:
+        serializedVersion: 2
+        x: 1025
+        y: 89
+        width: 17
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8708378ca56909e60800000000000000
+      internalID: 7967033057472643192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_15
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 136996b5c0700b1e0800000000000000
+      internalID: -2184238069620042191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_16
+      rect:
+        serializedVersion: 2
+        x: 1106
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 429a25cb31c0e75e0800000000000000
+      internalID: -1910075913055065820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Resume Button_17
+      rect:
+        serializedVersion: 2
+        x: 1164
+        y: 89
+        width: 52
+        height: 66
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03f8bec76ed79a8e0800000000000000
+      internalID: -1681674556954407120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Resume Button_0: 4291557665996174363
+      Resume Button_1: 8966035933672004273
+      Resume Button_10: 1101223933023717466
+      Resume Button_11: 6255792774205899841
+      Resume Button_12: 1031800931042098949
+      Resume Button_13: 459517650136024465
+      Resume Button_14: 7967033057472643192
+      Resume Button_15: -2184238069620042191
+      Resume Button_16: -1910075913055065820
+      Resume Button_17: -1681674556954407120
+      Resume Button_2: -1759587538737846510
+      Resume Button_3: -1968373822544650884
+      Resume Button_4: -1205646164601427205
+      Resume Button_5: -2048087281229780992
+      Resume Button_6: 8237002027555354410
+      Resume Button_7: 3569835279109590172
+      Resume Button_8: 9114588383601329616
+      Resume Button_9: 5978537193007317313
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

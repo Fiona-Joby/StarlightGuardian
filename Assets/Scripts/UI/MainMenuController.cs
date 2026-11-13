@@ -28,12 +28,12 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Text stageTitle;
     [SerializeField] private Text languageTitle;
     [SerializeField] private Text settingsTitle;
-    [SerializeField] private Text musicLabel;
-    [SerializeField] private Text sfxLabel;
 
     [Header("Settings controls")]
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider sfxSlider;
+    [SerializeField] private Text musicVolumePercent;
+    [SerializeField] private Text sfxVolumePercent;
 
     private static readonly string[] SceneNames = { "MainScene", "Stage2", "Stage3" };
     private static readonly string[,] Translations =
@@ -43,9 +43,6 @@ public class MainMenuController : MonoBehaviour
         { "LANGUAGE", "ഭാഷ", "BAHASA", "语言" },
         { "SETTINGS", "ക്രമീകരണങ്ങൾ", "PENGATURAN", "设置" },
         { "BACK", "തിരികെ", "KEMBALI", "返回" },
-        { "MUSIC VOLUME", "സംഗീത ശബ്ദം", "VOLUME MUSIK", "音乐音量" },
-        { "SOUND FX VOLUME", "ശബ്ദ പ്രഭാവം", "VOLUME EFEK SUARA", "音效音量" },
-        { "CONTROLS", "നിയന്ത്രണം", "KONTROL", "控制" },
         { "KEYBOARD", "കീബോർഡ്", "KEYBOARD", "键盘" },
         { "GESTURE", "ആംഗ്യം", "GESTUR", "手势" }
     };
@@ -80,8 +77,9 @@ public class MainMenuController : MonoBehaviour
         musicSlider.maxValue = sfxSlider.maxValue = 1f;
         musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
         sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
-        musicSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("MusicVolume", value); ApplyVolumes(); });
-        sfxSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("SfxVolume", value); ApplyVolumes(); });
+        UpdateVolumePercentages();
+        musicSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("MusicVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
+        sfxSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("SfxVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
         ApplyLanguage();
         ApplyVolumes();
         ShowPage(mainPage);
@@ -98,12 +96,12 @@ public class MainMenuController : MonoBehaviour
             foreach (Text text in GetComponentsInChildren<Text>(true)) text.font = languageFont;
 
         string[] main = { T(0), T(1), T(2), T(3) };
-        for (int i = 0; i < mainLabels.Length; i++) mainLabels[i].text = main[i];
+        if (mainLabels != null)
+            for (int i = 0; i < mainLabels.Length && i < main.Length; i++)
+                if (mainLabels[i] != null) mainLabels[i].text = main[i];
         stageTitle.text = T(1);
         languageTitle.text = T(2);
-        settingsTitle.text = T(3);
-        musicLabel.text = T(5);
-        sfxLabel.text = T(6);
+        if (settingsTitle != null) settingsTitle.text = T(3);
         for (int i = 0; i < stageButtons.Length; i++) SetButtonLabel(stageButtons[i], T(1) + " " + (i + 1));
         for (int i = 0; i < backButtons.Length; i++) SetButtonLabel(backButtons[i], T(4));
         SetControlLabel();
@@ -120,6 +118,7 @@ public class MainMenuController : MonoBehaviour
     {
         musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
         sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
+        UpdateVolumePercentages();
         ApplyVolumes();
         ShowPage(settingsPage);
     }
@@ -133,8 +132,8 @@ public class MainMenuController : MonoBehaviour
 
     private void SetControlLabel()
     {
-        string mode = PlayerPrefs.GetInt("GestureControls", 0) == 1 ? T(9) : T(8);
-        SetButtonLabel(controlsButton, T(7) + ": " + mode);
+        string mode = PlayerPrefs.GetInt("GestureControls", 0) == 1 ? T(6) : T(5);
+        SetButtonLabel(controlsButton, mode);
     }
 
     private void ShowPage(GameObject page)
@@ -157,6 +156,14 @@ public class MainMenuController : MonoBehaviour
         float sfx = PlayerPrefs.GetFloat("SfxVolume", 0.8f);
         foreach (AudioSource source in FindObjectsByType<AudioSource>())
             source.volume = source.gameObject.name.ToLowerInvariant().Contains("music") ? music : sfx;
+    }
+
+    private void UpdateVolumePercentages()
+    {
+        if (musicVolumePercent != null && musicSlider != null)
+            musicVolumePercent.text = Mathf.RoundToInt(musicSlider.value * 100f) + "%";
+        if (sfxVolumePercent != null && sfxSlider != null)
+            sfxVolumePercent.text = Mathf.RoundToInt(sfxSlider.value * 100f) + "%";
     }
 
     private static void LoadStage(int index)
