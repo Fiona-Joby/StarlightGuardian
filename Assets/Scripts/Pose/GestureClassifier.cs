@@ -214,6 +214,38 @@ public static class GestureClassifier
         return false;
     }
 
+    /// <summary>True when both palms are close together in the camera view.</summary>
+    public static bool HasPalmsTogether(HandData[] hands, int handCount)
+    {
+        handCount = ClampHandCount(hands, handCount);
+        LandmarkPoint[] firstPalm = null;
+        LandmarkPoint[] secondPalm = null;
+        for (int i = 0; i < handCount; i++)
+        {
+            LandmarkPoint[] landmarks = hands[i].landmarks;
+            if (!IsValidHand(landmarks)) continue;
+            if (firstPalm == null) firstPalm = landmarks;
+            else { secondPalm = landmarks; break; }
+        }
+        if (firstPalm == null || secondPalm == null) return false;
+
+        LandmarkPoint firstCenter = GetPalmCenter(firstPalm);
+        LandmarkPoint secondCenter = GetPalmCenter(secondPalm);
+        float dx = firstCenter.x - secondCenter.x;
+        float dy = firstCenter.y - secondCenter.y;
+        return dx * dx + dy * dy <= 0.18f * 0.18f;
+    }
+
+    private static LandmarkPoint GetPalmCenter(LandmarkPoint[] landmarks)
+    {
+        // Wrist and four finger knuckles provide a stable palm-center estimate.
+        return new LandmarkPoint
+        {
+            x = (landmarks[WRIST].x + landmarks[5].x + landmarks[9].x + landmarks[13].x + landmarks[17].x) / 5f,
+            y = (landmarks[WRIST].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5f
+        };
+    }
+
     private static bool IsValidHand(LandmarkPoint[] landmarks) => landmarks != null && landmarks.Length >= 21;
 
     private static int ClampHandCount(HandData[] hands, int handCount)

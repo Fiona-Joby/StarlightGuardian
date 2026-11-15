@@ -72,6 +72,16 @@ public static class MainMenuSceneBuilder
         Set(controller, "languageButtons", languageButtons);
         Set(controller, "backButtons", new[] { stageBack, languageBack, settingsBack });
         Set(controller, "controlsButton", controlsButton);
+        Set(controller, "localizedMainOptionVisuals", CreateLocalizedVisualObjects(
+            new Transform[] { mainButtons[0].transform, mainButtons[1].transform, mainButtons[2].transform, mainButtons[3].transform, null },
+            new[] { "New Game.png", "Stage.png", "Language.png", "Settings.png", "Quit Game.png" }));
+        Set(controller, "localizedStageOptionVisuals", CreateLocalizedVisualObjects(
+            new Transform[] { stageButtons[0].transform, stageButtons[1].transform, stageButtons[2].transform },
+            new[] { "Stage 1.png", "Stage 2.png", "Stage 3.png" }));
+        Image settingsCardImage = settings.transform.Find("Popup Card").GetComponent<Image>();
+        Set(controller, "settingsPopupCard", settingsCardImage);
+        Set(controller, "localizedSettingsTabVisuals", CreateLocalizedVisualObjects(
+            new[] { settingsCardImage.transform }, new[] { "Settings Tab.png" }));
         Set(controller, "mainLabels", new[] { LabelOf(mainButtons[0]), LabelOf(mainButtons[1]), LabelOf(mainButtons[2]), LabelOf(mainButtons[3]) });
         Set(controller, "stageTitle", stageTitle);
         Set(controller, "languageTitle", languageTitle);
@@ -85,6 +95,111 @@ public static class MainMenuSceneBuilder
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root;
         Debug.Log("MainMenu rebuilt as editable camera-rendered UI.");
+    }
+
+    private static GameObject[] CreateLocalizedVisualObjects(Transform[] visualRoots, string[] imageFiles)
+    {
+        string[] languages = { "Malayalam", "Indonesian", "Traditional Chinese" };
+        GameObject[] visuals = new GameObject[languages.Length * visualRoots.Length];
+        for (int language = 0; language < languages.Length; language++)
+        {
+            for (int option = 0; option < visualRoots.Length; option++)
+            {
+                Transform root = visualRoots[option];
+                if (root == null) continue;
+                string childName = "Localized Image - " + languages[language];
+                Transform existing = root.Find(childName);
+                GameObject visual = existing != null ? existing.gameObject : new GameObject(childName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                if (existing == null) visual.transform.SetParent(root, false);
+                RectTransform rect = visual.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                rect.localScale = Vector3.one;
+                Image image = visual.GetComponent<Image>();
+                image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Title Screen/UI Buttons/" + languages[language] + "/" + imageFiles[option]);
+                image.color = Color.white;
+                image.preserveAspect = false;
+                image.raycastTarget = false;
+                visual.SetActive(false);
+                visuals[language * visualRoots.Length + option] = visual;
+            }
+        }
+        return visuals;
+    }
+
+    [MenuItem("Tools/Starlight Guardian/Create Editable Localized Menu Visuals")]
+    public static void CreateEditableLocalizedMenuVisuals()
+    {
+        Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        MainMenuController controller = Object.FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
+        if (controller == null)
+        {
+            Debug.LogError("MainMenuController was not found in MainMenu.unity.");
+            return;
+        }
+
+        SerializedObject serializedController = new SerializedObject(controller);
+        Button newGame = ReadButton(serializedController, "newGameButton");
+        Button stage = ReadButton(serializedController, "stageMenuButton");
+        Button language = ReadButton(serializedController, "languageMenuButton");
+        Button settings = ReadButton(serializedController, "settingsMenuButton");
+        GameObject mainPage = serializedController.FindProperty("mainPage").objectReferenceValue as GameObject;
+        Button quit = FindButton(mainPage != null ? mainPage.transform : null, "Exit");
+
+        SetObjectArray(serializedController, "localizedMainOptionVisuals", CreateLocalizedVisualObjects(
+            new[] { GetVisualRoot(newGame), GetVisualRoot(stage), GetVisualRoot(language), GetVisualRoot(settings), GetVisualRoot(quit) },
+            new[] { "New Game.png", "Stage.png", "Language.png", "Settings.png", "Quit Game.png" }));
+
+        SerializedProperty stageProperty = serializedController.FindProperty("stageButtons");
+        Transform[] stageRoots = new Transform[stageProperty != null ? stageProperty.arraySize : 0];
+        for (int i = 0; i < stageRoots.Length; i++)
+            stageRoots[i] = GetVisualRoot(stageProperty.GetArrayElementAtIndex(i).objectReferenceValue as Button);
+        SetObjectArray(serializedController, "localizedStageOptionVisuals", CreateLocalizedVisualObjects(
+            stageRoots, new[] { "Stage 1.png", "Stage 2.png", "Stage 3.png" }));
+
+        Image settingsCard = serializedController.FindProperty("settingsPopupCard").objectReferenceValue as Image;
+        SetObjectArray(serializedController, "localizedSettingsTabVisuals", CreateLocalizedVisualObjects(
+            new[] { settingsCard != null ? settingsCard.transform : null }, new[] { "Settings Tab.png" }));
+
+        serializedController.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(controller);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene, ScenePath);
+        AssetDatabase.SaveAssets();
+        Debug.Log("Added editable localized visual GameObjects to MainMenu.unity.");
+    }
+
+    private static Button ReadButton(SerializedObject serializedObject, string propertyName)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        return property != null ? property.objectReferenceValue as Button : null;
+    }
+
+    private static Button FindButton(Transform root, string objectName)
+    {
+        if (root == null) return null;
+        foreach (Button button in root.GetComponentsInChildren<Button>(true))
+            if (button != null && button.gameObject.name == objectName) return button;
+        return null;
+    }
+
+    private static Transform GetVisualRoot(Button button)
+    {
+        if (button == null) return null;
+        Transform parent = button.transform.parent;
+        return parent != null && (parent.name == "New Game" || parent.name == "Stage" ||
+            parent.name == "Language" || parent.name == "Settings" || parent.name == "Exit" ||
+            parent.name == "Stage 1" || parent.name == "Stage 2" || parent.name == "Stage 3")
+            ? parent : button.transform;
+    }
+
+    private static void SetObjectArray(SerializedObject serializedObject, string propertyName, GameObject[] values)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        property.arraySize = values.Length;
+        for (int i = 0; i < values.Length; i++) property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
     }
 
     private static Camera CreateCamera(Transform parent)

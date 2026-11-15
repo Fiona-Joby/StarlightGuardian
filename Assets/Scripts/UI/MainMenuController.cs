@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -22,6 +23,19 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button[] languageButtons;
     [SerializeField] private Button[] backButtons;
     [SerializeField] private Button controlsButton;
+    [SerializeField] private GameObject controlsDropdownPanel;
+    [SerializeField] private Button keyboardOptionButton;
+    [SerializeField] private Button gestureOptionButton;
+    [SerializeField] private RectTransform controlsDropdownArrow;
+    [SerializeField] private Sprite selectionArrowSprite;
+
+    [Header("Localized visual GameObjects (language-major)")]
+    [SerializeField] private GameObject[] localizedMainOptionVisuals;
+    [SerializeField] private GameObject[] localizedStageOptionVisuals;
+    [SerializeField] private GameObject[] localizedSettingsTabVisuals;
+    [SerializeField] private Image settingsPopupCard;
+    private Image[] englishMainOptionImages;
+    private Image[] englishStageOptionImages;
 
     [Header("Localized labels")]
     [SerializeField] private Text[] mainLabels;
@@ -54,41 +68,68 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
-        newGameButton.onClick.AddListener(() => LoadStage(0));
-        stageMenuButton.onClick.AddListener(() => ShowPage(stagePage));
-        languageMenuButton.onClick.AddListener(() => ShowPage(languagePage));
-        settingsMenuButton.onClick.AddListener(() => ShowSettings());
-
-        for (int i = 0; i < stageButtons.Length; i++)
+        if (newGameButton != null) newGameButton.onClick.AddListener(() => LoadStage(0));
+        if (stageMenuButton != null) stageMenuButton.onClick.AddListener(() => ShowPage(stagePage));
+        if (languageMenuButton != null) languageMenuButton.onClick.AddListener(() => ShowPage(languagePage));
+        if (settingsMenuButton != null) settingsMenuButton.onClick.AddListener(() => ShowSettings());
+        Button exitButton = GetExitButton();
+        if (exitButton != null) exitButton.onClick.AddListener(Application.Quit);
+        for (int i = 0; stageButtons != null && i < stageButtons.Length; i++)
         {
+            if (stageButtons[i] == null) continue;
+            DisableColorTint(stageButtons[i]);
             int stage = i;
             stageButtons[i].onClick.AddListener(() => LoadStage(stage));
         }
-        for (int i = 0; i < languageButtons.Length; i++)
+        for (int i = 0; languageButtons != null && i < languageButtons.Length; i++)
         {
+            if (languageButtons[i] == null) continue;
+            DisableColorTint(languageButtons[i]);
             int selected = i;
             languageButtons[i].onClick.AddListener(() => SetLanguage(selected));
         }
-        foreach (Button back in backButtons)
-            back.onClick.AddListener(() => ShowPage(mainPage));
+        if (backButtons != null)
+            foreach (Button back in backButtons)
+                if (back != null) back.onClick.AddListener(() => ShowPage(mainPage));
 
-        controlsButton.onClick.AddListener(ToggleControls);
-        musicSlider.minValue = sfxSlider.minValue = 0f;
-        musicSlider.maxValue = sfxSlider.maxValue = 1f;
-        musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
-        sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
+        if (controlsButton != null) controlsButton.onClick.AddListener(ToggleControls);
+        if (keyboardOptionButton != null) keyboardOptionButton.onClick.AddListener(() => SetControlMode(false));
+        if (gestureOptionButton != null) gestureOptionButton.onClick.AddListener(() => SetControlMode(true));
+        SetControlsDropdownVisible(false);
+        SetupSelectionMarkers();
+        if (musicSlider != null)
+        {
+            musicSlider.minValue = 0f;
+            musicSlider.maxValue = 1f;
+            musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
+            musicSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("MusicVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
+        }
+        if (sfxSlider != null)
+        {
+            sfxSlider.minValue = 0f;
+            sfxSlider.maxValue = 1f;
+            sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
+            sfxSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("SfxVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
+        }
         UpdateVolumePercentages();
-        musicSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("MusicVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
-        sfxSlider.onValueChanged.AddListener(value => { PlayerPrefs.SetFloat("SfxVolume", value); ApplyVolumes(); UpdateVolumePercentages(); });
-        ApplyLanguage();
         ApplyVolumes();
         ShowPage(mainPage);
+    }
+
+    private void Start()
+    {
+        Canvas.ForceUpdateCanvases();
+        englishMainOptionImages = CollectEnglishOptionImages(new[]
+            { newGameButton, stageMenuButton, languageMenuButton, settingsMenuButton, GetExitButton() });
+        englishStageOptionImages = CollectEnglishOptionImages(stageButtons);
+        ApplyLanguage();
     }
 
     private string T(int index) => Translations[index, SelectedLanguage];
 
     private void ApplyLanguage()
     {
+        ApplyLocalizedVisualObjects();
         string fontName = SelectedLanguage == (int)Language.Malayalam ? "Nirmala UI" :
             SelectedLanguage == (int)Language.Chinese ? "Microsoft YaHei" : "Arial";
         Font languageFont = Font.CreateDynamicFontFromOSFont(fontName, 32);
@@ -99,12 +140,93 @@ public class MainMenuController : MonoBehaviour
         if (mainLabels != null)
             for (int i = 0; i < mainLabels.Length && i < main.Length; i++)
                 if (mainLabels[i] != null) mainLabels[i].text = main[i];
-        stageTitle.text = T(1);
-        languageTitle.text = T(2);
+        if (stageTitle != null) stageTitle.text = T(1);
+        if (languageTitle != null) languageTitle.text = T(2);
         if (settingsTitle != null) settingsTitle.text = T(3);
-        for (int i = 0; i < stageButtons.Length; i++) SetButtonLabel(stageButtons[i], T(1) + " " + (i + 1));
-        for (int i = 0; i < backButtons.Length; i++) SetButtonLabel(backButtons[i], T(4));
+        if (stageButtons != null)
+            for (int i = 0; i < stageButtons.Length; i++) SetButtonLabel(stageButtons[i], T(1) + " " + (i + 1));
+        if (backButtons != null)
+            for (int i = 0; i < backButtons.Length; i++) SetButtonLabel(backButtons[i], T(4));
+        SetButtonLabel(keyboardOptionButton, T(5));
+        SetButtonLabel(gestureOptionButton, T(6));
         SetControlLabel();
+    }
+
+    private void ApplyLocalizedVisualObjects()
+    {
+        bool englishSelected = SelectedLanguage == (int)Language.English;
+        SetImagesEnabled(englishMainOptionImages, englishSelected);
+        SetImagesEnabled(englishStageOptionImages, englishSelected);
+        SetVisualObjects(localizedMainOptionVisuals, SelectedLanguage - 1, 5);
+        SetVisualObjects(localizedStageOptionVisuals, SelectedLanguage - 1, 3);
+        RefreshStageSelectionMarkers();
+        SetVisualObjects(localizedSettingsTabVisuals, SelectedLanguage - 1, 1);
+        if (settingsPopupCard != null) settingsPopupCard.enabled = englishSelected;
+    }
+
+    private void RefreshStageSelectionMarkers()
+    {
+        if (selectionArrowSprite == null || stageButtons == null) return;
+        foreach (Button button in stageButtons)
+        {
+            if (button == null) continue;
+            MenuButtonSelectionMarker marker = button.GetComponent<MenuButtonSelectionMarker>();
+            if (marker != null)
+                marker.Initialize(selectionArrowSprite);
+        }
+    }
+
+    private static Image[] CollectEnglishOptionImages(Button[] buttons)
+    {
+        HashSet<Image> images = new HashSet<Image>();
+        if (buttons == null) return new Image[0];
+        foreach (Button button in buttons)
+        {
+            if (button == null) continue;
+            Transform parent = button.transform.parent;
+            GameObject visualRoot = parent != null && IsLocalizedOptionName(parent.name)
+                ? parent.gameObject : button.gameObject;
+            foreach (Image image in visualRoot.GetComponents<Image>())
+                if (image != null) images.Add(image);
+        }
+        Image[] result = new Image[images.Count];
+        images.CopyTo(result);
+        return result;
+    }
+
+    private static void SetImagesEnabled(Image[] images, bool enabled)
+    {
+        if (images == null) return;
+        foreach (Image image in images)
+            if (image != null) image.enabled = enabled;
+    }
+
+    private static void SetVisualObjects(GameObject[] visuals, int languageIndex, int visualsPerLanguage)
+    {
+        if (visuals == null) return;
+        int selectedIndex = languageIndex >= 0 ? languageIndex * visualsPerLanguage : -1;
+        for (int i = 0; i < visuals.Length; i++)
+            if (visuals[i] != null)
+            {
+                bool selected = languageIndex >= 0 && i >= selectedIndex && i < selectedIndex + visualsPerLanguage;
+                visuals[i].SetActive(selected);
+                if (selected) visuals[i].transform.SetAsFirstSibling();
+            }
+    }
+
+    private Button GetExitButton()
+    {
+        if (mainPage == null) return null;
+        Button[] buttons = mainPage.GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+            if (button != null && button.gameObject.name == "Exit") return button;
+        return null;
+    }
+
+    private static bool IsLocalizedOptionName(string name)
+    {
+        return name == "New Game" || name == "Stage" || name == "Language" || name == "Settings" ||
+            name == "Exit" || name == "Stage 1" || name == "Stage 2" || name == "Stage 3";
     }
 
     private void SetLanguage(int selected)
@@ -116,8 +238,8 @@ public class MainMenuController : MonoBehaviour
 
     private void ShowSettings()
     {
-        musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
-        sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
+        if (musicSlider != null) musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", 0.8f));
+        if (sfxSlider != null) sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", 0.8f));
         UpdateVolumePercentages();
         ApplyVolumes();
         ShowPage(settingsPage);
@@ -125,29 +247,91 @@ public class MainMenuController : MonoBehaviour
 
     private void ToggleControls()
     {
-        int value = PlayerPrefs.GetInt("GestureControls", 0) == 1 ? 0 : 1;
-        PlayerPrefs.SetInt("GestureControls", value);
+        if (controlsDropdownPanel != null)
+            SetControlsDropdownVisible(!controlsDropdownPanel.activeSelf);
+    }
+
+    private void SetControlMode(bool useGestureControls)
+    {
+        PlayerPrefs.SetInt("GestureControls", useGestureControls ? 1 : 0);
         SetControlLabel();
+        SetControlsDropdownVisible(false);
+    }
+
+    private void SetControlsDropdownVisible(bool visible)
+    {
+        if (controlsDropdownPanel != null) controlsDropdownPanel.SetActive(visible);
+        if (controlsDropdownArrow != null)
+            controlsDropdownArrow.localEulerAngles = new Vector3(0f, 0f, visible ? 90f : -90f);
     }
 
     private void SetControlLabel()
     {
-        string mode = PlayerPrefs.GetInt("GestureControls", 0) == 1 ? T(6) : T(5);
+        bool gestureSelected = PlayerPrefs.GetInt("GestureControls", 0) == 1;
+        string mode = gestureSelected ? T(6) : T(5);
         SetButtonLabel(controlsButton, mode);
+        SetButtonLabel(keyboardOptionButton, T(5));
+        SetButtonLabel(gestureOptionButton, T(6));
+        SetControlOptionVisible(keyboardOptionButton, gestureSelected);
+        SetControlOptionVisible(gestureOptionButton, !gestureSelected);
+    }
+
+    private static void SetControlOptionVisible(Button option, bool visible)
+    {
+        if (option == null) return;
+        option.gameObject.SetActive(visible);
+        foreach (Graphic graphic in option.GetComponentsInChildren<Graphic>(true))
+            graphic.enabled = visible;
     }
 
     private void ShowPage(GameObject page)
     {
-        mainPage.SetActive(page == mainPage);
-        stagePage.SetActive(page == stagePage);
-        languagePage.SetActive(page == languagePage);
-        settingsPage.SetActive(page == settingsPage);
+        if (page != settingsPage) SetControlsDropdownVisible(false);
+        bool keepMainOptionsVisible = page == mainPage || page == stagePage || page == languagePage;
+        if (mainPage != null) mainPage.SetActive(keepMainOptionsVisible);
+        if (stagePage != null) stagePage.SetActive(page == stagePage);
+        if (languagePage != null) languagePage.SetActive(page == languagePage);
+        if (settingsPage != null) settingsPage.SetActive(page == settingsPage);
     }
 
     private static void SetButtonLabel(Button button, string label)
     {
-        Text text = button.GetComponentInChildren<Text>();
-        if (text != null) text.text = label;
+        if (button == null) return;
+        foreach (Text text in button.GetComponentsInChildren<Text>(true))
+            if (text != null) text.text = label;
+    }
+
+    private static void DisableColorTint(Button button)
+    {
+        if (button != null && button.transition == Selectable.Transition.ColorTint)
+            button.transition = Selectable.Transition.None;
+    }
+
+    private void SetupSelectionMarkers()
+    {
+        if (selectionArrowSprite == null) return;
+
+        HashSet<Button> buttons = new HashSet<Button>();
+        AddSelectionMarker(buttons, newGameButton);
+        AddSelectionMarker(buttons, stageMenuButton);
+        AddSelectionMarker(buttons, languageMenuButton);
+        AddSelectionMarker(buttons, settingsMenuButton);
+        Button exitButton = GetExitButton();
+        AddSelectionMarker(buttons, exitButton, 12f);
+
+        if (stageButtons != null)
+            foreach (Button button in stageButtons) AddSelectionMarker(buttons, button);
+        if (languageButtons != null)
+            foreach (Button button in languageButtons) AddSelectionMarker(buttons, button);
+    }
+
+    private void AddSelectionMarker(HashSet<Button> buttons, Button button, float additionalLeftOffset = 0f)
+    {
+        if (button == null || !buttons.Add(button)) return;
+
+        MenuButtonSelectionMarker marker = button.GetComponent<MenuButtonSelectionMarker>();
+        if (marker == null) marker = button.gameObject.AddComponent<MenuButtonSelectionMarker>();
+        marker.Initialize(selectionArrowSprite, additionalLeftOffset);
     }
 
     private void ApplyVolumes()

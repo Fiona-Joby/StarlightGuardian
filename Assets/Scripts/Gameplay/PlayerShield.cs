@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Shield power for Stage 2: activated by a fist gesture (webcam) or Enter key.
@@ -8,7 +9,7 @@ using UnityEngine;
 ///   Shielding 1 (0.008s) → 2 (instant) → 3 (5.976s hold) → 4 (0.008s) → 5 (0.008s)
 ///
 /// Drives the Animator's "isShielding" boolean.
-/// While the shield is active, a countdown timer is drawn on screen.
+/// A HUD shield icon fades during activation and restores during cooldown.
 /// </summary>
 public class PlayerShield : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class PlayerShield : MonoBehaviour
 
     [SerializeField] private Sprite[] shieldRunFrames = new Sprite[6];
     [SerializeField] private Sprite shieldJumpSprite;
+    [SerializeField] private Sprite shieldHudSprite;
 
     /// <summary>True while the shield is active.</summary>
     public bool IsShielding { get; private set; }
@@ -40,10 +42,9 @@ public class PlayerShield : MonoBehaviour
     // Animator parameter hash.
     private static readonly int IsShieldingParam = Animator.StringToHash("isShielding");
 
-    // ---- GUI ----
-    private Texture2D timerBgTex;
-    private Texture2D timerFillTex;
-    private GUIStyle timerStyle;
+    private Image shieldHudIcon;
+    private CanvasGroup shieldHudGroup;
+    private Text shieldHudTimer;
 
     private void Awake()
     {
@@ -51,15 +52,46 @@ public class PlayerShield : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         playerMovement = GetComponent<PlayerMovement>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        timerBgTex = MakeTex(new Color(0.05f, 0.05f, 0.15f, 0.7f));
-        timerFillTex = MakeTex(Color.white);
+        if (shieldHudSprite != null)
+        {
+            Canvas canvas = RuntimeUiUtility.CreateOverlayCanvas("Shield HUD", 100, new Vector2(1920f, 1080f));
+            GameObject icon = new GameObject("Shield Status", typeof(RectTransform), typeof(Image));
+            icon.transform.SetParent(canvas.transform, false);
+            RectTransform rect = icon.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-32f, 32f);
+            rect.sizeDelta = new Vector2(140f, 140f);
+            shieldHudIcon = icon.GetComponent<Image>();
+            shieldHudIcon.sprite = shieldHudSprite;
+            shieldHudIcon.preserveAspect = true;
+            shieldHudIcon.raycastTarget = false;
+            shieldHudGroup = icon.AddComponent<CanvasGroup>();
+            shieldHudGroup.alpha = 1f;
+
+            GameObject timer = new GameObject("Shield Time Left", typeof(RectTransform), typeof(Text));
+            timer.transform.SetParent(canvas.transform, false);
+            RectTransform timerRect = timer.GetComponent<RectTransform>();
+            timerRect.anchorMin = timerRect.anchorMax = new Vector2(1f, 0f);
+            timerRect.pivot = new Vector2(1f, 0f);
+            timerRect.anchoredPosition = new Vector2(-40f, 40f);
+            timerRect.sizeDelta = new Vector2(76f, 38f);
+            shieldHudTimer = timer.GetComponent<Text>();
+            shieldHudTimer.font = RuntimeUiUtility.GetFont();
+            shieldHudTimer.fontSize = 28;
+            shieldHudTimer.fontStyle = FontStyle.Bold;
+            shieldHudTimer.alignment = TextAnchor.MiddleRight;
+            shieldHudTimer.color = Color.white;
+            shieldHudTimer.raycastTarget = false;
+            shieldHudTimer.enabled = false;
+        }
     }
 
     private void Update()
     {
         // Cool-down countdown.
         if (cooldownTimer > 0f)
-            cooldownTimer -= Time.deltaTime;
+            cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
 
         // --- Activation ---
         bool activatePressed = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
@@ -70,19 +102,14 @@ public class PlayerShield : MonoBehaviour
             ActivateShield();
 
         // --- Active shield tick ---
-        if (!IsShielding) return;
+        if (IsShielding)
+        {
+            shieldTimer -= Time.deltaTime;
+            if (shieldTimer <= 0f)
+                DeactivateShield();
+        }
 
-        shieldTimer -= Time.deltaTime;
-
-        // Shield expired.
-        if (shieldTimer <= 0f)
-            DeactivateShield();
-    }
-
-    private void OnDestroy()
-    {
-        if (timerBgTex != null) Destroy(timerBgTex);
-        if (timerFillTex != null) Destroy(timerFillTex);
+        UpdateShieldIcon();
     }
 
     private void LateUpdate()
@@ -147,61 +174,34 @@ public class PlayerShield : MonoBehaviour
         Debug.Log("[PlayerShield] Shield deactivated.");
     }
 
-    // ------------------------------------------------------------------ //
-    //  On-screen timer HUD
-    // ------------------------------------------------------------------ //
-
-    private void OnGUI()
+    private void UpdateShieldIcon()
     {
-        if (!IsShielding) return;
-
-        // Lazily create style.
-        if (timerStyle == null)
+        if (shieldHudIcon == null) return;
+        if (IsShielding)
         {
-            timerStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold,
-                fontSize = 16
-            };
-            timerStyle.normal.textColor = Color.white;
+            float remaining = shieldDuration > 0f ? Mathf.Clamp01(shieldTimer / shieldDuration) : 0f;
+            shieldHudIcon.color = Color.white;
+            shieldHudGroup.alpha = remaining;
+            shieldHudTimer.text = $"{Mathf.CeilToInt(Mathf.Max(0f, shieldTimer))}s";
+            shieldHudTimer.enabled = true;
         }
-
-        float barW = 180f;
-        float barH = 24f;
-        float x = (Screen.width - barW) * 0.5f;
-        float y = Screen.height - 50f;
-        Rect bgRect = new Rect(x, y, barW, barH);
-
-        // Background.
-        GUI.DrawTexture(bgRect, timerBgTex);
-
-        // Fill (shrinks as timer runs out).
-        float fill = Mathf.Clamp01(shieldTimer / shieldDuration);
-        Color fillCol = Color.Lerp(
-            new Color(1f, 0.3f, 0.3f, 0.9f),   // red when nearly out
-            new Color(0.3f, 0.75f, 1f, 0.9f),   // cyan when full
-            fill);
-        Rect fillRect = new Rect(bgRect.x + 2, bgRect.y + 2, (bgRect.width - 4) * fill, bgRect.height - 4);
-        Color previousGuiColor = GUI.color;
-        GUI.color = fillCol;
-        GUI.DrawTexture(fillRect, timerFillTex);
-        GUI.color = previousGuiColor;
-
-        // Label.
-        GUI.Label(bgRect, $"Shield: {shieldTimer:F1}s", timerStyle);
+        else if (cooldownTimer > 0f)
+        {
+            float restored = cooldown > 0f ? 1f - Mathf.Clamp01(cooldownTimer / cooldown) : 1f;
+            shieldHudIcon.color = Color.Lerp(new Color(0.28f, 0.28f, 0.28f, 1f), Color.white, restored);
+            shieldHudGroup.alpha = 1f;
+            shieldHudTimer.enabled = false;
+        }
+        else
+        {
+            shieldHudIcon.color = Color.white;
+            shieldHudGroup.alpha = 1f;
+            shieldHudTimer.enabled = false;
+        }
     }
 
     // ------------------------------------------------------------------ //
     //  Helpers
     // ------------------------------------------------------------------ //
-
-    private static Texture2D MakeTex(Color col)
-    {
-        var tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-        tex.SetPixel(0, 0, col);
-        tex.Apply();
-        return tex;
-    }
 
 }

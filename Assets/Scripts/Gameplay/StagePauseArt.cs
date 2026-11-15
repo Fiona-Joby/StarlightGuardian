@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class StagePauseArt : ScriptableObject
 {
     public Sprite pauseButton;
+    public Sprite taskButton;
     public Sprite pauseTab;
     public Texture2D settingsOption;
     public Texture2D resumeOption;

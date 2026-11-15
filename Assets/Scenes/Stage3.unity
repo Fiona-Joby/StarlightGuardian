@@ -236,8 +236,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd11ee22ff33aa44bb55cc6677889901, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShield
-  shieldDuration: 7
-  cooldown: 10
+  shieldDuration: 9
+  cooldown: 9
   shieldRunFrames:
   - {fileID: 21300000, guid: 03ccb379aa7f4efa88ee67e6662c3429, type: 3}
   - {fileID: 21300000, guid: 5dfa8a9795de4d22825b307f4e5711f4, type: 3}
@@ -246,6 +246,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d1090c0024e349c88d66405d293d34b3, type: 3}
   - {fileID: 21300000, guid: b530178efc7f4975902077c30f108a30, type: 3}
   shieldJumpSprite: {fileID: 21300000, guid: 30d12a00ff8b424eb4e4615826b1d70e, type: 3}
+  shieldHudSprite: {fileID: -400260700149131962, guid: ce2ed1055d4a1dd408b2a9d48c70df67, type: 3}
 --- !u!114 &1586116508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -673,7 +674,53 @@ MonoBehaviour:
   - {fileID: 6711199345543734360, guid: 165fd3613ab0457408c6c68a0fa327fd, type: 3}
   - {fileID: -5964768547269105579, guid: 446c2a67379e0774989fb2557030ec47, type: 3}
   heart: {fileID: 21300000, guid: 93a34d98634b4b0f96755d8d4f607e12, type: 3}
+  slimeWalkFrames:
+  - {fileID: 523844683030640136, guid: 46a4d22e95c108c4dafe7e94d45b30a6, type: 3}
+  - {fileID: 7173140865380682376, guid: 40c8f1366ec93ed419bc66d48aba6222, type: 3}
+  - {fileID: 6765231087053179561, guid: bfef1d44af90dd44cbfd9e7c1fb7a9df, type: 3}
+  - {fileID: -2447445506560101224, guid: a551b9e237b20844dacb1e01129adb75, type: 3}
+  slimeAttack: {fileID: -7008412969330441016, guid: e3f4b7a1fe3321348abf385c095c3ea9, type: 3}
+  hardBeastGoal: 2
+  hardBeastWalkFrames:
+  - {fileID: -1967582503060002275, guid: 2372ea1ae7bd1d944bf83dfbc9072f7d, type: 3}
+  - {fileID: -1002991105446622220, guid: b23462d1334342248ba0696c090f2753, type: 3}
+  - {fileID: 8656135258432947178, guid: b229898ddb148e34e8676137e6cc6b2f, type: 3}
+  - {fileID: 684802998596772019, guid: 92a52456a962a354b9b317d99f98af29, type: 3}
+  - {fileID: 5419537887855909322, guid: c7cf868a7abfd1344944d714b45de737, type: 3}
+  hardBeastJump: {fileID: 1066971091259034692, guid: 3a29cdd86f696f54186837bdad40cae0, type: 3}
+  hardBeastStomp: {fileID: -2252284673019152168, guid: a98b6f76c4bba02498d8c7947181af3c, type: 3}
+  hardBeastAI:
+    patrolLeftOffset: -2.5
+    patrolRightOffset: 2.5
+    patrolSpeed: 1.8
+    detectionRange: 9
+    visionAngle: 120
+    visionObstacleLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    spottingTime: 0.05
+    preparationTime: 0.25
+    predictionTime: 1.1
+    maximumPredictionDistance: 4.5
+    landingOffsetTowardFacing: 0.75
+    playerAimHalfWidth: 0.85
+    jumpHeight: 3.2
+    attackDuration: 1.1
+    damage: 1
+    recoveryTime: 0.8
+    recoverySideDistance: 1.5
+  lootBoxWithShield: {fileID: -5867801952968947338, guid: 9b2d877f541c7414dad0c660676265b4, type: 3}
+  lootBox: {fileID: 6047703769011812054, guid: 03909816ccea88c4c8300ca83a260ad9, type: 3}
+  starSpiritMoveFrames:
+  - {fileID: -6244830988531936243, guid: 3296e6ffcadcd0c47ad0e4541b1f5db0, type: 3}
+  - {fileID: -5634186440900818767, guid: b2917c0824378254d8f0b4cc37bc47b1, type: 3}
+  starSpiritFinalPose: {fileID: -5486426717658256728, guid: 5531b6cd0cf993f4989027cbc8bb3f59, type: 3}
+  companionMoveFrames:
+  - {fileID: 1302333569983755274, guid: 36c652301d230fc41848b74b3d701c7b, type: 3}
+  - {fileID: -1909234507801651165, guid: 2b153675bc681de459f3b6f58a349917, type: 3}
+  companionReunionPose: {fileID: -7062119304882899737, guid: 924a6dc99491ebd4583e4ed7545c6671, type: 3}
   droneGoal: 4
+  slimeGoal: 4
   lifeLimit: 5
 --- !u!1 &2100550234
 GameObject:

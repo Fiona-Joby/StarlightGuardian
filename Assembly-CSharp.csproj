@@ -60,6 +60,7 @@
     <Compile Include="Assets\Scripts\Gameplay\Stage3DroneEncounter.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarEvents.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlatformSpawner.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage2BlobBeast.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage3Drone.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StageQuitButton.cs" />
@@ -72,13 +73,16 @@
     <Compile Include="Assets\Scripts\Gameplay\GameplayBootstrapper.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage3ArtReferences.cs" />
     <Compile Include="Assets\Scripts\UI\MainMenuController.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage3Slime.cs" />
     <Compile Include="Assets\Scripts\Pose\GestureClassifier.cs" />
     <Compile Include="Assets\Scripts\Gameplay\TurretProjectile.cs" />
+    <Compile Include="Assets\Scripts\UI\MenuButtonSelectionMarker.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2PlayerHealth.cs" />
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Core\ParallaxLayerSetup.cs" />
     <Compile Include="Assets\Scripts\Core\LoopingParallaxUtility.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\StarSpiritCompanion.cs" />
     <Compile Include="Assets\Scripts\Core\Stage2ParallaxSetup.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GroundDetector.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreProgressBar.cs" />

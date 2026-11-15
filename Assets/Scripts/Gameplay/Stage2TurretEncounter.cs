@@ -10,7 +10,8 @@ public class Stage2TurretEncounter : MonoBehaviour
     private static readonly float[] TurretXs = { 10f, 26f, 42f, 58f, 74f, 90f };
 
     private int destroyedTurrets;
-    private int playerHits;
+    private int destroyedBlobBeasts;
+    private float playerDamage;
     private bool finished;
     private Text hudText;
     private Image[] lifeIcons = new Image[0];
@@ -32,6 +33,8 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (player.GetComponent<Stage2PlayerHealth>() == null)
             player.AddComponent<Stage2PlayerHealth>();
         artReferences = FindAnyObjectByType<Stage2ArtReferences>();
+        StarSpiritCompanion.Attach(player.transform,
+            artReferences != null ? artReferences.CompanionMoveFrames : null);
         BuildHud();
         StartCoroutine(SpawnTurretsAfterPlayerWalks(player.transform));
         RefreshHud();
@@ -45,14 +48,62 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (player != null && !finished)
         {
             SpawnTurrets();
+            SpawnBlobBeasts();
             LimitPlayerAtEnd(player);
+        }
+    }
+
+    private void SpawnBlobBeasts()
+    {
+        Sprite[] walk = artReferences != null ? artReferences.BlobWalkFrames : null;
+        Sprite jump = artReferences != null ? artReferences.BlobJump : null;
+        Sprite stomp = artReferences != null ? artReferences.BlobStomp : null;
+        if (walk == null || walk.Length < 5 || jump == null || stomp == null ||
+            System.Array.Exists(walk, frame => frame == null))
+        {
+            Debug.LogError("[Stage2TurretEncounter] Blob Beast sprites are not assigned on Stage2ArtReferences.");
+            return;
+        }
+
+        // Keep a full turret interval between each beast and the nearest turret.
+        // These positions are centered in the gaps between the fixed turret line.
+        int beastGoal = BlobBeastGoal;
+        int slotCount = Mathf.Max(TurretGoal, beastGoal);
+        GameObject ground = GameObject.Find("Ground");
+        Collider2D groundCollider = ground != null ? ground.GetComponent<Collider2D>() : null;
+        float groundTop = groundCollider != null ? groundCollider.bounds.max.y : -4.9f;
+        for (int i = 0; i < beastGoal; i++)
+        {
+            int slot = Mathf.FloorToInt((i + 0.5f) * slotCount / beastGoal);
+            float blobX = GetTurretX(slot) + TurretSpacing * 0.5f;
+            GameObject blob = new GameObject("Blob Beast");
+            blob.transform.position = new Vector3(blobX, groundTop, 0f);
+            GameObject art = new GameObject("Blob Beast Art");
+            art.transform.SetParent(blob.transform, false);
+            art.transform.localPosition = new Vector3(-1f, 0f, 0f);
+            art.transform.localScale = Vector3.one * 0.24f;
+            SpriteRenderer renderer = art.AddComponent<SpriteRenderer>();
+            renderer.sprite = walk[0];
+            renderer.sortingOrder = 8;
+            // Imported beast sprites may use a nonzero pivot. Align the rendered
+            // sprite's actual lower bound with the floor instead of trusting it.
+            Vector3 artPosition = art.transform.localPosition;
+            artPosition.y += groundTop - renderer.bounds.min.y - 0.12f;
+            art.transform.localPosition = artPosition;
+            BoxCollider2D collider = blob.AddComponent<BoxCollider2D>();
+            collider.isTrigger = true;
+            collider.size = new Vector2(1.9f, 2.2f);
+            collider.offset = new Vector2(0f, 1.1f);
+            blob.AddComponent<Stage2BlobBeast>().Initialize(
+                this, walk, jump, stomp, i % 2 == 1,
+                artReferences != null ? artReferences.BlobBeastAI : null);
         }
     }
 
     private void LimitPlayerAtEnd(Transform player)
     {
         if (player == null) return;
-        float furthestEnemyX = GetTurretX(TurretGoal - 1);
+        float furthestEnemyX = Mathf.Max(GetTurretX(TurretGoal - 1), GetBlobSpawnX(BlobBeastGoal - 1));
         Camera camera = Camera.main;
         float halfViewWidth = camera != null ? camera.orthographicSize * camera.aspect : 9f;
         PlayerMovement movement = player.GetComponent<PlayerMovement>();
@@ -62,6 +113,15 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private static float GetTurretX(int index) =>
         index < TurretXs.Length ? TurretXs[index] : TurretXs[TurretXs.Length - 1] + (index - TurretXs.Length + 1) * 16f;
+
+    private const float TurretSpacing = 16f;
+
+    private float GetBlobSpawnX(int index)
+    {
+        int slotCount = Mathf.Max(TurretGoal, BlobBeastGoal);
+        int slot = Mathf.FloorToInt((index + 0.5f) * slotCount / BlobBeastGoal);
+        return GetTurretX(slot) + TurretSpacing * 0.5f;
+    }
 
     private void SpawnTurrets()
     {
@@ -83,7 +143,7 @@ public class Stage2TurretEncounter : MonoBehaviour
             float imageCenterY = tall ? 650f : 805f;
             // Stage2's Ground collider top is y = -4.9 (center -5, half-height 0.1).
             const float groundLevel = -4.9f;
-            float rootY = groundLevel + ((951f - imageCenterY) * scale / 700f);
+            float rootY = groundLevel - 0.2f + ((951f - imageCenterY) * scale / 700f);
             GameObject turretGO = new GameObject(tall ? "Tall Turret" : "Short Turret");
             turretGO.transform.position = new Vector3(turretX, rootY, 0f);
 
@@ -115,6 +175,7 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     public bool IsFinished => finished;
     public int TurretGoal => artReferences != null ? artReferences.TurretGoal : 6;
+    public int BlobBeastGoal => artReferences != null ? artReferences.BlobBeastGoal : 2;
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
 
     public void OnTurretDestroyed()
@@ -122,19 +183,32 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (finished) return;
         destroyedTurrets++;
         RefreshHud();
-        if (destroyedTurrets < TurretGoal) return;
+        CheckEncounterComplete();
+    }
+
+    public void OnBlobBeastDestroyed()
+    {
+        if (finished) return;
+        destroyedBlobBeasts++;
+        RefreshHud();
+        CheckEncounterComplete();
+    }
+
+    private void CheckEncounterComplete()
+    {
+        if (finished || destroyedTurrets < TurretGoal || destroyedBlobBeasts < BlobBeastGoal) return;
         finished = true;
-        ShowOverlay("All turrets destroyed successfully", true);
+        ShowOverlay("All turrets and beasts defeated successfully", true);
         Time.timeScale = 0f;
         StartCoroutine(LoadStage3());
     }
 
-    public void OnPlayerHit()
+    public void OnPlayerHit(float damage = 1f)
     {
         if (finished) return;
-        playerHits++;
+        playerDamage = Mathf.Min(LifeLimit, playerDamage + Mathf.Max(0f, damage));
         RefreshHud();
-        if (playerHits >= LifeLimit)
+        if (playerDamage >= LifeLimit)
         {
             finished = true;
             ShowOverlay("GAME OVER");
@@ -159,20 +233,11 @@ public class Stage2TurretEncounter : MonoBehaviour
         lifeIcons = new Image[LifeLimit];
 
         RectTransform hudRect = RuntimeUiUtility.CreateRect("Encounter Status", canvasGO.transform);
-        hudRect.anchorMin = new Vector2(0f, 1f);
-        hudRect.anchorMax = new Vector2(0f, 1f);
-        hudRect.pivot = new Vector2(0f, 1f);
-        hudRect.anchoredPosition = new Vector2(32f, -24f);
-        hudRect.sizeDelta = new Vector2(Mathf.Max(720f, 32f + lifeIcons.Length * 80f), 88f);
-        hudText = RuntimeUiUtility.CreateText(
-            "Turrets Destroyed", hudRect, null, 32, TextAnchor.MiddleLeft,
-            Color.white, FontStyle.Bold);
-        hudText.rectTransform.anchorMin = new Vector2(0f, 0f);
-        hudText.rectTransform.anchorMax = new Vector2(0f, 1f);
-        hudText.rectTransform.pivot = new Vector2(0f, 0.5f);
-        hudText.rectTransform.anchoredPosition = new Vector2(lifeIcons.Length * 80f + 16f, 0f);
-        hudText.rectTransform.sizeDelta = new Vector2(400f, 0f);
-
+        hudRect.anchorMin = new Vector2(1f, 1f);
+        hudRect.anchorMax = new Vector2(1f, 1f);
+        hudRect.pivot = new Vector2(1f, 1f);
+        hudRect.anchoredPosition = new Vector2(-32f, -24f);
+        hudRect.sizeDelta = new Vector2(Mathf.Max(1200f, 32f + lifeIcons.Length * 80f), 88f);
         Sprite heartSprite = artReferences != null ? artReferences.Heart : null;
         if (heartSprite == null)
             Debug.LogError("[Stage2TurretEncounter] Heart sprite is not assigned on Stage2ArtReferences.");
@@ -181,11 +246,11 @@ public class Stage2TurretEncounter : MonoBehaviour
             GameObject heart = new GameObject($"Life {i + 1}", typeof(RectTransform), typeof(Image));
             heart.transform.SetParent(hudRect, false);
             RectTransform heartRect = heart.GetComponent<RectTransform>();
-            heartRect.anchorMin = new Vector2(0f, 0.5f);
-            heartRect.anchorMax = new Vector2(0f, 0.5f);
-            heartRect.pivot = new Vector2(0f, 0.5f);
-            heartRect.anchoredPosition = new Vector2(i * 80f, 0f);
-            heartRect.sizeDelta = new Vector2(80f, 80f);
+            heartRect.anchorMin = new Vector2(1f, 0.5f);
+            heartRect.anchorMax = new Vector2(1f, 0.5f);
+            heartRect.pivot = new Vector2(1f, 0.5f);
+            heartRect.anchoredPosition = new Vector2(-i * 92f, 0f);
+            heartRect.sizeDelta = new Vector2(112f, 112f);
             lifeIcons[i] = heart.GetComponent<Image>();
             lifeIcons[i].sprite = heartSprite;
             lifeIcons[i].preserveAspect = true;
@@ -201,7 +266,7 @@ public class Stage2TurretEncounter : MonoBehaviour
         overlayRect.offsetMin = Vector2.zero;
         overlayRect.offsetMax = Vector2.zero;
         overlayText = RuntimeUiUtility.CreateText(
-            "Result Text", overlayGO.transform, hudText.font, 58,
+            "Result Text", overlayGO.transform, RuntimeUiUtility.GetFont(), 58,
             TextAnchor.MiddleCenter, new Color(1f, 0.9f, 0.35f, 1f), FontStyle.Bold);
         RectTransform textRect = overlayText.rectTransform;
         textRect.anchorMin = new Vector2(0.1f, 0.48f);
@@ -239,12 +304,16 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private void RefreshHud()
     {
-        if (hudText != null)
-            hudText.text = $"Turrets: {destroyedTurrets}/{TurretGoal}";
-        int livesRemaining = Mathf.Max(0, LifeLimit - playerHits);
+        float livesRemaining = Mathf.Max(0f, LifeLimit - playerDamage);
         for (int i = 0; i < lifeIcons.Length; i++)
             if (lifeIcons[i] != null)
+            {
                 lifeIcons[i].gameObject.SetActive(i < livesRemaining);
+                lifeIcons[i].type = Image.Type.Filled;
+                lifeIcons[i].fillMethod = Image.FillMethod.Horizontal;
+                lifeIcons[i].fillOrigin = (int)Image.OriginHorizontal.Left;
+                lifeIcons[i].fillAmount = Mathf.Clamp01(livesRemaining - i);
+            }
     }
 
     private void ShowOverlay(string message, bool showTransition = false)

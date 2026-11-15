@@ -53,6 +53,7 @@ public class WebcamPoseInput : MonoBehaviour
     public float HorizontalAxis { get; private set; }
     public bool IsReaching { get; private set; }
     public bool IsCollecting { get; private set; }
+    public bool ArePalmsTogether { get; private set; }
     public bool IsJumpHeld => isActiveAndEnabled && IsActive && jumpGestureHeld;
     private bool jumpGestureHeld;
     public bool IsFistHeld => isActiveAndEnabled && IsActive && fistGestureHeld;
@@ -248,6 +249,7 @@ public class WebcamPoseInput : MonoBehaviour
         HorizontalAxis = 0f;
         IsReaching = false;
         IsCollecting = false;
+        ArePalmsTogether = false;
         jumpGestureHeld = false;
         fistGestureHeld = false;
         shootGestureHeld = false;
@@ -355,6 +357,7 @@ public class WebcamPoseInput : MonoBehaviour
         if (detectedJumpGesture)
             lastJumpGestureTime = Time.unscaledTime;
         fistGestureHeld = GestureClassifier.HasFistGesture(handDataBuffer, handCount);
+        ArePalmsTogether = GestureClassifier.HasPalmsTogether(handDataBuffer, handCount);
         shootGestureHeld = GestureClassifier.HasShootGesture(handDataBuffer, handCount);
         return GestureClassifier.Classify(handDataBuffer, handCount);
     }

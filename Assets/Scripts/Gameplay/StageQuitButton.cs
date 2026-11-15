@@ -14,6 +14,9 @@ public class StageQuitButton : MonoBehaviour
     private Slider musicSlider;
     private Slider sfxSlider;
     private Text controlsLabel;
+    private GameObject taskPage;
+    private Text taskGoalText;
+    private float nextTaskRefreshTime;
 
     private void Awake()
     {
@@ -30,8 +33,14 @@ public class StageQuitButton : MonoBehaviour
 
         Button pauseButton = CreateImageButton(
             "Pause Button", canvas.transform, art.pauseButton, new Vector2(100f, 100f),
-            new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-76f, -76f));
+            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(76f, -76f));
         pauseButton.onClick.AddListener(OpenPause);
+
+        Button taskButton = CreateImageButton(
+            "Task Button", canvas.transform, art.taskButton, new Vector2(100f, 100f),
+            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(196f, -76f));
+        taskButton.onClick.AddListener(ToggleTaskPage);
+        CreateTaskPage(canvas.transform);
 
         pausePage = CreatePage("Pause Page", canvas.transform);
         CreatePauseArt(pausePage.transform, art);
@@ -40,8 +49,67 @@ public class StageQuitButton : MonoBehaviour
         settingsPage.SetActive(false);
     }
 
+    private void CreateTaskPage(Transform parent)
+    {
+        taskPage = CreatePage("Task Page", parent);
+        Image dimmer = CreateImage("Task Dimmer", taskPage.transform, null);
+        Stretch(dimmer.rectTransform);
+        dimmer.color = new Color(0f, 0f, 0f, 0.55f);
+        dimmer.raycastTarget = true;
+        Image panel = CreateImage("Task Panel", taskPage.transform, null);
+        panel.color = new Color(0.08f, 0.04f, 0.25f, 0.96f);
+        panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        panel.rectTransform.sizeDelta = new Vector2(920f, 340f);
+        taskGoalText = CreateLabel("Stage Goal", taskPage.transform, GetStageGoal(), 42);
+        Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.57f), new Vector2(820f, 210f));
+        Button close = RuntimeUiUtility.CreateButton("Close Task", taskPage.transform, "CLOSE", 26,
+            new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(220f, 64f));
+        Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.25f), new Vector2(220f, 64f));
+        close.onClick.AddListener(() => taskPage.SetActive(false));
+        taskPage.SetActive(false);
+    }
+
+    private void ToggleTaskPage()
+    {
+        if (taskPage == null) return;
+        taskPage.SetActive(!taskPage.activeSelf);
+        if (taskPage.activeSelf) RefreshTaskPage();
+    }
+
+    private string GetStageGoal()
+    {
+        switch (SceneManager.GetActiveScene().name)
+        {
+            case "MainScene":
+                int scoreGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : 35;
+                return $"STAGE 1\nCollect stars and reach {scoreGoal} points.";
+            case "Stage2":
+                Stage2ArtReferences stage2 = Object.FindAnyObjectByType<Stage2ArtReferences>();
+                int turrets = stage2 != null ? stage2.TurretGoal : 6;
+                int beasts = stage2 != null ? stage2.BlobBeastGoal : 2;
+                return $"STAGE 2\nProtect your star spirit. Destroy {turrets} turrets and {beasts} blob beasts.";
+            case "Stage3":
+                Stage3ArtReferences stage3 = Object.FindAnyObjectByType<Stage3ArtReferences>();
+                int drones = stage3 != null ? stage3.DroneGoal : 5;
+                int slimes = stage3 != null ? stage3.SlimeGoal : 4;
+                Stage3DroneEncounter encounter = Object.FindAnyObjectByType<Stage3DroneEncounter>();
+                int hardBeastGoal = stage3 != null ? stage3.HardBeastGoal : 2;
+                string progress = encounter != null
+                    ? encounter.ObjectiveProgress
+                    : $"Drones: 0/{drones}\nSlimes: 0/{slimes}\nHard Beasts: 0/{hardBeastGoal}";
+                return $"STAGE 3\nDefeat all enemies. Rescue the star.\n{progress}";
+            default: return "STAGE GOAL";
+        }
+    }
+
     private void Update()
     {
+        if (taskPage != null && taskPage.activeSelf && Time.unscaledTime >= nextTaskRefreshTime)
+        {
+            RefreshTaskPage();
+            nextTaskRefreshTime = Time.unscaledTime + 0.25f;
+        }
+
         if (canvas == null || !Input.GetKeyDown(KeyCode.Escape)) return;
 
         if (settingsPage.activeSelf)
@@ -50,6 +118,11 @@ public class StageQuitButton : MonoBehaviour
             ResumeGame();
         else
             OpenPause();
+    }
+
+    private void RefreshTaskPage()
+    {
+        if (taskGoalText != null) taskGoalText.text = GetStageGoal();
     }
 
     private void OnDestroy()
@@ -83,10 +156,10 @@ public class StageQuitButton : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void QuitGame()
+    private void ReturnToMainMenu()
     {
         Time.timeScale = 1f;
-        Application.Quit();
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void CreatePauseArt(Transform parent, StagePauseArt art)
@@ -115,7 +188,7 @@ public class StageQuitButton : MonoBehaviour
         string[] optionNames = { "Settings", "Resume", "Restart", "Exit" };
         UnityEngine.Events.UnityAction[] actions =
         {
-            ShowSettings, ResumeGame, RestartStage, QuitGame
+            ShowSettings, ResumeGame, RestartStage, ReturnToMainMenu
         };
         float[] x = { 0.265f, 0.425f, 0.58f, 0.735f };
         for (int i = 0; i < optionNames.Length; i++)

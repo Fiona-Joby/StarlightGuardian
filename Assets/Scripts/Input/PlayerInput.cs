@@ -24,6 +24,8 @@ public class PlayerInput : MonoBehaviour
     public bool JumpHeld { get; private set; }
     public bool JumpPressed { get; private set; }
     public bool ShootPressed { get; private set; }
+    /// <summary>True for one frame when the Stage 3 final-pose gesture or "star" is entered.</summary>
+    public bool FinalPosePressed { get; private set; }
 
     /// <summary>True for one frame when the player makes a fist gesture (shield activation).</summary>
     public bool ShieldPressed { get; private set; }
@@ -41,6 +43,8 @@ public class PlayerInput : MonoBehaviour
     private WebcamPoseInput poseInput;
     private bool wasFisting;
     private bool wasShooting;
+    private bool wasPalmsTogether;
+    private string finalPoseTypingBuffer = string.Empty;
 
     private void Awake()
     {
@@ -50,6 +54,28 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         bool gestureControls = PlayerPrefs.GetInt("GestureControls", 0) == 1;
+        FinalPosePressed = false;
+        bool palmsTogether = gestureControls && poseInput != null && poseInput.IsActive && poseInput.ArePalmsTogether;
+        if (palmsTogether && !wasPalmsTogether) FinalPosePressed = true;
+        wasPalmsTogether = palmsTogether;
+
+        bool keyboardAvailable = !gestureControls || poseInput == null || !poseInput.IsActive;
+        if (keyboardAvailable)
+        {
+            string typed = Input.inputString.ToLowerInvariant();
+            foreach (char character in typed)
+            {
+                if (!char.IsLetter(character)) continue;
+                finalPoseTypingBuffer += character;
+                if (finalPoseTypingBuffer.Length > 4)
+                    finalPoseTypingBuffer = finalPoseTypingBuffer.Substring(finalPoseTypingBuffer.Length - 4);
+                if (finalPoseTypingBuffer == "star")
+                {
+                    FinalPosePressed = true;
+                    finalPoseTypingBuffer = string.Empty;
+                }
+            }
+        }
         string activeScene = SceneManager.GetActiveScene().name;
         bool supportsCombat = activeScene == "Stage2" || activeScene == "Stage3";
         bool shootingGesture = gestureControls && supportsCombat && poseInput != null && poseInput.IsShooting;

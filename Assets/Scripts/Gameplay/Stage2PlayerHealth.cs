@@ -19,14 +19,14 @@ public class Stage2PlayerHealth : MonoBehaviour
         invulnerabilityTimer = Mathf.Max(0f, invulnerabilityTimer - Time.deltaTime);
     }
 
-    public void TakeHit()
+    public void TakeHit(float damage = 1f)
     {
-        if ((encounter == null && stage3Encounter == null) ||
+        if (damage <= 0f || (encounter == null && stage3Encounter == null) ||
             (encounter != null && encounter.IsFinished) ||
             (stage3Encounter != null && stage3Encounter.IsFinished) ||
             invulnerabilityTimer > 0f) return;
         invulnerabilityTimer = hitInvulnerability;
-        if (encounter != null) encounter.OnPlayerHit();
+        if (encounter != null) encounter.OnPlayerHit(damage);
         else stage3Encounter.OnPlayerHit();
     }
 }

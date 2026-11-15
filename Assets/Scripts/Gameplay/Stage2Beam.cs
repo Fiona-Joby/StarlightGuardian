@@ -30,10 +30,24 @@ public class Stage2Beam : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        Stage2BlobBeast blob = other.GetComponentInParent<Stage2BlobBeast>();
+        if (blob != null)
+        {
+            blob.TakeHit();
+            Destroy(gameObject);
+            return;
+        }
         Stage3Drone drone = other.GetComponentInParent<Stage3Drone>();
         if (drone != null)
         {
             drone.TakeHit();
+            Destroy(gameObject);
+            return;
+        }
+        Stage3Slime slime = other.GetComponentInParent<Stage3Slime>();
+        if (slime != null)
+        {
+            slime.TakeHit();
             Destroy(gameObject);
         }
     }

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: StagePauseArt
   m_EditorClassIdentifier: 
   pauseButton: {fileID: 3643419794548232310, guid: 9725b8e483896a1428461801940cb7be, type: 3}
+  taskButton: {fileID: -3656459492962148647, guid: 69843e31392b105469cabb5d4951b82c, type: 3}
   pauseTab: {fileID: -4164497066753525170, guid: e9e408108d8def74a9e01b3e47c43189, type: 3}
   settingsOption: {fileID: 2800000, guid: 3203f6da418b8a4458b454d6b9b143de, type: 3}
   resumeOption: {fileID: 2800000, guid: e93e862a91f66a94bbeece0e5781f3cd, type: 3}
