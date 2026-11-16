@@ -13,7 +13,6 @@ using UnityEngine.UI;
 public class StageManager : MonoBehaviour
 {
     [Header("Transition")]
-    [SerializeField] private float displayDuration = 3f;
     [SerializeField] private string stage2SceneName = "Stage2";
 
     private Canvas overlayCanvas;
@@ -67,21 +66,22 @@ public class StageManager : MonoBehaviour
             yield return null;
         }
 
-        // Hold.
-        yield return new WaitForSeconds(displayDuration);
+        Time.timeScale = 0f;
+        ScoreManager score = ScoreManager.Instance;
+        int currentScore = score != null ? score.Score : 0;
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 1", Time.timeSinceLevelLoad,
+            currentScore, score != null ? score.StarsCollected : 0,
+            "The player completed the star-collection stage with a score of " + currentScore + ".",
+            ContinueToNextStage);
+    }
 
-        // Transition to Stage 2.
-        // If the Stage 2 scene exists in the build settings, load it.
-        // Otherwise, log a message and stay on the current scene.
+    private void ContinueToNextStage()
+    {
+        Time.timeScale = 1f;
         if (Application.CanStreamedLevelBeLoaded(stage2SceneName))
-        {
             SceneManager.LoadScene(stage2SceneName);
-        }
         else
-        {
-            Debug.Log($"[StageManager] Scene \"{stage2SceneName}\" not found in Build Settings. " +
-                       "Add it to transition to Stage 2.");
-        }
+            Debug.Log($"[StageManager] Scene \"{stage2SceneName}\" not found in Build Settings. Add it to transition to Stage 2.");
     }
 
     // ------------------------------------------------------------------ //

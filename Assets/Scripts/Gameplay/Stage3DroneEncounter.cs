@@ -33,6 +33,7 @@ public class Stage3DroneEncounter : MonoBehaviour
     private Text resultText;
     private Text transitionText;
     private Button retryButton;
+    private float stageStartedAt;
 
     public bool IsFinished => finished;
     public int DroneGoal => artReferences != null ? artReferences.DroneGoal : 5;
@@ -44,6 +45,7 @@ public class Stage3DroneEncounter : MonoBehaviour
 
     private void Start()
     {
+        stageStartedAt = Time.unscaledTime;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
@@ -310,7 +312,11 @@ public class Stage3DroneEncounter : MonoBehaviour
         finished = true;
         ShowResult("Star rescued!", "Stages Completed!", false);
         Time.timeScale = 0f;
-        StartCoroutine(ReturnToMainMenu());
+        resultText.gameObject.SetActive(false);
+        transitionText.gameObject.SetActive(false);
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
+            0, 0, $"The player rescued the star after defeating {destroyedDrones} drones, {destroyedSlimes} slimes, and {destroyedHardBeasts} hard beasts, taking {playerHits} hits.",
+            ReturnToMainMenu);
     }
 
     public void OnPlayerHit()
@@ -325,9 +331,8 @@ public class Stage3DroneEncounter : MonoBehaviour
         Time.timeScale = 0f;
     }
 
-    private IEnumerator ReturnToMainMenu()
+    private void ReturnToMainMenu()
     {
-        yield return new WaitForSecondsRealtime(3f);
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }

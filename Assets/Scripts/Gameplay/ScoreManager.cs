@@ -23,6 +23,9 @@ public class ScoreManager : MonoBehaviour
     /// <summary>The target score needed to complete the current stage.</summary>
     public int StageGoal => stageGoal;
 
+    /// <summary>Total stars caught during the current stage, including rainbow stars.</summary>
+    public int StarsCollected { get; private set; }
+
     /// <summary>Fires every time the score changes. Args: (currentScore, stageGoal).</summary>
     public event System.Action<int, int> ScoreChanged;
 
@@ -52,6 +55,8 @@ public class ScoreManager : MonoBehaviour
     private void OnStarCaught(StarMovement star)
     {
         if (goalReached) return;
+
+        StarsCollected++;
 
         // Rainbow stars don't award points — they activate the multiplier.
         if (star.Type == StarType.Rainbow) return;

@@ -20,9 +20,11 @@ public class Stage2TurretEncounter : MonoBehaviour
     private Text transitionText;
     private Button retryButton;
     private Stage2ArtReferences artReferences;
+    private float stageStartedAt;
 
     private void Start()
     {
+        stageStartedAt = Time.unscaledTime;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
@@ -200,7 +202,11 @@ public class Stage2TurretEncounter : MonoBehaviour
         finished = true;
         ShowOverlay("All turrets and beasts defeated successfully", true);
         Time.timeScale = 0f;
-        StartCoroutine(LoadStage3());
+        overlayText.gameObject.SetActive(false);
+        transitionText.gameObject.SetActive(false);
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
+            0, 0, $"The player defeated {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
+            ContinueToStage3);
     }
 
     public void OnPlayerHit(float damage = 1f)
@@ -217,9 +223,8 @@ public class Stage2TurretEncounter : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadStage3()
+    private void ContinueToStage3()
     {
-        yield return new WaitForSecondsRealtime(2f);
         Time.timeScale = 1f;
         SceneManager.LoadScene("Stage3");
     }
