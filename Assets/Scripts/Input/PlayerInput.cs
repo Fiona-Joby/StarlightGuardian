@@ -29,6 +29,13 @@ public class PlayerInput : MonoBehaviour
 
     /// <summary>True for one frame when the player makes a fist gesture (shield activation).</summary>
     public bool ShieldPressed { get; private set; }
+    /// <summary>True only while webcam gestures are the active control source.</summary>
+    public bool IsUsingGestureControls => PlayerPrefs.GetInt("GestureControls", 0) == 1 && poseInput != null && poseInput.IsActive;
+    public int GestureLeftCount { get; private set; }
+    public int GestureRightCount { get; private set; }
+    public int GestureJumpCount { get; private set; }
+    public int GestureReachCount { get; private set; }
+    public int GestureCollectCount { get; private set; }
 
     private bool jumpArmed = true;
     private float jumpReleaseTime;
@@ -44,6 +51,10 @@ public class PlayerInput : MonoBehaviour
     private bool wasFisting;
     private bool wasShooting;
     private bool wasPalmsTogether;
+    private bool wasGestureLeft;
+    private bool wasGestureRight;
+    private bool wasGestureReaching;
+    private bool wasGestureCollecting;
     private string finalPoseTypingBuffer = string.Empty;
 
     private void Awake()
@@ -88,6 +99,8 @@ public class PlayerInput : MonoBehaviour
             ? poseInput != null && poseInput.IsJumpHeld
             : Input.GetKey(KeyCode.UpArrow);
         JumpPressed = JumpHeld && jumpArmed;
+        if (IsUsingGestureControls && JumpPressed)
+            GestureJumpCount++;
         if (JumpHeld)
         {
             jumpArmed = false;
@@ -127,5 +140,19 @@ public class PlayerInput : MonoBehaviour
         // Track facing direction.
         if (HorizontalInput > 0.01f) FacingRight = true;
         else if (HorizontalInput < -0.01f) FacingRight = false;
+
+        bool usingGestures = IsUsingGestureControls;
+        bool gestureLeft = usingGestures && HorizontalInput < -0.01f;
+        bool gestureRight = usingGestures && HorizontalInput > 0.01f;
+        bool gestureReaching = usingGestures && IsReaching;
+        bool gestureCollecting = usingGestures && CollectPressed;
+        if (gestureLeft && !wasGestureLeft) GestureLeftCount++;
+        if (gestureRight && !wasGestureRight) GestureRightCount++;
+        if (gestureReaching && !wasGestureReaching) GestureReachCount++;
+        if (gestureCollecting && !wasGestureCollecting) GestureCollectCount++;
+        wasGestureLeft = gestureLeft;
+        wasGestureRight = gestureRight;
+        wasGestureReaching = gestureReaching;
+        wasGestureCollecting = gestureCollecting;
     }
 }

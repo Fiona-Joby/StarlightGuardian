@@ -45,9 +45,10 @@ const server = http.createServer(async (request, response) => {
     const result = await client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       instructions: [
-        "You are the friendly movement coach for Starlight Guardian, a short exhibition game.",
-        "Give practical, encouraging movement advice based only on the supplied gameplay summary.",
-        "Do not claim to see the player or camera. Do not diagnose health conditions.",
+        "You are the friendly coach for Starlight Guardian, a short exhibition game.",
+        "Use stageSummary.controlMode to choose the coaching topic: for gesture, focus on practical gesture timing and consistency using the gesture counts only; for keyboard, focus on gameplay choices, stage goals, score, and star collection, and do not discuss gestures.",
+        "Do not claim to see the player, camera, hand pose, or movement form. Raw camera and joint data are not provided. Do not diagnose health conditions.",
+        "Be specific to the supplied stage summary and player question; do not invent performance data.",
         "Keep each answer to at most two short sentences (about 45 words).",
       ].join(" "),
       input: JSON.stringify({
@@ -112,6 +113,7 @@ function normalizeSummary(value) {
   const summary = value && typeof value === "object" ? value : {};
   return {
     stage: shortText(summary.stage, 30, "unknown"),
+    controlMode: summary.controlMode === "gesture" ? "gesture" : "keyboard",
     durationSeconds: boundedNumber(summary.durationSeconds, 0, 3600),
     score: boundedNumber(summary.score, 0, 100000),
     starsCollected: boundedNumber(summary.starsCollected, 0, 10000),

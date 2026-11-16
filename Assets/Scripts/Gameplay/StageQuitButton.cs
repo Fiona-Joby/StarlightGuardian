@@ -14,6 +14,18 @@ public class StageQuitButton : MonoBehaviour
     private Slider musicSlider;
     private Slider sfxSlider;
     private Text controlsLabel;
+    private Button controlsButton;
+    private RectTransform controlsArrow;
+    private GameObject controlsDropdown;
+    private Button keyboardOption;
+    private Button gestureOption;
+    private Text musicVolumePercent;
+    private Text sfxVolumePercent;
+    private StagePauseArt.LocalizedArt localizedArt;
+    private int language;
+    private AudioSource uiAudioSource;
+    private AudioClip optionHoverSound;
+    private AudioClip optionSelectSound;
     private GameObject taskPage;
     private Text taskGoalText;
     private float nextTaskRefreshTime;
@@ -27,6 +39,10 @@ public class StageQuitButton : MonoBehaviour
             return;
         }
 
+        language = Mathf.Clamp(PlayerPrefs.GetInt("Language", 0), 0, 3);
+        if (art.localizedArt != null && language < art.localizedArt.Length)
+            localizedArt = art.localizedArt[language];
+
         canvas = RuntimeUiUtility.CreateOverlayCanvas(
             "Stage Pause Canvas", 500, new Vector2(1920f, 1080f));
         RuntimeUiUtility.EnsureEventSystem();
@@ -34,11 +50,13 @@ public class StageQuitButton : MonoBehaviour
         Button pauseButton = CreateImageButton(
             "Pause Button", canvas.transform, art.pauseButton, new Vector2(100f, 100f),
             new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(76f, -76f));
+        SetupOptionAudio(pauseButton);
         pauseButton.onClick.AddListener(OpenPause);
 
         Button taskButton = CreateImageButton(
             "Task Button", canvas.transform, art.taskButton, new Vector2(100f, 100f),
             new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(196f, -76f));
+        SetupOptionAudio(taskButton);
         taskButton.onClick.AddListener(ToggleTaskPage);
         CreateTaskPage(canvas.transform);
 
@@ -65,6 +83,7 @@ public class StageQuitButton : MonoBehaviour
         Button close = RuntimeUiUtility.CreateButton("Close Task", taskPage.transform, "CLOSE", 26,
             new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(220f, 64f));
         Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.25f), new Vector2(220f, 64f));
+        SetupOptionAudio(close);
         close.onClick.AddListener(() => taskPage.SetActive(false));
         taskPage.SetActive(false);
     }
@@ -171,7 +190,9 @@ public class StageQuitButton : MonoBehaviour
         dimmerImage.color = new Color(0f, 0f, 0f, 0.52f);
         dimmerImage.raycastTarget = true;
 
-        Image frame = CreateImage("Pause Tab Background", parent, art.pauseTab);
+        Sprite pauseTab = localizedArt != null && localizedArt.pauseTab != null
+            ? localizedArt.pauseTab : art.pauseTab;
+        Image frame = CreateImage("Pause Tab Background", parent, pauseTab);
         RectTransform frameRect = frame.rectTransform;
         frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
         frameRect.sizeDelta = new Vector2(1280f, 762f);
@@ -181,10 +202,9 @@ public class StageQuitButton : MonoBehaviour
         options.transform.SetParent(parent, false);
         Stretch(options.GetComponent<RectTransform>());
 
-        Texture2D[] optionTextures =
-        {
-            art.settingsOption, art.resumeOption, art.restartOption, art.quitOption
-        };
+        Texture2D[] optionTextures = localizedArt != null
+            ? new[] { localizedArt.settingsOption, localizedArt.resumeOption, localizedArt.restartOption, localizedArt.quitOption }
+            : new[] { art.settingsOption, art.resumeOption, art.restartOption, art.quitOption };
         string[] optionNames = { "Settings", "Resume", "Restart", "Exit" };
         UnityEngine.Events.UnityAction[] actions =
         {
@@ -198,6 +218,7 @@ public class StageQuitButton : MonoBehaviour
                 optionNames[i] + " Option", options.transform, optionSprite,
                 new Vector2(240f, 292f), new Vector2(x[i], 0.49f),
                 new Vector2(x[i], 0.49f), Vector2.zero);
+            SetupOptionAudio(button);
             button.onClick.AddListener(actions[i]);
         }
     }
@@ -211,44 +232,59 @@ public class StageQuitButton : MonoBehaviour
         dimmer.color = new Color(0f, 0f, 0f, 0.52f);
         dimmer.raycastTarget = true;
 
-        Image frame = CreateImage("Settings Tab Background", settingsPage.transform, art.pauseTab);
+        Sprite settingsTab = localizedArt != null && localizedArt.settingsTab != null
+            ? localizedArt.settingsTab : art.pauseTab;
+        Image frame = CreateImage("Settings Tab Background", settingsPage.transform, settingsTab);
         frame.rectTransform.anchorMin = frame.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        frame.rectTransform.sizeDelta = new Vector2(1340f, 798f);
+        frame.rectTransform.sizeDelta = new Vector2(1388.48f, 818.29f);
+        frame.preserveAspect = false;
         frame.raycastTarget = false;
 
-        // Cover the pause artwork's center while leaving its decorative frame visible.
-        Image panel = CreateImage("Settings Content Panel", settingsPage.transform, null);
-        panel.color = new Color(0.31f, 0.02f, 0.93f, 0.98f);
-        panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        panel.rectTransform.sizeDelta = new Vector2(1200f, 630f);
-        panel.raycastTarget = true;
+        Font font = GetLanguageFont();
+        musicSlider = CreateSlider("Music Volume", settingsPage.transform, new Vector2(0.57900006f, 0.5707784f), art.sliderHandle);
+        musicSlider.GetComponent<RectTransform>().anchoredPosition = new Vector2(-2.03f, 0.056f);
+        musicSlider.GetComponent<RectTransform>().sizeDelta = new Vector2(487.93f, 34f);
+        sfxSlider = CreateSlider("Sound FX Volume", settingsPage.transform, new Vector2(0.57900006f, 0.5f), art.sliderHandle);
+        sfxSlider.GetComponent<RectTransform>().anchoredPosition = new Vector2(-2.02f, 0.887f);
+        sfxSlider.GetComponent<RectTransform>().sizeDelta = new Vector2(487.9f, 34f);
 
-        Text title = CreateLabel("Settings Title", settingsPage.transform, "SETTINGS", 64);
-        Place(title.rectTransform, new Vector2(0.5f, 0.79f), new Vector2(620f, 90f));
-        title.color = Color.white;
+        musicVolumePercent = CreateLabel("Music Volume Percentage", settingsPage.transform, "", 32);
+        Place(musicVolumePercent.rectTransform, new Vector2(0.782f, 0.5708f), new Vector2(130f, 54f));
+        sfxVolumePercent = CreateLabel("Sound FX Volume Percentage", settingsPage.transform, "", 32);
+        Place(sfxVolumePercent.rectTransform, new Vector2(0.782f, 0.5f), new Vector2(130f, 54f));
 
-        Text musicLabel = CreateLabel("Music Volume Label", settingsPage.transform, "MUSIC VOLUME", 34);
-        Place(musicLabel.rectTransform, new Vector2(0.5f, 0.66f), new Vector2(800f, 52f));
-        musicSlider = CreateSlider("Music Volume", settingsPage.transform, new Vector2(0.5f, 0.57f));
-
-        Text sfxLabel = CreateLabel("Sound FX Volume Label", settingsPage.transform, "SOUND FX VOLUME", 34);
-        Place(sfxLabel.rectTransform, new Vector2(0.5f, 0.46f), new Vector2(800f, 52f));
-        sfxSlider = CreateSlider("Sound FX Volume", settingsPage.transform, new Vector2(0.5f, 0.37f));
-
-        Button controlsButton = RuntimeUiUtility.CreateButton(
+        controlsButton = RuntimeUiUtility.CreateButton(
             "Control Mode", settingsPage.transform, "", 32,
-            new Color(0.08f, 0.01f, 0.38f, 1f), Color.white,
-            new Vector2(600f, 76f));
-        Place(controlsButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.25f), new Vector2(600f, 76f));
+            new Color(0.54f, 0.35f, 0.97f, 0.93f), Color.white,
+            new Vector2(632.65f, 86f));
+        Place(controlsButton.GetComponent<RectTransform>(), new Vector2(0.61600006f, 0.404f), new Vector2(632.65f, 86f));
+        controlsButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(1.36f, 2f);
         controlsLabel = controlsButton.GetComponentInChildren<Text>();
+        controlsLabel.font = font;
+        controlsLabel.alignment = TextAnchor.MiddleLeft;
+        controlsLabel.rectTransform.offsetMin = new Vector2(38f, 0f);
+        controlsLabel.rectTransform.offsetMax = new Vector2(-38f, 0f);
+        controlsLabel.fontSize = 40;
+        SetupOptionAudio(controlsButton);
         controlsButton.onClick.AddListener(ToggleControls);
 
-        Button back = RuntimeUiUtility.CreateButton(
-            "Back to Pause", settingsPage.transform, "BACK", 30,
-            new Color(0.08f, 0.01f, 0.38f, 1f), Color.white,
-            new Vector2(260f, 64f));
-        Place(back.GetComponent<RectTransform>(), new Vector2(0.5f, 0.13f), new Vector2(260f, 64f));
-        back.onClick.AddListener(ShowPause);
+        Image arrow = CreateImage("Control Dropdown Arrow", settingsPage.transform, art.controlsDropdownArrow);
+        controlsArrow = arrow.rectTransform;
+        controlsArrow.anchorMin = controlsArrow.anchorMax = new Vector2(0.57900006f, 0.404f);
+        controlsArrow.anchoredPosition = new Vector2(342f, -3f);
+        controlsArrow.sizeDelta = new Vector2(142.63f, 78.75f);
+        arrow.color = new Color(0.78f, 1f, 0f, 1f);
+        arrow.raycastTarget = false;
+        controlsArrow.localEulerAngles = new Vector3(0f, 0f, -90f);
+
+        CreateControlsDropdown(settingsPage.transform, font);
+
+        Button pauseSettingsBack = RuntimeUiUtility.CreateButton(
+            "Close Settings", settingsPage.transform, "", 30,
+            new Color(0f, 0f, 0f, 0f), Color.white, new Vector2(106f, 106f));
+        Place(pauseSettingsBack.GetComponent<RectTransform>(), new Vector2(0.82f, 0.79f), new Vector2(106f, 106f));
+        SetupOptionAudio(pauseSettingsBack);
+        pauseSettingsBack.onClick.AddListener(ShowPause);
 
         musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", DefaultVolume));
         sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", DefaultVolume));
@@ -262,8 +298,68 @@ public class StageQuitButton : MonoBehaviour
             PlayerPrefs.SetFloat("SfxVolume", value);
             ApplyVolumes();
         });
+        musicSlider.onValueChanged.AddListener(_ => UpdateVolumePercentages());
+        sfxSlider.onValueChanged.AddListener(_ => UpdateVolumePercentages());
         RefreshControlLabel();
+        UpdateVolumePercentages();
         ApplyVolumes();
+    }
+
+    private void CreateControlsDropdown(Transform parent, Font font)
+    {
+        controlsDropdown = new GameObject("Controls Dropdown Panel", typeof(RectTransform), typeof(Image));
+        controlsDropdown.transform.SetParent(parent, false);
+        RectTransform panelRect = controlsDropdown.GetComponent<RectTransform>();
+        panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.57900006f, 0.404f);
+        panelRect.anchoredPosition = new Vector2(72.377f, -85.1f);
+        panelRect.sizeDelta = new Vector2(632.68f, 88.21f);
+        controlsDropdown.GetComponent<Image>().color = new Color(0.39f, 0.2f, 0.86f, 1f);
+
+        keyboardOption = CreateControlOption("Keyboard Option", controlsDropdown.transform, font);
+        gestureOption = CreateControlOption("Gesture Option", controlsDropdown.transform, font);
+        controlsDropdown.SetActive(false);
+    }
+
+    private Button CreateControlOption(string name, Transform parent, Font font)
+    {
+        Button option = RuntimeUiUtility.CreateButton(
+            name, parent, "", 34, new Color(0.36f, 0.18f, 0.76f, 1f), Color.white,
+            new Vector2(632.68f, 88.21f));
+        RectTransform rect = option.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        Text label = option.GetComponentInChildren<Text>();
+        label.font = font;
+        label.fontSize = 38;
+        SetupOptionAudio(option);
+        option.onClick.AddListener(() => SetControlMode(name == "Gesture Option"));
+        return option;
+    }
+
+    private void SetupOptionAudio(Button button)
+    {
+        if (button == null) return;
+        if (optionHoverSound == null)
+            optionHoverSound = Resources.Load<AudioClip>("Audio/litupsubway-ui-hover-sfx-513360");
+        if (optionSelectSound == null)
+            optionSelectSound = Resources.Load<AudioClip>("Audio/litupsubway-ui-move-518617");
+
+        if (uiAudioSource == null)
+        {
+            GameObject audioObject = new GameObject("Pause UI SFX");
+            audioObject.transform.SetParent(transform, false);
+            uiAudioSource = audioObject.AddComponent<AudioSource>();
+            uiAudioSource.playOnAwake = false;
+            uiAudioSource.spatialBlend = 0f;
+            uiAudioSource.volume = PlayerPrefs.GetFloat("SfxVolume", DefaultVolume);
+        }
+
+        MenuOptionAudio optionAudio = button.GetComponent<MenuOptionAudio>();
+        if (optionAudio == null) optionAudio = button.gameObject.AddComponent<MenuOptionAudio>();
+        optionAudio.Initialize(uiAudioSource, optionHoverSound, optionSelectSound);
+        button.onClick.AddListener(optionAudio.PlaySelection);
     }
 
     private void ShowSettings()
@@ -271,6 +367,7 @@ public class StageQuitButton : MonoBehaviour
         musicSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("MusicVolume", DefaultVolume));
         sfxSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat("SfxVolume", DefaultVolume));
         RefreshControlLabel();
+        UpdateVolumePercentages();
         ApplyVolumes();
         settingsPage.SetActive(true);
         pausePage.SetActive(false);
@@ -278,15 +375,65 @@ public class StageQuitButton : MonoBehaviour
 
     private void ToggleControls()
     {
-        PlayerPrefs.SetInt("GestureControls", PlayerPrefs.GetInt("GestureControls", 0) == 1 ? 0 : 1);
+        if (controlsDropdown == null) return;
+        SetControlsDropdownVisible(!controlsDropdown.activeSelf);
+    }
+
+    private void SetControlMode(bool useGestureControls)
+    {
+        PlayerPrefs.SetInt("GestureControls", useGestureControls ? 1 : 0);
         RefreshControlLabel();
+        SetControlsDropdownVisible(false);
+    }
+
+    private void SetControlsDropdownVisible(bool visible)
+    {
+        if (controlsDropdown != null) controlsDropdown.SetActive(visible);
+        if (controlsArrow != null)
+            controlsArrow.localEulerAngles = new Vector3(0f, 0f, visible ? 90f : -90f);
     }
 
     private void RefreshControlLabel()
     {
-        if (controlsLabel == null) return;
-        string mode = PlayerPrefs.GetInt("GestureControls", 0) == 1 ? "GESTURE" : "KEYBOARD";
-        controlsLabel.text = "CONTROLS: " + mode;
+        bool gestureSelected = PlayerPrefs.GetInt("GestureControls", 0) == 1;
+        if (controlsLabel != null) controlsLabel.text = gestureSelected ? GetText(6) : GetText(5);
+        if (keyboardOption != null)
+        {
+            keyboardOption.GetComponentInChildren<Text>().text = GetText(5);
+            keyboardOption.gameObject.SetActive(gestureSelected);
+        }
+        if (gestureOption != null)
+        {
+            gestureOption.GetComponentInChildren<Text>().text = GetText(6);
+            gestureOption.gameObject.SetActive(!gestureSelected);
+        }
+        SetControlsDropdownVisible(false);
+    }
+
+    private string GetText(int key)
+    {
+        string[,] translations =
+        {
+            { "KEYBOARD", "കീബോർഡ്", "KEYBOARD", "键盘" },
+            { "GESTURE", "ആംഗ്യം", "GESTUR", "手势" }
+        };
+        int row = key == 6 ? 1 : 0;
+        return translations[row, language];
+    }
+
+    private Font GetLanguageFont()
+    {
+        string fontName = language == 1 ? "Nirmala UI" : language == 3 ? "Microsoft YaHei" : "Arial";
+        Font font = Font.CreateDynamicFontFromOSFont(fontName, 40);
+        return font != null ? font : RuntimeUiUtility.GetFont();
+    }
+
+    private void UpdateVolumePercentages()
+    {
+        if (musicVolumePercent != null && musicSlider != null)
+            musicVolumePercent.text = Mathf.RoundToInt(musicSlider.value * 100f) + "%";
+        if (sfxVolumePercent != null && sfxSlider != null)
+            sfxVolumePercent.text = Mathf.RoundToInt(sfxSlider.value * 100f) + "%";
     }
 
     private static void ApplyVolumes()
@@ -352,7 +499,7 @@ public class StageQuitButton : MonoBehaviour
         return text;
     }
 
-    private static Slider CreateSlider(string name, Transform parent, Vector2 anchor)
+    private static Slider CreateSlider(string name, Transform parent, Vector2 anchor, Sprite handleSprite)
     {
         GameObject go = new GameObject(name + " Slider", typeof(RectTransform), typeof(Slider));
         go.transform.SetParent(parent, false);
@@ -361,10 +508,10 @@ public class StageQuitButton : MonoBehaviour
         rect.sizeDelta = new Vector2(720f, 34f);
 
         Image track = CreateImage("Track", go.transform, null);
-        track.color = new Color(0.1f, 0.06f, 0.28f, 1f);
+        track.color = new Color(0.16f, 0.21f, 0.34f, 0f);
         Stretch(track.rectTransform);
         Image fill = CreateImage("Fill", go.transform, null);
-        fill.color = new Color(0.86f, 1f, 0.02f, 1f);
+        fill.color = new Color(0.80784315f, 1f, 0.023529412f, 1f);
         RectTransform fillRect = fill.rectTransform;
         fillRect.anchorMin = Vector2.zero;
         fillRect.anchorMax = Vector2.one;
@@ -374,9 +521,11 @@ public class StageQuitButton : MonoBehaviour
         GameObject handleGO = new GameObject("Handle", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         handleGO.transform.SetParent(go.transform, false);
         Image handleImage = handleGO.GetComponent<Image>();
+        handleImage.sprite = handleSprite;
+        handleImage.preserveAspect = true;
         handleImage.color = Color.white;
         RectTransform handle = handleGO.GetComponent<RectTransform>();
-        handle.sizeDelta = new Vector2(30f, 50f);
+        handle.sizeDelta = new Vector2(24f, 46f);
 
         Slider slider = go.GetComponent<Slider>();
         slider.minValue = 0f;

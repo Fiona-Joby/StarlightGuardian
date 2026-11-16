@@ -316,7 +316,7 @@ public class Stage3DroneEncounter : MonoBehaviour
         transitionText.gameObject.SetActive(false);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player rescued the star after defeating {destroyedDrones} drones, {destroyedSlimes} slimes, and {destroyedHardBeasts} hard beasts, taking {playerHits} hits.",
-            ReturnToMainMenu);
+            playerInput, ReturnToMainMenu);
     }
 
     public void OnPlayerHit()

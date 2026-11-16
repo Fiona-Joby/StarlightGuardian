@@ -29,6 +29,10 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private RectTransform controlsDropdownArrow;
     [SerializeField] private Sprite selectionArrowSprite;
 
+    [Header("Menu option sounds")]
+    [SerializeField] private AudioClip optionHoverSound;
+    [SerializeField] private AudioClip optionSelectSound;
+
     [Header("Localized visual GameObjects (language-major)")]
     [SerializeField] private GameObject[] localizedMainOptionVisuals;
     [SerializeField] private GameObject[] localizedStageOptionVisuals;
@@ -36,6 +40,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Image settingsPopupCard;
     private Image[] englishMainOptionImages;
     private Image[] englishStageOptionImages;
+    private AudioSource menuAudioSource;
 
     [Header("Localized labels")]
     [SerializeField] private Text[] mainLabels;
@@ -95,6 +100,7 @@ public class MainMenuController : MonoBehaviour
         if (controlsButton != null) controlsButton.onClick.AddListener(ToggleControls);
         if (keyboardOptionButton != null) keyboardOptionButton.onClick.AddListener(() => SetControlMode(false));
         if (gestureOptionButton != null) gestureOptionButton.onClick.AddListener(() => SetControlMode(true));
+        SetupOptionAudio();
         SetControlsDropdownVisible(false);
         SetupSelectionMarkers();
         if (musicSlider != null)
@@ -332,6 +338,50 @@ public class MainMenuController : MonoBehaviour
         MenuButtonSelectionMarker marker = button.GetComponent<MenuButtonSelectionMarker>();
         if (marker == null) marker = button.gameObject.AddComponent<MenuButtonSelectionMarker>();
         marker.Initialize(selectionArrowSprite, additionalLeftOffset);
+    }
+
+    private void SetupOptionAudio()
+    {
+        if (optionHoverSound == null)
+            optionHoverSound = Resources.Load<AudioClip>("Audio/litupsubway-ui-hover-sfx-513360");
+        if (optionSelectSound == null)
+            optionSelectSound = Resources.Load<AudioClip>("Audio/litupsubway-ui-move-518617");
+
+        GameObject audioObject = new GameObject("UI SFX");
+        audioObject.transform.SetParent(transform, false);
+        menuAudioSource = audioObject.AddComponent<AudioSource>();
+        menuAudioSource.playOnAwake = false;
+        menuAudioSource.spatialBlend = 0f;
+        menuAudioSource.volume = PlayerPrefs.GetFloat("SfxVolume", 0.8f);
+
+        HashSet<Button> buttons = new HashSet<Button>();
+        AddOptionAudio(buttons, newGameButton);
+        AddOptionAudio(buttons, stageMenuButton);
+        AddOptionAudio(buttons, languageMenuButton);
+        AddOptionAudio(buttons, settingsMenuButton);
+        AddOptionAudio(buttons, GetExitButton());
+        AddOptionAudio(buttons, controlsButton);
+        AddOptionAudio(buttons, keyboardOptionButton);
+        AddOptionAudio(buttons, gestureOptionButton);
+        AddOptionAudio(buttons, stageButtons);
+        AddOptionAudio(buttons, languageButtons);
+        AddOptionAudio(buttons, backButtons);
+    }
+
+    private void AddOptionAudio(HashSet<Button> buttons, Button button)
+    {
+        if (button == null || !buttons.Add(button)) return;
+
+        MenuOptionAudio optionAudio = button.GetComponent<MenuOptionAudio>();
+        if (optionAudio == null) optionAudio = button.gameObject.AddComponent<MenuOptionAudio>();
+        optionAudio.Initialize(menuAudioSource, optionHoverSound, optionSelectSound);
+        button.onClick.AddListener(optionAudio.PlaySelection);
+    }
+
+    private void AddOptionAudio(HashSet<Button> buttons, Button[] buttonArray)
+    {
+        if (buttonArray == null) return;
+        foreach (Button button in buttonArray) AddOptionAudio(buttons, button);
     }
 
     private void ApplyVolumes()

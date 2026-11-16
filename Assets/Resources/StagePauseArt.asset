@@ -14,8 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pauseButton: {fileID: 3643419794548232310, guid: 9725b8e483896a1428461801940cb7be, type: 3}
   taskButton: {fileID: -3656459492962148647, guid: 69843e31392b105469cabb5d4951b82c, type: 3}
+  controlsDropdownArrow: {fileID: 21300000, guid: a1b2c3d4e5f60003a1b2c3d4e5f60003, type: 3}
+  sliderHandle: {fileID: 21300000, guid: 1a7361536e654fb5812e90bf74ca563e, type: 3}
   pauseTab: {fileID: -4164497066753525170, guid: e9e408108d8def74a9e01b3e47c43189, type: 3}
   settingsOption: {fileID: 2800000, guid: 3203f6da418b8a4458b454d6b9b143de, type: 3}
   resumeOption: {fileID: 2800000, guid: e93e862a91f66a94bbeece0e5781f3cd, type: 3}
   restartOption: {fileID: 2800000, guid: 2096eeb83575b6b4691f7f9981e9976b, type: 3}
   quitOption: {fileID: 2800000, guid: 0cef9b6168b7ae74a97281d91cbfa9a0, type: 3}
+  localizedArt:
+  - pauseTab: {fileID: -4164497066753525170, guid: e9e408108d8def74a9e01b3e47c43189, type: 3}
+    settingsTab: {fileID: 9028999574756111584, guid: f42e8ab7b0d0ffe478b0f431f76f42f3, type: 3}
+    settingsOption: {fileID: 2800000, guid: 3203f6da418b8a4458b454d6b9b143de, type: 3}
+    resumeOption: {fileID: 2800000, guid: e93e862a91f66a94bbeece0e5781f3cd, type: 3}
+    restartOption: {fileID: 2800000, guid: 2096eeb83575b6b4691f7f9981e9976b, type: 3}
+    quitOption: {fileID: 2800000, guid: 0cef9b6168b7ae74a97281d91cbfa9a0, type: 3}
+  - pauseTab: {fileID: -4164497066753525170, guid: f84fbbd707412d643a7aad0dd42f24fa, type: 3}
+    settingsTab: {fileID: 3266668403823126467, guid: 6845ca18c7cb56242893be40c4b1b5d3, type: 3}
+    settingsOption: {fileID: 2800000, guid: cf1a3e769dfaa894a838cc9962dba3ee, type: 3}
+    resumeOption: {fileID: 2800000, guid: c1d2d492c06e89648a3e452a511023de, type: 3}
+    restartOption: {fileID: 2800000, guid: ec0914c11a2718c4fb454a96f0ef6530, type: 3}
+    quitOption: {fileID: 2800000, guid: 0ca527f62a398924e8e49ee9c86445be, type: 3}
+  - pauseTab: {fileID: -4164497066753525170, guid: ad0255a90a296bd4681a788f32fe51c9, type: 3}
+    settingsTab: {fileID: 3266668403823126467, guid: 3d15646c71245f94c8d8fa63224f73e4, type: 3}
+    settingsOption: {fileID: 2800000, guid: c2d12b0c06f534941a279eb8e706cdd4, type: 3}
+    resumeOption: {fileID: 2800000, guid: 832e93a275a381a44971e473eec7bc08, type: 3}
+    restartOption: {fileID: 2800000, guid: 3d42c0e1d5de7fa41832c0c44629352c, type: 3}
+    quitOption: {fileID: 2800000, guid: 99ac55c68bef88a4db1a264702fe936d, type: 3}
+  - pauseTab: {fileID: -4164497066753525170, guid: 1cdf4e14e814792469c96a7ec2d9116f, type: 3}
+    settingsTab: {fileID: 3266668403823126467, guid: 7087eb01a216f8446991f93513ec0829, type: 3}
+    settingsOption: {fileID: 2800000, guid: 39f2ead23274dff49866032f27327030, type: 3}
+    resumeOption: {fileID: 2800000, guid: 6b969d90424f8a246bcc0951002cd660, type: 3}
+    restartOption: {fileID: 2800000, guid: d1899dc7793d62143bbd192e1763756d, type: 3}
+    quitOption: {fileID: 2800000, guid: 579bfcd5ead5c5345b2c255989098786, type: 3}

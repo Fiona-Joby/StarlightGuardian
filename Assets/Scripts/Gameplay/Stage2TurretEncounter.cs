@@ -206,7 +206,7 @@ public class Stage2TurretEncounter : MonoBehaviour
         transitionText.gameObject.SetActive(false);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player defeated {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
-            ContinueToStage3);
+            FindPlayerInput(), ContinueToStage3);
     }
 
     public void OnPlayerHit(float damage = 1f)
@@ -227,6 +227,12 @@ public class Stage2TurretEncounter : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("Stage3");
+    }
+
+    private static PlayerInput FindPlayerInput()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        return player != null ? player.GetComponent<PlayerInput>() : null;
     }
 
     private void BuildHud()

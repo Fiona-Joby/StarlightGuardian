@@ -10,7 +10,6 @@ using UnityEngine.UI;
 public sealed class AiCoachInteraction : MonoBehaviour
 {
     private const string Endpoint = "https://starlight-guardian.onrender.com/coach";
-    private const int MaxFollowUps = 2;
     // Render's free service can take around a minute to wake after inactivity.
     private const int RequestTimeoutSeconds = 90;
 
@@ -23,6 +22,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
     [Serializable] private sealed class CoachSummary
     {
         public string stage;
+        public string controlMode;
         public float durationSeconds;
         public int score;
         public int starsCollected;
@@ -41,24 +41,25 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
     private static readonly string[,] Copy =
     {
-        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "You can ask {0} more question(s).", "Opening tip", "Reply in English." },
-        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "ഇനി {0} ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക." },
-        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya {0} kali lagi.", "Saran awal", "Balas dalam bahasa Indonesia." },
-        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你还可以提问 {0} 次。", "初始建议", "请用中文回答。" }
+        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "Ask another question any time.", "Opening tip", "Reply in English." },
+        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "എപ്പോൾ വേണമെങ്കിലും മറ്റൊരു ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക." },
+        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya lagi kapan saja.", "Saran awal", "Balas dalam bahasa Indonesia." },
+        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你可以随时继续提问。", "初始建议", "请用中文回答。" }
     };
 
     private readonly List<CoachTurn> history = new List<CoachTurn>();
     private CoachSummary summary;
     private Action continueAction;
-    private int followUps;
     private bool requestInProgress;
     private Text titleText, replyText, statusText;
     private Button improveButton, wellButton, askButton, continueButton;
     private InputField questionInput;
     private int language;
+    private bool gestureMode;
+    private string stageContext;
 
     public static AiCoachInteraction Show(Transform parent, string stage, float durationSeconds,
-        int score, int starsCollected, string context, Action onContinue)
+        int score, int starsCollected, string context, PlayerInput playerInput, Action onContinue)
     {
         RuntimeUiUtility.EnsureEventSystem();
         var host = new GameObject("AI Coach Interaction", typeof(RectTransform));
@@ -76,8 +77,19 @@ public sealed class AiCoachInteraction : MonoBehaviour
             starsCollected = Mathf.Max(0, starsCollected)
         };
         coach.continueAction = onContinue;
-        coach.Build(context ?? string.Empty);
-        coach.StartCoroutine(coach.RequestReply(coach.Localized(10) + ". " + coach.Localized(2) + " " + coach.Localized(11), true));
+        coach.gestureMode = playerInput != null && playerInput.IsUsingGestureControls;
+        coach.summary.controlMode = coach.gestureMode ? "gesture" : "keyboard";
+        coach.stageContext = context ?? string.Empty;
+        if (playerInput != null && coach.gestureMode)
+        {
+            coach.summary.gestures.left = playerInput.GestureLeftCount;
+            coach.summary.gestures.right = playerInput.GestureRightCount;
+            coach.summary.gestures.jump = playerInput.GestureJumpCount;
+            coach.summary.gestures.reach = playerInput.GestureReachCount;
+            coach.summary.gestures.collect = playerInput.GestureCollectCount;
+        }
+        coach.Build(coach.stageContext);
+        coach.StartCoroutine(coach.RequestReply(coach.CreateQuestion(coach.Localized(10) + ". " + coach.Localized(2)), true));
         return coach;
     }
 
@@ -108,7 +120,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
         continueButton = AddButton("Continue Button", root, Localized(6), new Vector2(0.32f, 0.025f), new Vector2(0.68f, 0.12f));
         continueButton.GetComponent<Image>().color = new Color(0.28f, 0.55f, 0.88f, 1f);
         continueButton.onClick.AddListener(Continue);
-        statusText.text = string.Format(Localized(9), MaxFollowUps);
+        statusText.text = Localized(9);
     }
 
     private Text AddText(string name, Transform parent, string value, int size, Vector2 min, Vector2 max, Color color, FontStyle style)
@@ -170,11 +182,20 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
     private void Ask(string question, string context)
     {
-        if (requestInProgress || followUps >= MaxFollowUps || string.IsNullOrWhiteSpace(question)) return;
-        followUps++;
-        string contextQuestion = question.Trim() + " " + Localized(11);
-        if (!string.IsNullOrWhiteSpace(context)) contextQuestion += "\nStage details: " + context;
-        StartCoroutine(RequestReply(contextQuestion, false));
+        if (requestInProgress || string.IsNullOrWhiteSpace(question)) return;
+        StartCoroutine(RequestReply(CreateQuestion(question.Trim()), false));
+    }
+
+    private string CreateQuestion(string question)
+    {
+        string focus = gestureMode
+            ? "Control mode: webcam gestures. Focus on gesture clarity, timing and consistency. Don't claim to see hand motion; joint data was not sent."
+            : "Control mode: keyboard. Focus on gameplay strategy, stage goals, score and star collection; avoid gesture advice.";
+        string suffix = " " + Localized(11) + "\n" + focus;
+        if (!string.IsNullOrWhiteSpace(stageContext)) suffix += "\nStage details: " + stageContext;
+        int questionLimit = Mathf.Max(1, 500 - suffix.Length);
+        if (question.Length > questionLimit) question = question.Substring(0, questionLimit);
+        return question + suffix;
     }
 
     private IEnumerator RequestReply(string question, bool opening)
@@ -202,7 +223,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
                     history.Add(new CoachTurn { role = "user", content = question });
                     history.Add(new CoachTurn { role = "assistant", content = answer.Trim() });
                     while (history.Count > 4) history.RemoveAt(0);
-                    statusText.text = string.Format(Localized(9), Mathf.Max(0, MaxFollowUps - followUps));
+                    statusText.text = Localized(9);
                 }
                 else ShowFallback();
             }
@@ -213,13 +234,13 @@ public sealed class AiCoachInteraction : MonoBehaviour
             }
         }
         requestInProgress = false;
-        SetAskControls(followUps < MaxFollowUps);
+        SetAskControls(true);
     }
 
     private void ShowFallback()
     {
         replyText.text = Localized(8);
-        statusText.text = string.Format(Localized(9), Mathf.Max(0, MaxFollowUps - followUps));
+        statusText.text = Localized(9);
     }
 
     private void SetAskControls(bool enabled)

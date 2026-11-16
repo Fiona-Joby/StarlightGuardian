@@ -69,10 +69,12 @@ public class StageManager : MonoBehaviour
         Time.timeScale = 0f;
         ScoreManager score = ScoreManager.Instance;
         int currentScore = score != null ? score.Score : 0;
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        PlayerInput playerInput = player != null ? player.GetComponent<PlayerInput>() : null;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 1", Time.timeSinceLevelLoad,
             currentScore, score != null ? score.StarsCollected : 0,
             "The player completed the star-collection stage with a score of " + currentScore + ".",
-            ContinueToNextStage);
+            playerInput, ContinueToNextStage);
     }
 
     private void ContinueToNextStage()
