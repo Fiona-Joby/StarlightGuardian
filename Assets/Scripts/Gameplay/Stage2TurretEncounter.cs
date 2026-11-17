@@ -176,8 +176,8 @@ public class Stage2TurretEncounter : MonoBehaviour
     }
 
     public bool IsFinished => finished;
-    public int TurretGoal => artReferences != null ? artReferences.TurretGoal : 6;
-    public int BlobBeastGoal => artReferences != null ? artReferences.BlobBeastGoal : 2;
+    public int TurretGoal => GameDifficulty.Stage2TurretGoal(artReferences != null ? artReferences.TurretGoal : 6);
+    public int BlobBeastGoal => GameDifficulty.Stage2BeastGoal(artReferences != null ? artReferences.BlobBeastGoal : 2);
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
 
     public void OnTurretDestroyed()
@@ -200,6 +200,7 @@ public class Stage2TurretEncounter : MonoBehaviour
     {
         if (finished || destroyedTurrets < TurretGoal || destroyedBlobBeasts < BlobBeastGoal) return;
         finished = true;
+        GameDifficulty.AdjustAfterCombat(playerDamage, LifeLimit);
         ShowOverlay("All turrets and beasts defeated successfully", true);
         Time.timeScale = 0f;
         overlayText.gameObject.SetActive(false);
@@ -217,6 +218,7 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (playerDamage >= LifeLimit)
         {
             finished = true;
+            GameDifficulty.AdjustAfterCombat(playerDamage, LifeLimit);
             ShowOverlay("GAME OVER");
             if (retryButton != null) retryButton.gameObject.SetActive(true);
             Time.timeScale = 0f;

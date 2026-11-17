@@ -6,27 +6,24 @@ using UnityEngine;
 /// Subscribes to <see cref="StarEvents.StarCaught"/> and awards points based
 /// on the star type and the current <see cref="ScoreMultiplier"/>.
 ///
-/// Normal star → 1 × multiplier points.
-/// Rainbow star → 0 points (activates the 2× multiplier instead).
+/// Normal star → 1 × multiplier points and one star toward the objective.
+/// Rainbow star → no points, but counts toward the objective and activates 2×.
 ///
-/// Fires <see cref="ScoreChanged"/> whenever the score updates and
+/// Fires <see cref="ScoreChanged"/> whenever a star is caught and
 /// <see cref="StageGoalReached"/> once when the target is met.
 /// </summary>
 public class ScoreManager : MonoBehaviour
 {
-    [Header("Stage 1 Settings")]
-    [SerializeField] private int stageGoal = 35;
-
     /// <summary>Current accumulated score.</summary>
     public int Score { get; private set; }
 
-    /// <summary>The target score needed to complete the current stage.</summary>
-    public int StageGoal => stageGoal;
+    /// <summary>The number of stars required to complete Stage 1 at this difficulty.</summary>
+    public int StageGoal => GameDifficulty.Stage1StarGoal;
 
     /// <summary>Total stars caught during the current stage, including rainbow stars.</summary>
     public int StarsCollected { get; private set; }
 
-    /// <summary>Fires every time the score changes. Args: (currentScore, stageGoal).</summary>
+    /// <summary>Fires whenever a star is caught. Args: (currentScore, starGoal).</summary>
     public event System.Action<int, int> ScoreChanged;
 
     /// <summary>Fires once when the player reaches the stage goal.</summary>
@@ -58,14 +55,12 @@ public class ScoreManager : MonoBehaviour
 
         StarsCollected++;
 
-        // Rainbow stars don't award points — they activate the multiplier.
-        if (star.Type == StarType.Rainbow) return;
+        // Rainbow stars count toward the stage objective but don't award points.
+        if (star.Type != StarType.Rainbow)
+            Score += Mathf.RoundToInt(1 * ScoreMultiplier.CurrentMultiplier);
+        ScoreChanged?.Invoke(Score, StageGoal);
 
-        int points = Mathf.RoundToInt(1 * ScoreMultiplier.CurrentMultiplier);
-        Score += points;
-        ScoreChanged?.Invoke(Score, stageGoal);
-
-        if (Score >= stageGoal && !goalReached)
+        if (StarsCollected >= StageGoal && !goalReached)
         {
             goalReached = true;
             StageGoalReached?.Invoke();

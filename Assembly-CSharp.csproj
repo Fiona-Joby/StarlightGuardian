@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\Gameplay\Stage3Slime.cs" />
     <Compile Include="Assets\Scripts\Pose\GestureClassifier.cs" />
     <Compile Include="Assets\Scripts\Gameplay\TurretProjectile.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\GameDifficulty.cs" />
     <Compile Include="Assets\Scripts\UI\MenuButtonSelectionMarker.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2PlayerHealth.cs" />
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />

@@ -41,10 +41,10 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
     private static readonly string[,] Copy =
     {
-        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "Ask another question any time.", "Opening tip", "Reply in English." },
-        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "എപ്പോൾ വേണമെങ്കിലും മറ്റൊരു ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക." },
-        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya lagi kapan saja.", "Saran awal", "Balas dalam bahasa Indonesia." },
-        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你可以随时继续提问。", "初始建议", "请用中文回答。" }
+        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "Ask another question any time.", "Opening tip", "Reply in English.", "Difficulty: {0} ({1})", "Easy", "Normal", "Hard", "Auto", "Manual" },
+        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "എപ്പോൾ വേണമെങ്കിലും മറ്റൊരു ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക.", "ബുദ്ധിമുട്ട്: {0} ({1})", "എളുപ്പം", "സാധാരണം", "കഠിനം", "സ്വയം", "മാനുവൽ" },
+        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya lagi kapan saja.", "Saran awal", "Balas dalam bahasa Indonesia.", "Kesulitan: {0} ({1})", "Mudah", "Normal", "Sulit", "Otomatis", "Manual" },
+        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你可以随时继续提问。", "初始建议", "请用中文回答。", "难度：{0}（{1}）", "简单", "普通", "困难", "自动", "手动" }
     };
 
     private readonly List<CoachTurn> history = new List<CoachTurn>();
@@ -53,6 +53,8 @@ public sealed class AiCoachInteraction : MonoBehaviour
     private bool requestInProgress;
     private Text titleText, replyText, statusText;
     private Button improveButton, wellButton, askButton, continueButton;
+    private Button easyButton, normalButton, hardButton, autoButton;
+    private Text difficultyText;
     private InputField questionInput;
     private int language;
     private bool gestureMode;
@@ -106,21 +108,65 @@ public sealed class AiCoachInteraction : MonoBehaviour
         card.color = new Color(0.035f, 0.045f, 0.12f, 0.97f);
 
         titleText = AddText("Coach Title", root, Localized(0), 58, new Vector2(0.04f, 0.82f), new Vector2(0.96f, 0.98f), Color.white, FontStyle.Bold);
-        replyText = AddText("Coach Reply", root, Localized(7), 42, new Vector2(0.07f, 0.59f), new Vector2(0.93f, 0.81f), new Color(0.94f, 0.96f, 1f, 1f), FontStyle.Bold);
-        statusText = AddText("Coach Status", root, Localized(10), 28, new Vector2(0.05f, 0.54f), new Vector2(0.95f, 0.60f), new Color(0.82f, 0.87f, 1f, 1f), FontStyle.Bold);
+        replyText = AddText("Coach Reply", root, Localized(7), 42, new Vector2(0.07f, 0.63f), new Vector2(0.93f, 0.81f), new Color(0.94f, 0.96f, 1f, 1f), FontStyle.Bold);
+        statusText = AddText("Coach Status", root, Localized(10), 28, new Vector2(0.05f, 0.59f), new Vector2(0.95f, 0.63f), new Color(0.82f, 0.87f, 1f, 1f), FontStyle.Bold);
 
-        improveButton = AddButton("Improve Prompt", root, Localized(2), new Vector2(0.08f, 0.43f), new Vector2(0.48f, 0.53f));
-        wellButton = AddButton("Well Prompt", root, Localized(3), new Vector2(0.52f, 0.43f), new Vector2(0.92f, 0.53f));
+        difficultyText = AddText("Difficulty Selection Label", root, string.Empty, 30,
+            new Vector2(0.04f, 0.52f), new Vector2(0.96f, 0.58f), Color.white, FontStyle.Bold);
+        easyButton = AddButton("Easy Difficulty", root, Localized(13), new Vector2(0.06f, 0.445f), new Vector2(0.27f, 0.515f));
+        normalButton = AddButton("Normal Difficulty", root, Localized(14), new Vector2(0.30f, 0.445f), new Vector2(0.51f, 0.515f));
+        hardButton = AddButton("Hard Difficulty", root, Localized(15), new Vector2(0.54f, 0.445f), new Vector2(0.75f, 0.515f));
+        autoButton = AddButton("Automatic Difficulty", root, Localized(16), new Vector2(0.78f, 0.445f), new Vector2(0.96f, 0.515f));
+        easyButton.onClick.AddListener(() => SelectManualDifficulty(0));
+        normalButton.onClick.AddListener(() => SelectManualDifficulty(1));
+        hardButton.onClick.AddListener(() => SelectManualDifficulty(2));
+        autoButton.onClick.AddListener(SelectAutomaticDifficulty);
+        RefreshDifficultyControls();
+
+        improveButton = AddButton("Improve Prompt", root, Localized(2), new Vector2(0.08f, 0.35f), new Vector2(0.48f, 0.425f));
+        wellButton = AddButton("Well Prompt", root, Localized(3), new Vector2(0.52f, 0.35f), new Vector2(0.92f, 0.425f));
         improveButton.onClick.AddListener(() => Ask(Localized(2), context));
         wellButton.onClick.AddListener(() => Ask(Localized(3), context));
 
         questionInput = AddInput(root, Localized(4));
-        askButton = AddButton("Ask Button", root, Localized(5), new Vector2(0.58f, 0.13f), new Vector2(0.92f, 0.22f));
+        askButton = AddButton("Ask Button", root, Localized(5), new Vector2(0.58f, 0.105f), new Vector2(0.92f, 0.19f));
         askButton.onClick.AddListener(() => Ask(questionInput.text, context));
-        continueButton = AddButton("Continue Button", root, Localized(6), new Vector2(0.32f, 0.025f), new Vector2(0.68f, 0.12f));
+        continueButton = AddButton("Continue Button", root, Localized(6), new Vector2(0.32f, 0.02f), new Vector2(0.68f, 0.095f));
         continueButton.GetComponent<Image>().color = new Color(0.28f, 0.55f, 0.88f, 1f);
         continueButton.onClick.AddListener(Continue);
         statusText.text = Localized(9);
+    }
+
+    private void SelectManualDifficulty(int level)
+    {
+        GameDifficulty.SetManual(level);
+        RefreshDifficultyControls();
+    }
+
+    private void SelectAutomaticDifficulty()
+    {
+        GameDifficulty.EnableAutomatic();
+        RefreshDifficultyControls();
+    }
+
+    private void RefreshDifficultyControls()
+    {
+        if (difficultyText == null) return;
+        string[] levels = { Localized(13), Localized(14), Localized(15) };
+        difficultyText.text = string.Format(Localized(12), levels[GameDifficulty.Level],
+            Localized(GameDifficulty.IsAutomatic ? 16 : 17));
+        SetDifficultyButtonState(easyButton, !GameDifficulty.IsAutomatic && GameDifficulty.Level == 0);
+        SetDifficultyButtonState(normalButton, !GameDifficulty.IsAutomatic && GameDifficulty.Level == 1);
+        SetDifficultyButtonState(hardButton, !GameDifficulty.IsAutomatic && GameDifficulty.Level == 2);
+        SetDifficultyButtonState(autoButton, GameDifficulty.IsAutomatic);
+    }
+
+    private static void SetDifficultyButtonState(Button button, bool selected)
+    {
+        if (button != null)
+            button.GetComponent<Image>().color = selected
+                ? new Color(0.2f, 0.55f, 0.38f, 1f)
+                : new Color(0.16f, 0.28f, 0.53f, 1f);
     }
 
     private Text AddText(string name, Transform parent, string value, int size, Vector2 min, Vector2 max, Color color, FontStyle style)
@@ -158,8 +204,8 @@ public sealed class AiCoachInteraction : MonoBehaviour
         GameObject fieldObject = new GameObject("Question Input", typeof(RectTransform), typeof(Image), typeof(InputField));
         fieldObject.transform.SetParent(parent, false);
         RectTransform rect = fieldObject.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.08f, 0.25f);
-        rect.anchorMax = new Vector2(0.92f, 0.38f);
+        rect.anchorMin = new Vector2(0.08f, 0.22f);
+        rect.anchorMax = new Vector2(0.92f, 0.32f);
         rect.offsetMin = rect.offsetMax = Vector2.zero;
         fieldObject.GetComponent<Image>().color = new Color(0.12f, 0.15f, 0.24f, 1f);
 

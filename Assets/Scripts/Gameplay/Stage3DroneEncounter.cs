@@ -36,9 +36,9 @@ public class Stage3DroneEncounter : MonoBehaviour
     private float stageStartedAt;
 
     public bool IsFinished => finished;
-    public int DroneGoal => artReferences != null ? artReferences.DroneGoal : 5;
-    public int SlimeGoal => artReferences != null ? artReferences.SlimeGoal : 4;
-    public int HardBeastGoal => artReferences != null ? artReferences.HardBeastGoal : 2;
+    public int DroneGoal => GameDifficulty.Stage3DroneGoal(artReferences != null ? artReferences.DroneGoal : 5);
+    public int SlimeGoal => GameDifficulty.Stage3SlimeGoal(artReferences != null ? artReferences.SlimeGoal : 4);
+    public int HardBeastGoal => GameDifficulty.Stage3HardBeastGoal(artReferences != null ? artReferences.HardBeastGoal : 2);
     public string ObjectiveProgress =>
         $"Drones: {destroyedDrones}/{DroneGoal}\nSlimes: {destroyedSlimes}/{SlimeGoal}\nHard Beasts: {destroyedHardBeasts}/{HardBeastGoal}";
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
@@ -310,6 +310,7 @@ public class Stage3DroneEncounter : MonoBehaviour
             renderer.sprite = artReferences.StarSpiritFinalPose;
         yield return new WaitForSeconds(2f);
         finished = true;
+        GameDifficulty.AdjustAfterCombat(playerHits, LifeLimit);
         ShowResult("Star rescued!", "Stages Completed!", false);
         Time.timeScale = 0f;
         resultText.gameObject.SetActive(false);
@@ -327,6 +328,7 @@ public class Stage3DroneEncounter : MonoBehaviour
         if (playerHits < LifeLimit) return;
 
         finished = true;
+        GameDifficulty.AdjustAfterCombat(playerHits, LifeLimit);
         ShowResult("GAME OVER", string.Empty, true);
         Time.timeScale = 0f;
     }

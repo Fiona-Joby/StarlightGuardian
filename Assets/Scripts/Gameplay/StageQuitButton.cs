@@ -100,19 +100,20 @@ public class StageQuitButton : MonoBehaviour
         switch (SceneManager.GetActiveScene().name)
         {
             case "MainScene":
-                int scoreGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : 35;
-                return $"STAGE 1\nCollect stars and reach {scoreGoal} points.";
+                int starGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : GameDifficulty.Stage1StarGoal;
+                return $"STAGE 1\nCollect {starGoal} stars.";
             case "Stage2":
                 Stage2ArtReferences stage2 = Object.FindAnyObjectByType<Stage2ArtReferences>();
-                int turrets = stage2 != null ? stage2.TurretGoal : 6;
-                int beasts = stage2 != null ? stage2.BlobBeastGoal : 2;
+                Stage2TurretEncounter encounter2 = Object.FindAnyObjectByType<Stage2TurretEncounter>();
+                int turrets = encounter2 != null ? encounter2.TurretGoal : GameDifficulty.Stage2TurretGoal(stage2 != null ? stage2.TurretGoal : 6);
+                int beasts = encounter2 != null ? encounter2.BlobBeastGoal : GameDifficulty.Stage2BeastGoal(stage2 != null ? stage2.BlobBeastGoal : 2);
                 return $"STAGE 2\nProtect your star spirit. Destroy {turrets} turrets and {beasts} blob beasts.";
             case "Stage3":
                 Stage3ArtReferences stage3 = Object.FindAnyObjectByType<Stage3ArtReferences>();
-                int drones = stage3 != null ? stage3.DroneGoal : 5;
-                int slimes = stage3 != null ? stage3.SlimeGoal : 4;
                 Stage3DroneEncounter encounter = Object.FindAnyObjectByType<Stage3DroneEncounter>();
-                int hardBeastGoal = stage3 != null ? stage3.HardBeastGoal : 2;
+                int drones = encounter != null ? encounter.DroneGoal : GameDifficulty.Stage3DroneGoal(stage3 != null ? stage3.DroneGoal : 5);
+                int slimes = encounter != null ? encounter.SlimeGoal : GameDifficulty.Stage3SlimeGoal(stage3 != null ? stage3.SlimeGoal : 4);
+                int hardBeastGoal = encounter != null ? encounter.HardBeastGoal : GameDifficulty.Stage3HardBeastGoal(stage3 != null ? stage3.HardBeastGoal : 2);
                 string progress = encounter != null
                     ? encounter.ObjectiveProgress
                     : $"Drones: 0/{drones}\nSlimes: 0/{slimes}\nHard Beasts: 0/{hardBeastGoal}";
