@@ -166,6 +166,7 @@ public class StarMovement : MonoBehaviour
     {
         if (collected) return;
         collected = true;
+        GameAudio.PlaySfx("Button Click 2");
 
         if (starType == StarType.Rainbow)
             ScoreMultiplier.ActivateTemporaryDouble(rainbowMultiplierDuration);

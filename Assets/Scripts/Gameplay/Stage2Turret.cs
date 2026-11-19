@@ -36,13 +36,13 @@ public class Stage2Turret : MonoBehaviour
         if (destroyed || encounter == null || encounter.IsFinished || muzzle == null || beamSprite == null) return;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null || player.transform.position.x >= muzzle.position.x) return;
-
         Camera camera = Camera.main;
         if (camera == null) return;
         Vector3 viewportPosition = camera.WorldToViewportPoint(transform.position);
         if (viewportPosition.z <= 0f || viewportPosition.x < 0f || viewportPosition.x > 1f ||
             viewportPosition.y < 0f || viewportPosition.y > 1f) return;
 
+        GameAudio.PlaySfx("Turret and Drone Shoot");
         Vector2 direction = Vector2.left;
         GameObject shot = new GameObject("Turret Beam");
         // The beam sprite is centered on its transform; advance half its visible

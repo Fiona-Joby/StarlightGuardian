@@ -47,7 +47,15 @@ public class PlatformSpawner : MonoBehaviour
         string activeScene = SceneManager.GetActiveScene().name;
         hasStarLandingDetectors = activeScene != "Stage2";
         if (activeScene == "Stage3")
+        {
             maxHeight = 1.5f;
+            Stage3ArtReferences stage3Art = Object.FindAnyObjectByType<Stage3ArtReferences>();
+            if (stage3Art != null)
+            {
+                platformLongSprites = stage3Art.PlatformLongSprites;
+                platformShortSprite = stage3Art.PlatformShortSprite;
+            }
+        }
         // Find the player.
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
         if (playerGO != null)

@@ -79,6 +79,7 @@
     <Compile Include="Assets\Scripts\Gameplay\TurretProjectile.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameDifficulty.cs" />
     <Compile Include="Assets\Scripts\UI\MenuButtonSelectionMarker.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\GestureInstructionOverlay.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2PlayerHealth.cs" />
     <Compile Include="Assets\Scripts\Input\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlayerMovement.cs" />
@@ -89,7 +90,9 @@
     <Compile Include="Assets\Scripts\Core\Stage2ParallaxSetup.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GroundDetector.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreProgressBar.cs" />
+    <Compile Include="Assets\Scripts\Core\GameAudio.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPreview.cs" />
+    <Compile Include="Assets\Scripts\UI\QuitGameButton.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreMultiplierTimer.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2Beam.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPoseInput.cs" />

@@ -60,6 +60,30 @@ public class WebcamPoseInput : MonoBehaviour
     private bool fistGestureHeld;
     public bool IsShooting => isActiveAndEnabled && IsActive && shootGestureHeld;
     private bool shootGestureHeld;
+    public string ReadGestureLabel
+    {
+        get
+        {
+            if (!IsActive || !HasHandPosition) return "No hand";
+
+            string gesture;
+            switch (currentGesture)
+            {
+                case "right": gesture = "Move right"; break;
+                case "left": gesture = "Move left"; break;
+                case "reach": gesture = "Reach"; break;
+                case "collect": gesture = "Collect"; break;
+                case "idle": gesture = "Idle"; break;
+                default: gesture = currentGesture; break;
+            }
+
+            if (jumpGestureHeld) gesture += " + Jump";
+            if (fistGestureHeld) gesture += " + Fist";
+            if (shootGestureHeld) gesture += " + Shoot";
+            if (ArePalmsTogether) gesture += " + Palms together";
+            return gesture;
+        }
+    }
     public WebCamTexture PreviewTexture => webcamTexture;
     public bool HasHandPosition { get; private set; }
     // Mirrored camera coordinates, with the origin at the bottom left.

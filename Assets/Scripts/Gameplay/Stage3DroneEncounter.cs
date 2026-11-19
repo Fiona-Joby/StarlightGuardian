@@ -329,8 +329,17 @@ public class Stage3DroneEncounter : MonoBehaviour
 
         finished = true;
         GameDifficulty.AdjustAfterCombat(playerHits, LifeLimit);
-        ShowResult("GAME OVER", string.Empty, true);
+        ShowResult("GAME OVER", string.Empty, false);
         Time.timeScale = 0f;
+        StartCoroutine(ShowGameOverCoach());
+    }
+
+    private IEnumerator ShowGameOverCoach()
+    {
+        yield return new WaitForSecondsRealtime(1.5f);
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
+            0, 0, $"The player lost after defeating {destroyedDrones} drones, {destroyedSlimes} slimes, and {destroyedHardBeasts} hard beasts, taking {playerHits} hits.",
+            playerInput, null, false);
     }
 
     private void ReturnToMainMenu()

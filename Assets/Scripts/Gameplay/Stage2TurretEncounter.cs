@@ -220,9 +220,18 @@ public class Stage2TurretEncounter : MonoBehaviour
             finished = true;
             GameDifficulty.AdjustAfterCombat(playerDamage, LifeLimit);
             ShowOverlay("GAME OVER");
-            if (retryButton != null) retryButton.gameObject.SetActive(true);
+            if (retryButton != null) retryButton.gameObject.SetActive(false);
             Time.timeScale = 0f;
+            StartCoroutine(ShowGameOverCoach());
         }
+    }
+
+    private IEnumerator ShowGameOverCoach()
+    {
+        yield return new WaitForSecondsRealtime(1.5f);
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
+            0, 0, $"The player lost after defeating {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
+            FindPlayerInput(), null, false);
     }
 
     private void ContinueToStage3()

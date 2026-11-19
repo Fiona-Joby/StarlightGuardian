@@ -62,6 +62,7 @@ public class Stage2Shooter : MonoBehaviour
     {
         if (attackFrames == null || attackFrames.Length < 4 || beamSprite == null ||
             System.Array.Exists(attackFrames, frame => frame == null)) return;
+        GameAudio.PlaySfx("Main Character Shoot");
         facingRight = faceRight;
         if (spriteRenderer != null)
         {

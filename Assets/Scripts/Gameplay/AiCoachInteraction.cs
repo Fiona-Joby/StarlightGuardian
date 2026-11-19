@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
@@ -41,10 +42,10 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
     private static readonly string[,] Copy =
     {
-        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "Ask another question any time.", "Opening tip", "Reply in English.", "Difficulty: {0} ({1})", "Easy", "Normal", "Hard", "Auto", "Manual" },
-        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "എപ്പോൾ വേണമെങ്കിലും മറ്റൊരു ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക.", "ബുദ്ധിമുട്ട്: {0} ({1})", "എളുപ്പം", "സാധാരണം", "കഠിനം", "സ്വയം", "മാനുവൽ" },
-        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya lagi kapan saja.", "Saran awal", "Balas dalam bahasa Indonesia.", "Kesulitan: {0} ({1})", "Mudah", "Normal", "Sulit", "Otomatis", "Manual" },
-        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你可以随时继续提问。", "初始建议", "请用中文回答。", "难度：{0}（{1}）", "简单", "普通", "困难", "自动", "手动" }
+        { "AI Movement Coach", "Ask Coach", "How can I improve my movement?", "What did I do well?", "Type a question…", "Ask", "Continue", "Thinking…", "The coach is taking a moment. Try a question, or continue when you’re ready.", "Ask another question any time.", "Opening tip", "Reply in English.", "Difficulty: {0} ({1})", "Easy", "Normal", "Hard", "Auto", "Manual", "Restart", "Use simple words and short sentences." },
+        { "AI ചലന പരിശീലകൻ", "പരിശീലകനോട് ചോദിക്കുക", "എന്റെ ചലനം എങ്ങനെ മെച്ചപ്പെടുത്താം?", "ഞാൻ നന്നായി ചെയ്തത് എന്താണ്?", "ഒരു ചോദ്യം ടൈപ്പ് ചെയ്യൂ…", "ചോദിക്കുക", "തുടരുക", "ചിന്തിക്കുന്നു…", "പരിശീലകൻ മറുപടി നൽകാൻ വൈകുന്നു. ഒരു ചോദ്യം ചോദിക്കാം, അല്ലെങ്കിൽ തയ്യാറാകുമ്പോൾ തുടരാം.", "എപ്പോൾ വേണമെങ്കിലും മറ്റൊരു ചോദ്യം ചോദിക്കാം.", "ആദ്യ നിർദേശം", "മലയാളത്തിൽ മറുപടി നൽകുക.", "ബുദ്ധിമുട്ട്: {0} ({1})", "എളുപ്പം", "സാധാരണം", "കഠിനം", "സ്വയം", "മാനുവൽ", "വീണ്ടും തുടങ്ങുക", "ലളിതമായ വാക്കുകളും ചെറിയ വാക്യങ്ങളും ഉപയോഗിക്കുക." },
+        { "Pelatih Gerakan AI", "Tanya Pelatih", "Bagaimana cara meningkatkan gerakan saya?", "Apa yang saya lakukan dengan baik?", "Ketik pertanyaan…", "Tanya", "Lanjutkan", "Sedang berpikir…", "Pelatih sedang lambat merespons. Coba bertanya atau lanjutkan saat siap.", "Kamu bisa bertanya lagi kapan saja.", "Saran awal", "Balas dalam bahasa Indonesia.", "Kesulitan: {0} ({1})", "Mudah", "Normal", "Sulit", "Otomatis", "Manual", "Ulangi tahap", "Gunakan kata sederhana dan kalimat pendek." },
+        { "AI 动作教练", "询问教练", "如何改善我的动作？", "我哪些方面做得好？", "输入问题…", "提问", "继续", "正在思考…", "教练暂时没有回应。你可以再试一次，或准备好后继续。", "你可以随时继续提问。", "初始建议", "请用中文回答。", "难度：{0}（{1}）", "简单", "普通", "困难", "自动", "手动", "重新开始", "请使用简单词语和短句。" }
     };
 
     private readonly List<CoachTurn> history = new List<CoachTurn>();
@@ -52,16 +53,18 @@ public sealed class AiCoachInteraction : MonoBehaviour
     private Action continueAction;
     private bool requestInProgress;
     private Text titleText, replyText, statusText;
-    private Button improveButton, wellButton, askButton, continueButton;
+    private Button improveButton, wellButton, askButton, continueButton, restartButton;
     private Button easyButton, normalButton, hardButton, autoButton;
     private Text difficultyText;
     private InputField questionInput;
     private int language;
     private bool gestureMode;
+    private bool showContinue = true;
     private string stageContext;
 
     public static AiCoachInteraction Show(Transform parent, string stage, float durationSeconds,
-        int score, int starsCollected, string context, PlayerInput playerInput, Action onContinue)
+        int score, int starsCollected, string context, PlayerInput playerInput, Action onContinue,
+        bool allowContinue = true)
     {
         RuntimeUiUtility.EnsureEventSystem();
         var host = new GameObject("AI Coach Interaction", typeof(RectTransform));
@@ -79,6 +82,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
             starsCollected = Mathf.Max(0, starsCollected)
         };
         coach.continueAction = onContinue;
+        coach.showContinue = allowContinue;
         coach.gestureMode = playerInput != null && playerInput.IsUsingGestureControls;
         coach.summary.controlMode = coach.gestureMode ? "gesture" : "keyboard";
         coach.stageContext = context ?? string.Empty;
@@ -131,9 +135,13 @@ public sealed class AiCoachInteraction : MonoBehaviour
         questionInput = AddInput(root, Localized(4));
         askButton = AddButton("Ask Button", root, Localized(5), new Vector2(0.58f, 0.105f), new Vector2(0.92f, 0.19f));
         askButton.onClick.AddListener(() => Ask(questionInput.text, context));
-        continueButton = AddButton("Continue Button", root, Localized(6), new Vector2(0.32f, 0.02f), new Vector2(0.68f, 0.095f));
+        restartButton = AddButton("Restart Button", root, Localized(18), new Vector2(0.08f, 0.02f), new Vector2(0.42f, 0.095f));
+        restartButton.GetComponent<Image>().color = new Color(0.2f, 0.25f, 0.4f, 1f);
+        restartButton.onClick.AddListener(RestartCurrentStage);
+        continueButton = AddButton("Continue Button", root, Localized(6), new Vector2(0.58f, 0.02f), new Vector2(0.92f, 0.095f));
         continueButton.GetComponent<Image>().color = new Color(0.28f, 0.55f, 0.88f, 1f);
         continueButton.onClick.AddListener(Continue);
+        continueButton.gameObject.SetActive(showContinue);
         statusText.text = Localized(9);
     }
 
@@ -237,7 +245,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
         string focus = gestureMode
             ? "Control mode: webcam gestures. Focus on gesture clarity, timing and consistency. Don't claim to see hand motion; joint data was not sent."
             : "Control mode: keyboard. Focus on gameplay strategy, stage goals, score and star collection; avoid gesture advice.";
-        string suffix = " " + Localized(11) + "\n" + focus;
+        string suffix = " " + Localized(11) + " " + Localized(19) + "\n" + focus;
         if (!string.IsNullOrWhiteSpace(stageContext)) suffix += "\nStage details: " + stageContext;
         int questionLimit = Mathf.Max(1, 500 - suffix.Length);
         if (question.Length > questionLimit) question = question.Substring(0, questionLimit);
@@ -301,5 +309,12 @@ public sealed class AiCoachInteraction : MonoBehaviour
     {
         if (requestInProgress) StopAllCoroutines();
         continueAction?.Invoke();
+    }
+
+    private void RestartCurrentStage()
+    {
+        if (requestInProgress) StopAllCoroutines();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

@@ -74,6 +74,7 @@ public class Stage3Slime : MonoBehaviour
 
     private void StartAttack()
     {
+        GameAudio.PlaySfx("Slime Attack");
         if (spriteRenderer != null && attackSprite != null) spriteRenderer.sprite = attackSprite;
         if (spriteRenderer != null) spriteRenderer.flipX = direction < 0f;
         attackTimer = attackInterval;

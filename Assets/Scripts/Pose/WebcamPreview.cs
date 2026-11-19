@@ -44,11 +44,13 @@ public sealed class WebcamPreview : MonoBehaviour
         labelRect.anchorMin = new Vector2(0f, 1f);
         labelRect.anchorMax = Vector2.one;
         labelRect.pivot = new Vector2(0.5f, 1f);
-        labelRect.sizeDelta = new Vector2(-12f, 26f);
+        labelRect.sizeDelta = new Vector2(-12f, 42f);
         status = labelRect.gameObject.AddComponent<Text>();
         status.font = RuntimeUiUtility.GetFont();
-        status.fontSize = 13;
+        status.fontSize = 12;
         status.alignment = TextAnchor.MiddleLeft;
+        status.horizontalOverflow = HorizontalWrapMode.Wrap;
+        status.verticalOverflow = VerticalWrapMode.Overflow;
         status.color = Color.white;
         status.raycastTarget = false;
         previewMarker.gameObject.SetActive(false);
@@ -64,7 +66,8 @@ public sealed class WebcamPreview : MonoBehaviour
         previewMarker.gameObject.SetActive(tracking);
         screenMarker.gameObject.SetActive(tracking);
         status.text = !ready ? "WEBCAM | Waiting for camera"
-            : !tracking ? "WEBCAM | No hand detected" : $"WEBCAM | Palm mapping {mappingScale:0.0}x";
+            : !tracking ? "WEBCAM | No hand detected\nREAD: —"
+            : $"WEBCAM | Tracking\nREAD: {source.ReadGestureLabel}  •  Mapping {mappingScale:0.0}x";
 
         float width = Mathf.Min(Screen.width * previewWidthFraction, 360f);
         float angle = ready ? cameraTexture.videoRotationAngle : 0f;
@@ -78,7 +81,7 @@ public sealed class WebcamPreview : MonoBehaviour
             height = Screen.height * 0.32f;
             width = height * displayAspect;
         }
-        panel.sizeDelta = new Vector2(width + 8f, height + 34f);
+        panel.sizeDelta = new Vector2(width + 8f, height + 50f);
         preview.rectTransform.anchoredPosition = new Vector2(0f, -13f);
         preview.rectTransform.sizeDelta = sideways ? new Vector2(height, width) : new Vector2(width, height);
         preview.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -angle);

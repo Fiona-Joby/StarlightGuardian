@@ -719,6 +719,9 @@ MonoBehaviour:
   - {fileID: 1302333569983755274, guid: 36c652301d230fc41848b74b3d701c7b, type: 3}
   - {fileID: -1909234507801651165, guid: 2b153675bc681de459f3b6f58a349917, type: 3}
   companionReunionPose: {fileID: -7062119304882899737, guid: 924a6dc99491ebd4583e4ed7545c6671, type: 3}
+  platformLongSprites:
+  - {fileID: 21300000, guid: a2e16d29ec404f4ebbb81af17a34f003, type: 3}
+  platformShortSprite: {fileID: 21300000, guid: c3f27e30fd51505fcc92b02c80ebf114, type: 3}
   droneGoal: 4
   slimeGoal: 4
   lifeLimit: 5

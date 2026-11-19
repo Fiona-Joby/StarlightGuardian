@@ -279,6 +279,7 @@ public class Stage2BlobBeast : MonoBehaviour
             damageApplied = true;
         }
         SetSprite(stompFrame);
+        GameAudio.PlaySfx("Blob Beast Stomp");
         float playerX = playerCollider != null ? GetPlayerAimBounds().center.x : attackTargetX;
         recoveryTargetX = playerX - attackApproachSide * settings.recoverySideDistance;
         state = AIState.Recover;

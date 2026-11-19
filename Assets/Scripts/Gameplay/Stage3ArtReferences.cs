@@ -35,6 +35,9 @@ public class Stage3ArtReferences : MonoBehaviour
     [SerializeField] private Sprite starSpiritFinalPose;
     [SerializeField] private Sprite[] companionMoveFrames = new Sprite[2];
     [SerializeField] private Sprite companionReunionPose;
+    [Header("Stage 3 Platforms")]
+    [SerializeField] private Sprite[] platformLongSprites;
+    [SerializeField] private Sprite platformShortSprite;
     [Header("Stage 3 Objectives")]
     [SerializeField, Min(1)] private int droneGoal = 5;
     [SerializeField, Min(1)] private int slimeGoal = 4;
@@ -58,6 +61,8 @@ public class Stage3ArtReferences : MonoBehaviour
     public Sprite StarSpiritFinalPose => starSpiritFinalPose;
     public Sprite[] CompanionMoveFrames => companionMoveFrames;
     public Sprite CompanionReunionPose => companionReunionPose;
+    public Sprite[] PlatformLongSprites => platformLongSprites;
+    public Sprite PlatformShortSprite => platformShortSprite;
     public int DroneGoal => droneGoal;
     public int SlimeGoal => slimeGoal;
     public int LifeLimit => lifeLimit;

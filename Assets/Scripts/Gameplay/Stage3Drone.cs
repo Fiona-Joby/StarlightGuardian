@@ -53,6 +53,7 @@ public class Stage3Drone : MonoBehaviour
     private void Fire(Vector2 direction)
     {
         if (beamSprite == null) return;
+        GameAudio.PlaySfx("Turret and Drone Shoot");
         GameObject shot = new GameObject("Drone Beam");
         shot.transform.position = transform.position + (Vector3)(direction * 1.2f);
         shot.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);

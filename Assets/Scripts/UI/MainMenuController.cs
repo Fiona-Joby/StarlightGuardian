@@ -77,8 +77,6 @@ public class MainMenuController : MonoBehaviour
         if (stageMenuButton != null) stageMenuButton.onClick.AddListener(() => ShowPage(stagePage));
         if (languageMenuButton != null) languageMenuButton.onClick.AddListener(() => ShowPage(languagePage));
         if (settingsMenuButton != null) settingsMenuButton.onClick.AddListener(() => ShowSettings());
-        Button exitButton = GetExitButton();
-        if (exitButton != null) exitButton.onClick.AddListener(Application.Quit);
         for (int i = 0; stageButtons != null && i < stageButtons.Length; i++)
         {
             if (stageButtons[i] == null) continue;

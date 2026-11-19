@@ -28,6 +28,7 @@ public class StageQuitButton : MonoBehaviour
     private AudioClip optionSelectSound;
     private GameObject taskPage;
     private Text taskGoalText;
+    private Text taskHeading;
     private float nextTaskRefreshTime;
 
     private void Awake()
@@ -60,6 +61,23 @@ public class StageQuitButton : MonoBehaviour
         taskButton.onClick.AddListener(ToggleTaskPage);
         CreateTaskPage(canvas.transform);
 
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        if (activeSceneName == "MainScene" || activeSceneName == "Stage2" || activeSceneName == "Stage3")
+        {
+            Texture2D controlButtonTexture = Resources.Load<Texture2D>("StageUI/Control Button");
+            if (controlButtonTexture != null)
+            {
+                Button controlButton = CreateTextureButton("Control Button", canvas.transform, controlButtonTexture,
+                    new Vector2(100f, 100f), new Vector2(0f, 1f), new Vector2(316f, -76f));
+                SetupOptionAudio(controlButton);
+                GestureInstructionOverlay instructions = gameObject.AddComponent<GestureInstructionOverlay>();
+                instructions.Configure(activeSceneName == "MainScene" ? 1 : 2, canvas.transform);
+                controlButton.onClick.AddListener(instructions.Show);
+                if (activeSceneName != "Stage3") instructions.ShowAtStageStart();
+            }
+            else Debug.LogError("Control Button image is missing from Assets/Resources/StageUI.");
+        }
+
         pausePage = CreatePage("Pause Page", canvas.transform);
         CreatePauseArt(pausePage.transform, art);
         CreateSettingsPage(art);
@@ -70,19 +88,32 @@ public class StageQuitButton : MonoBehaviour
     private void CreateTaskPage(Transform parent)
     {
         taskPage = CreatePage("Task Page", parent);
-        Image dimmer = CreateImage("Task Dimmer", taskPage.transform, null);
-        Stretch(dimmer.rectTransform);
-        dimmer.color = new Color(0f, 0f, 0f, 0.55f);
-        dimmer.raycastTarget = true;
-        Image panel = CreateImage("Task Panel", taskPage.transform, null);
-        panel.color = new Color(0.08f, 0.04f, 0.25f, 0.96f);
+        Image blocker = CreateImage("Task Popup Click Blocker", taskPage.transform, null);
+        Stretch(blocker.rectTransform);
+        blocker.color = new Color(0f, 0f, 0f, 0f);
+        blocker.raycastTarget = true;
+        Texture2D boxTexture = Resources.Load<Texture2D>("StageUI/UI Box");
+        RawImage panel = RuntimeUiUtility.CreateRect("Task Box", taskPage.transform).gameObject.AddComponent<RawImage>();
+        panel.texture = boxTexture;
+        panel.color = Color.white;
         panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        panel.rectTransform.sizeDelta = new Vector2(920f, 340f);
+        panel.rectTransform.sizeDelta = new Vector2(1080f, 540f);
+        const float boxSourceWidth = 1920f;
+        const float boxSourceHeight = 1080f;
+        const float boxLeft = 566f;
+        const float boxTop = 176f;
+        const float boxRight = 1331f;
+        const float boxBottom = 901f;
+        panel.uvRect = new Rect(boxLeft / boxSourceWidth, 1f - boxBottom / boxSourceHeight,
+            (boxRight - boxLeft) / boxSourceWidth, (boxBottom - boxTop) / boxSourceHeight);
+        taskHeading = CreateLabel("Task Heading", taskPage.transform, "GOAL", 36);
+        Place(taskHeading.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(920f, 70f));
         taskGoalText = CreateLabel("Stage Goal", taskPage.transform, GetStageGoal(), 42);
-        Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.57f), new Vector2(820f, 210f));
+        taskGoalText.fontSize = 30;
+        Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.46f), new Vector2(920f, 190f));
         Button close = RuntimeUiUtility.CreateButton("Close Task", taskPage.transform, "CLOSE", 26,
             new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(220f, 64f));
-        Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.25f), new Vector2(220f, 64f));
+        Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.20f), new Vector2(220f, 64f));
         SetupOptionAudio(close);
         close.onClick.AddListener(() => taskPage.SetActive(false));
         taskPage.SetActive(false);
@@ -143,6 +174,7 @@ public class StageQuitButton : MonoBehaviour
     private void RefreshTaskPage()
     {
         if (taskGoalText != null) taskGoalText.text = GetStageGoal();
+        if (taskHeading != null) taskHeading.text = language == 3 ? "目標" : language == 1 ? "ലക്ഷ്യം" : language == 2 ? "TUJUAN" : "GOAL";
     }
 
     private void OnDestroy()
@@ -473,6 +505,43 @@ public class StageQuitButton : MonoBehaviour
         Button button = go.GetComponent<Button>();
         button.targetGraphic = image;
         return button;
+    }
+
+    private static Button CreateTextureButton(
+        string name, Transform parent, Texture2D texture, Vector2 size,
+        Vector2 anchor, Vector2 anchoredPosition)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        RawImage image = go.GetComponent<RawImage>();
+        image.texture = texture;
+        image.color = Color.white;
+        // Match the visible circular button artwork. The source PNG has transparent margins;
+        // crop those margins in UV space so the 100x100 hit target renders at the same visual size.
+        const float sourceWidth = 1920f;
+        const float sourceHeight = 1080f;
+        const float left = 562f;
+        const float top = 142f;
+        const float right = 1355f;
+        const float bottom = 934f;
+        image.uvRect = new Rect(left / sourceWidth, 1f - bottom / sourceHeight,
+            (right - left) / sourceWidth, (bottom - top) / sourceHeight);
+        Button button = go.GetComponent<Button>();
+        button.targetGraphic = image;
+        return button;
+    }
+
+    private static Vector2 FitTexture(Texture2D texture, Vector2 bounds)
+    {
+        if (texture == null) return bounds;
+        float aspect = (float)texture.width / texture.height;
+        float width = Mathf.Min(bounds.x, bounds.y * aspect);
+        return new Vector2(width, width / aspect);
     }
 
     private static Image CreateImage(string name, Transform parent, Sprite sprite)
