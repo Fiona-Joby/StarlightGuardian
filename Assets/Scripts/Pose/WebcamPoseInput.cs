@@ -69,18 +69,18 @@ public class WebcamPoseInput : MonoBehaviour
             string gesture;
             switch (currentGesture)
             {
-                case "right": gesture = "Move right"; break;
-                case "left": gesture = "Move left"; break;
-                case "reach": gesture = "Reach"; break;
-                case "collect": gesture = "Collect"; break;
+                case "right": gesture = "Index only → Move right"; break;
+                case "left": gesture = "Index only → Move left"; break;
+                case "reach": gesture = "Both palms raised → Reach"; break;
+                case "collect": gesture = "Open palm → Collect"; break;
                 case "idle": gesture = "Idle"; break;
                 default: gesture = currentGesture; break;
             }
 
-            if (jumpGestureHeld) gesture += " + Jump";
-            if (fistGestureHeld) gesture += " + Fist";
-            if (shootGestureHeld) gesture += " + Shoot";
-            if (ArePalmsTogether) gesture += " + Palms together";
+            if (jumpGestureHeld) gesture = "V sign → Jump" + (currentGesture != "idle" ? " | " + gesture : "");
+            if (fistGestureHeld) gesture += " | Fist → Shield";
+            if (shootGestureHeld) gesture += " | Index + pinky → Shoot";
+            if (ArePalmsTogether) gesture += " | Palms together";
             return gesture;
         }
     }

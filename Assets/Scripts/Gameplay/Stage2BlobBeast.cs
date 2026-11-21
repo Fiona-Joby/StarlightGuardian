@@ -434,7 +434,7 @@ public class Stage2BlobBeast : MonoBehaviour
         destroyed = true;
         StopAllCoroutines();
         if (stage2Encounter != null) stage2Encounter.OnBlobBeastDestroyed();
-        else if (stage3Encounter != null) stage3Encounter.OnHardBeastDestroyed();
+        else if (stage3Encounter != null) stage3Encounter.OnHardBeastDestroyed(GetEntityId());
         Destroy(gameObject);
     }
 

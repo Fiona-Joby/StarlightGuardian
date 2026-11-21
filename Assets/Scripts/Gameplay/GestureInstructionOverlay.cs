@@ -4,6 +4,7 @@ using UnityEngine.UI;
 /// <summary>On-demand, localized gesture guide for stages 1 and 2.</summary>
 public sealed class GestureInstructionOverlay : MonoBehaviour
 {
+    public System.Action onStartupDismissed;
     private static readonly string[] Languages = { "English", "Malayalam", "Indonesian", "Traditional Chinese" };
     private static readonly string[][] Labels =
     {
@@ -12,7 +13,6 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         new[] { "SEBELUMNYA", "BERIKUTNYA", "KELUAR" },
         new[] { "上一頁", "下一頁", "退出" }
     };
-    private static readonly string[] ContinueLabels = { "CONTINUE", "തുടരുക", "LANJUTKAN", "繼續" };
 
     private GameObject page;
     private RawImage instructionImage;
@@ -62,9 +62,9 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
             exitButton = CreateControlButton("Exit", imageRect, Labels[language][2], new Vector2(1f, 0f));
             exitButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-224f, 24f);
             exitButton.onClick.AddListener(Exit);
-            startupContinueButton = CreateControlButton("Continue", imageRect, ContinueLabels[language], new Vector2(1f, 0f));
-            startupContinueButton.onClick.AddListener(Exit);
         }
+        startupContinueButton = CreateContinueButton(imageRect);
+        startupContinueButton.onClick.AddListener(Exit);
         previousButton?.GetComponent<RectTransform>().SetAsLastSibling();
         nextButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-24f, 24f);
         page.SetActive(false);
@@ -94,7 +94,8 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         }
         else
         {
-            SetButtonLabel(nextButton, ContinueLabels[language]);
+            SetReminderControls(false);
+            startupContinueButton.gameObject.SetActive(true);
         }
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -126,6 +127,9 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
     {
         if (page != null) page.SetActive(false);
         Time.timeScale = previousTimeScale;
+        System.Action callback = onStartupDismissed;
+        onStartupDismissed = null;
+        callback?.Invoke();
     }
 
     private void SetReminderControls(bool visible)
@@ -158,6 +162,28 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         rect.anchorMin = rect.anchorMax = anchor;
         rect.pivot = anchor;
         rect.anchoredPosition = new Vector2(anchor.x == 0f ? 24f : -24f, 24f);
+        return button;
+    }
+
+    private Button CreateContinueButton(Transform parent)
+    {
+        string[] languageFolders = { "English", "Malayalam", "Indonesian", "Traditional Chinese" };
+        Texture2D texture = Resources.Load<Texture2D>("AIContinue/" + languageFolders[language]);
+        GameObject go = new GameObject("AI Continue", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        // Keep the startup action within the illustrated control panel, slightly left and higher.
+        rect.anchoredPosition = new Vector2(-140f, 112f);
+        rect.sizeDelta = new Vector2(300f, 80f);
+        RawImage image = go.GetComponent<RawImage>();
+        image.texture = texture;
+        image.color = Color.white;
+        image.uvRect = new Rect(0.10f, 0.31f, 0.80f, 0.38f);
+        image.raycastTarget = true;
+        Button button = go.GetComponent<Button>();
+        button.targetGraphic = image;
         return button;
     }
 }

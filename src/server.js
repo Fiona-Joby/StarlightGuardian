@@ -47,10 +47,12 @@ const server = http.createServer(async (request, response) => {
       instructions: [
         "You are a friendly coach for Starlight Guardian, a short game shown at an exhibition.",
         "Use simple, everyday words that most players will understand. Keep sentences short. Avoid technical terms and explain advice as one clear action at a time.",
-        "Use stageSummary.controlMode to choose the topic: for gesture controls, give an easy tip for making hand signs clear and holding them long enough; for keyboard controls, talk about game goals, score, collecting stars, or simple ways to play better. Do not talk about gestures when keyboard controls are active.",
-        "Do not claim to see the player, camera, hand pose, or movement form. Raw camera and joint data are not provided. Do not diagnose health conditions.",
-        "Use only facts in the stage summary. Do not guess what the player did.",
-        "Answer the player's question in at most two short sentences and about 30 words.",
+        "Every reply must mention at least one real detail from stageSummary.performance or another field that is relevant to this stage. Explain what that result means and give one useful next step. Avoid advice that could fit any player.",
+        stageInstructions(summary.stage),
+        "Use stageSummary.controlMode to tailor the next step: for gesture controls, give a simple gesture tip as well as referring to the gameplay result; for keyboard controls, focus the tip on gameplay. Do not talk about gestures when keyboard controls are active.",
+        "Gesture counts show how often an action was used, not whether it was done correctly. Do not claim to see the player, camera, hand pose, or movement form. Raw camera and joint data are not provided. Do not diagnose health conditions.",
+        "Use only facts in the stage summary. Do not guess what the player did. If a stat is missing, do not make one up.",
+        "Answer the player's question in at most two short sentences and about 40 words.",
       ].join(" "),
       input: JSON.stringify({
         stageSummary: summary,
@@ -81,6 +83,19 @@ const server = http.createServer(async (request, response) => {
 server.listen(port, "0.0.0.0", () => {
   console.log(`Starlight Guardian Coach API listening on port ${port}`);
 });
+
+function stageInstructions(stage) {
+  switch (stage) {
+    case "Stage 1":
+      return "Stage 1 objective: move and jump to collect the required falling stars. Star count and score are relevant. Do not give combat advice about Stage 2 or Stage 3 enemies.";
+    case "Stage 2":
+      return "Stage 2 objective: protect the star spirit by defeating the required turrets and blob beasts. Use enemy progress and hits for advice. This stage has no collectible-star objective; do not advise collecting stars or discuss a star score. Do not give Stage 3 drone, slime or hard-beast advice.";
+    case "Stage 3":
+      return "Stage 3 objective: defeat the required drones, slimes and hard beasts, then rescue the star spirit and restore the constellation. Use enemy progress and hits for advice. This stage has no collectible stars or score objective. Never advise collecting stars or discuss star counts or scores. Do not give Stage 1 star-collection or Stage 2 turret advice.";
+    default:
+      return "Use only the objectives named in stageSummary.performance. Never recommend objectives from another stage.";
+  }
+}
 
 function setCommonHeaders(response) {
   response.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -115,6 +130,7 @@ function normalizeSummary(value) {
   return {
     stage: shortText(summary.stage, 30, "unknown"),
     controlMode: summary.controlMode === "gesture" ? "gesture" : "keyboard",
+    performance: shortText(summary.performance, 240, ""),
     durationSeconds: boundedNumber(summary.durationSeconds, 0, 3600),
     score: boundedNumber(summary.score, 0, 100000),
     starsCollected: boundedNumber(summary.starsCollected, 0, 10000),

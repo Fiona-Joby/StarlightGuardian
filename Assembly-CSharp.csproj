@@ -95,6 +95,7 @@
     <Compile Include="Assets\Scripts\UI\QuitGameButton.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ScoreMultiplierTimer.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2Beam.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Stage3DroneProjectile.cs" />
     <Compile Include="Assets\Scripts\Pose\WebcamPoseInput.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2Shooter.cs" />
   </ItemGroup>

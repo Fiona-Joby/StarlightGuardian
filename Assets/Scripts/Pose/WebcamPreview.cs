@@ -67,7 +67,7 @@ public sealed class WebcamPreview : MonoBehaviour
         screenMarker.gameObject.SetActive(tracking);
         status.text = !ready ? "WEBCAM | Waiting for camera"
             : !tracking ? "WEBCAM | No hand detected\nREAD: —"
-            : $"WEBCAM | Tracking\nREAD: {source.ReadGestureLabel}  •  Mapping {mappingScale:0.0}x";
+            : $"WEBCAM | Tracking\nGESTURE: {source.ReadGestureLabel}";
 
         float width = Mathf.Min(Screen.width * previewWidthFraction, 360f);
         float angle = ready ? cameraTexture.videoRotationAngle : 0f;

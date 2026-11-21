@@ -1,3 +1,5 @@
+using System;
+
 /// <summary>
 /// Pure C# gesture classifier — direct port of the Python pose_server.py logic.
 /// Takes normalized hand landmark positions and classifies the gesture.
@@ -107,7 +109,32 @@ public static class GestureClassifier
     /// <summary>True when all fingers are curled (closed fist).</summary>
     private static bool IsFist(LandmarkPoint[] lm)
     {
-        return lm != null && lm.Length >= 21 && CountRaisedFingers(lm) == 0;
+        if (lm == null || lm.Length < 21) return false;
+
+        // Require all four fingers to fold back toward the wrist. Comparing
+        // tip-to-wrist distance with the middle joint is less sensitive to
+        // camera rotation than checking only whether the tip is below the PIP.
+        for (int finger = 1; finger < 5; finger++)
+        {
+            float tipDistance = DistanceSquared(lm[WRIST], lm[FingerTips[finger]]);
+            float jointDistance = DistanceSquared(lm[WRIST], lm[FingerPIPs[finger]]);
+            if (tipDistance >= jointDistance * 0.92f)
+                return false;
+        }
+
+        // The thumb should be tucked toward the palm too, which avoids reading
+        // an index-pointing pose or a partially curled hand as a shield fist.
+        LandmarkPoint palmCenter = GetPalmCenter(lm);
+        float palmWidth = (float)Math.Sqrt(DistanceSquared(lm[5], lm[17]));
+        float thumbToPalm = (float)Math.Sqrt(DistanceSquared(lm[THUMB_TIP], palmCenter));
+        return palmWidth > 0f && thumbToPalm <= palmWidth * 0.9f;
+    }
+
+    private static float DistanceSquared(LandmarkPoint a, LandmarkPoint b)
+    {
+        float dx = a.x - b.x;
+        float dy = a.y - b.y;
+        return dx * dx + dy * dy;
     }
 
     // ------------------------------------------------------------------ //

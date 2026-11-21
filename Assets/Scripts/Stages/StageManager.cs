@@ -75,7 +75,7 @@ public class StageManager : MonoBehaviour
         PlayerInput playerInput = player != null ? player.GetComponent<PlayerInput>() : null;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 1", Time.timeSinceLevelLoad,
             currentScore, starsCollected,
-            $"The player completed the star-collection stage, catching {starsCollected} stars and scoring {currentScore} points.",
+            $"The player collected {starsCollected} of {score?.StageGoal ?? GameDifficulty.Stage1StarGoal} stars, scored {currentScore} points, and took {Time.timeSinceLevelLoad:0} seconds.",
             playerInput, ContinueToNextStage);
     }
 

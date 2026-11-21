@@ -39,7 +39,8 @@ public class StarSpiritCompanion : MonoBehaviour
         visual.transform.localScale = Vector3.one * 0.065f;
         spriteRenderer = visual.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = moveFrames[0];
-        spriteRenderer.sortingOrder = 8;
+        // Keep the follower in front of generated platforms (order 9) in Stages 2 and 3.
+        spriteRenderer.sortingOrder = 11;
         transform.position = owner.position + new Vector3(-0.8f, 1.1f, 0f);
     }
 

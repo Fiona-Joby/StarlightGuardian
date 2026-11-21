@@ -30,6 +30,9 @@ public class StageQuitButton : MonoBehaviour
     private Text taskGoalText;
     private Text taskHeading;
     private float nextTaskRefreshTime;
+    private bool pauseMenuOpen;
+    private float timeScaleBeforePause = 1f;
+    private GameObject objectivePage;
 
     private void Awake()
     {
@@ -72,8 +75,12 @@ public class StageQuitButton : MonoBehaviour
                 SetupOptionAudio(controlButton);
                 GestureInstructionOverlay instructions = gameObject.AddComponent<GestureInstructionOverlay>();
                 instructions.Configure(activeSceneName == "MainScene" ? 1 : 2, canvas.transform);
-                controlButton.onClick.AddListener(instructions.Show);
-                if (activeSceneName != "Stage3") instructions.ShowAtStageStart();
+                controlButton.onClick.AddListener(() => instructions.Show());
+                if (activeSceneName != "Stage3")
+                {
+                    instructions.onStartupDismissed = ShowStartupObjectives;
+                    instructions.ShowAtStageStart();
+                }
             }
             else Debug.LogError("Control Button image is missing from Assets/Resources/StageUI.");
         }
@@ -83,6 +90,86 @@ public class StageQuitButton : MonoBehaviour
         CreateSettingsPage(art);
         pausePage.SetActive(false);
         settingsPage.SetActive(false);
+        if (activeSceneName == "Stage3") ShowStartupObjectives();
+    }
+
+    private void ShowStartupObjectives()
+    {
+        if (canvas == null) return;
+        if (objectivePage == null) CreateObjectivePage();
+        timeScaleBeforePause = Time.timeScale;
+        Time.timeScale = 0f;
+        objectivePage.SetActive(true);
+    }
+
+    private void CreateObjectivePage()
+    {
+        objectivePage = CreatePage("Stage Objectives", canvas.transform);
+        Image dimmer = CreateImage("Objective Backdrop", objectivePage.transform, null);
+        Stretch(dimmer.rectTransform);
+        dimmer.color = new Color(0f, 0f, 0f, 0.82f);
+        dimmer.raycastTarget = true;
+        Texture2D tab = Resources.Load<Texture2D>("TaskTabs/" + new[] { "English", "Malayalam", "Indonesian", "Traditional Chinese" }[language]);
+        RawImage panel = RuntimeUiUtility.CreateRect("Objective Task Tab", objectivePage.transform).gameObject.AddComponent<RawImage>();
+        panel.texture = tab;
+        panel.raycastTarget = false;
+        panel.rectTransform.sizeDelta = new Vector2(1500f, 1000f);
+        Text objective = CreateLabel("Objective Text", objectivePage.transform, GetStartupObjective(), 40);
+        objective.font = GetLanguageFont();
+        objective.fontSize = language == 3 ? 38 : 44;
+        objective.alignment = TextAnchor.MiddleCenter;
+        objective.horizontalOverflow = HorizontalWrapMode.Wrap;
+        objective.verticalOverflow = VerticalWrapMode.Overflow;
+        Place(objective.rectTransform, new Vector2(0.5f, 0.55f), new Vector2(800f, 390f));
+        Button continueButton = RuntimeUiUtility.CreateButton("Start Stage", objectivePage.transform,
+            language == 1 ? "തുടരുക" : language == 2 ? "MULAI" : language == 3 ? "開始" : "START", 28,
+            new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(240f, 72f));
+        RectTransform startRect = continueButton.GetComponent<RectTransform>();
+        startRect.anchorMin = startRect.anchorMax = new Vector2(0.5f, 0.5f);
+        startRect.anchoredPosition = new Vector2(0f, -270f);
+        continueButton.GetComponent<RectTransform>().SetAsLastSibling();
+        continueButton.onClick.AddListener(() => { objectivePage.SetActive(false); Time.timeScale = timeScaleBeforePause; });
+        objectivePage.SetActive(false);
+    }
+
+    private string GetStartupObjective()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        if (scene == "MainScene")
+        {
+            int stars = GameDifficulty.Stage1StarGoal;
+            return language switch
+            {
+                1 => $"നക്ഷത്രരാശി പുനഃസ്ഥാപിക്കാൻ ആസ്റ്ററിനെ സഹായിക്കുക!\nഘട്ടം പൂർത്തിയാക്കാൻ {stars} നക്ഷത്രങ്ങൾ ശേഖരിക്കുക",
+                2 => $"Bantu Aster memulihkan rasi bintang!\nKumpulkan {stars} bintang untuk menyelesaikan tahap",
+                3 => $"幫助 Aster 修復星座！\n收集 {stars} 顆星星以完成關卡",
+                _ => $"Help Aster restore the constellation!\nCollect {stars} stars to complete the stage"
+            };
+        }
+        if (scene == "Stage2")
+        {
+            Stage2ArtReferences art = Object.FindAnyObjectByType<Stage2ArtReferences>();
+            int turrets = GameDifficulty.Stage2TurretGoal(art != null ? art.TurretGoal : 6);
+            int beasts = GameDifficulty.Stage2BeastGoal(art != null ? art.BlobBeastGoal : 2);
+            return language switch
+            {
+                1 => $"നിങ്ങളുടെ നക്ഷത്രാത്മാവിനെ സംരക്ഷിക്കുക!\n{turrets} ടററ്റുകളും {beasts} ബ്ലോബ് മൃഗങ്ങളെയും നശിപ്പിക്കുക.",
+                2 => $"Lindungi roh bintangmu!\nHancurkan {turrets} turret dan {beasts} monster blob.",
+                3 => $"保護你的星靈！\n摧毀 {turrets} 座砲塔和 {beasts} 隻黏 blob 怪。",
+                _ => $"Protect your star spirit!\nDestroy {turrets} turrets and {beasts} blob beasts."
+            };
+        }
+        Stage3ArtReferences stage3 = Object.FindAnyObjectByType<Stage3ArtReferences>();
+        int drones = GameDifficulty.Stage3DroneGoal(stage3 != null ? stage3.DroneGoal : 5);
+        int slimes = GameDifficulty.Stage3SlimeGoal(stage3 != null ? stage3.SlimeGoal : 4);
+        int hard = GameDifficulty.Stage3HardBeastGoal(stage3 != null ? stage3.HardBeastGoal : 2);
+        return language switch
+        {
+            1 => $"ലൂട്ട്ബോക്സ് നേടുക!\n{drones} ഡ്രോണുകളും {slimes} സ്ലൈമുകളും {hard} ഹാർഡ് മൃഗങ്ങളെയും തോൽപ്പിക്കുക.",
+            2 => $"Dapatkan kotak jarahan!\nKalahkan {drones} drone, {slimes} slime, dan {hard} monster kuat.",
+            3 => $"取得戰利品箱！\n擊敗 {drones} 架無人機、{slimes} 隻史萊姆和 {hard} 隻強力怪獸。",
+            _ => $"Get the lootbox!\nDefeat {drones} drones, {slimes} slimes, and {hard} hard beasts."
+        };
     }
 
     private void CreateTaskPage(Transform parent)
@@ -107,10 +194,12 @@ public class StageQuitButton : MonoBehaviour
         panel.uvRect = new Rect(boxLeft / boxSourceWidth, 1f - boxBottom / boxSourceHeight,
             (boxRight - boxLeft) / boxSourceWidth, (boxBottom - boxTop) / boxSourceHeight);
         taskHeading = CreateLabel("Task Heading", taskPage.transform, "GOAL", 36);
+        taskHeading.font = GetLanguageFont();
         Place(taskHeading.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(920f, 70f));
-        taskGoalText = CreateLabel("Stage Goal", taskPage.transform, GetStageGoal(), 42);
-        taskGoalText.fontSize = 30;
-        Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.46f), new Vector2(920f, 190f));
+        taskGoalText = CreateLabel("Stage Goal", taskPage.transform, GetStageGoal(), 40);
+        taskGoalText.font = GetLanguageFont();
+        taskGoalText.fontSize = 34;
+        Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.46f), new Vector2(820f, 260f));
         Button close = RuntimeUiUtility.CreateButton("Close Task", taskPage.transform, "CLOSE", 26,
             new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(220f, 64f));
         Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.20f), new Vector2(220f, 64f));
@@ -132,29 +221,54 @@ public class StageQuitButton : MonoBehaviour
         {
             case "MainScene":
                 int starGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : GameDifficulty.Stage1StarGoal;
-                return $"STAGE 1\nCollect {starGoal} stars.";
+                int starsCollected = ScoreManager.Instance != null ? ScoreManager.Instance.StarsCollected : 0;
+                return language switch
+                {
+                    1 => $"{starGoal} നക്ഷത്രങ്ങൾ ശേഖരിക്കുക.\n{starsCollected}/{starGoal} നക്ഷത്രങ്ങൾ ശേഖരിച്ചു",
+                    2 => $"Kumpulkan {starGoal} bintang.\n{starsCollected}/{starGoal} bintang terkumpul",
+                    3 => $"收集 {starGoal} 顆星星。\n已收集 {starsCollected}/{starGoal} 顆星星",
+                    _ => $"Collect {starGoal} stars.\n{starsCollected}/{starGoal} Stars collected"
+                };
             case "Stage2":
                 Stage2ArtReferences stage2 = Object.FindAnyObjectByType<Stage2ArtReferences>();
                 Stage2TurretEncounter encounter2 = Object.FindAnyObjectByType<Stage2TurretEncounter>();
                 int turrets = encounter2 != null ? encounter2.TurretGoal : GameDifficulty.Stage2TurretGoal(stage2 != null ? stage2.TurretGoal : 6);
                 int beasts = encounter2 != null ? encounter2.BlobBeastGoal : GameDifficulty.Stage2BeastGoal(stage2 != null ? stage2.BlobBeastGoal : 2);
-                return $"STAGE 2\nProtect your star spirit. Destroy {turrets} turrets and {beasts} blob beasts.";
+                int turretsDestroyed = encounter2 != null ? encounter2.DestroyedTurrets : 0;
+                int beastsDestroyed = encounter2 != null ? encounter2.DestroyedBlobBeasts : 0;
+                return language switch
+                {
+                    1 => $"ടററ്റുകളും ബ്ലോബ് മൃഗങ്ങളെയും നശിപ്പിക്കുക.\n{turretsDestroyed}/{turrets} ടററ്റുകൾ നശിപ്പിച്ചു\n{beastsDestroyed}/{beasts} ബ്ലോബ് മൃഗങ്ങൾ നശിപ്പിച്ചു",
+                    2 => $"Hancurkan turret dan monster blob.\n{turretsDestroyed}/{turrets} turret dihancurkan\n{beastsDestroyed}/{beasts} monster blob dihancurkan",
+                    3 => $"摧毀砲塔和黏 blob 怪。\n已摧毀 {turretsDestroyed}/{turrets} 座砲塔\n已擊敗 {beastsDestroyed}/{beasts} 隻黏 blob 怪",
+                    _ => $"Destroy turrets and blob beasts.\n{turretsDestroyed}/{turrets} Turrets destroyed\n{beastsDestroyed}/{beasts} Blob Beasts destroyed"
+                };
             case "Stage3":
                 Stage3ArtReferences stage3 = Object.FindAnyObjectByType<Stage3ArtReferences>();
                 Stage3DroneEncounter encounter = Object.FindAnyObjectByType<Stage3DroneEncounter>();
                 int drones = encounter != null ? encounter.DroneGoal : GameDifficulty.Stage3DroneGoal(stage3 != null ? stage3.DroneGoal : 5);
                 int slimes = encounter != null ? encounter.SlimeGoal : GameDifficulty.Stage3SlimeGoal(stage3 != null ? stage3.SlimeGoal : 4);
                 int hardBeastGoal = encounter != null ? encounter.HardBeastGoal : GameDifficulty.Stage3HardBeastGoal(stage3 != null ? stage3.HardBeastGoal : 2);
-                string progress = encounter != null
-                    ? encounter.ObjectiveProgress
-                    : $"Drones: 0/{drones}\nSlimes: 0/{slimes}\nHard Beasts: 0/{hardBeastGoal}";
-                return $"STAGE 3\nDefeat all enemies. Rescue the star.\n{progress}";
+                int dronesDestroyed = encounter != null ? encounter.DestroyedDrones : 0;
+                int slimesDestroyed = encounter != null ? encounter.DestroyedSlimes : 0;
+                int hardDestroyed = encounter != null ? encounter.DestroyedHardBeasts : 0;
+                return language switch
+                {
+                    1 => $"ഡ്രോണുകൾ, സ്ലൈമുകൾ, ഹാർഡ് മൃഗങ്ങൾ എന്നിവയെ തോൽപ്പിക്കുക.\n{dronesDestroyed}/{drones} ഡ്രോണുകൾ നശിപ്പിച്ചു\n{slimesDestroyed}/{slimes} സ്ലൈമുകൾ നശിപ്പിച്ചു\n{hardDestroyed}/{hardBeastGoal} ഹാർഡ് മൃഗങ്ങൾ നശിപ്പിച്ചു",
+                    2 => $"Kalahkan drone, slime, dan monster kuat.\n{dronesDestroyed}/{drones} drone dikalahkan\n{slimesDestroyed}/{slimes} slime dikalahkan\n{hardDestroyed}/{hardBeastGoal} monster kuat dikalahkan",
+                    3 => $"擊敗無人機、史萊姆和強力怪獸。\n已擊敗 {dronesDestroyed}/{drones} 架無人機\n已擊敗 {slimesDestroyed}/{slimes} 隻史萊姆\n已擊敗 {hardDestroyed}/{hardBeastGoal} 隻強力怪獸",
+                    _ => $"Destroy drones, slimes and hard beasts.\n{dronesDestroyed}/{drones} Drones destroyed\n{slimesDestroyed}/{slimes} Slimes destroyed\n{hardDestroyed}/{hardBeastGoal} Hard Beasts destroyed"
+                };
             default: return "STAGE GOAL";
         }
     }
 
     private void Update()
     {
+        if (pauseMenuOpen && ((pausePage != null && pausePage.activeSelf) ||
+                              (settingsPage != null && settingsPage.activeSelf)))
+            Time.timeScale = 0f;
+
         if (taskPage != null && taskPage.activeSelf && Time.unscaledTime >= nextTaskRefreshTime)
         {
             RefreshTaskPage();
@@ -184,6 +298,8 @@ public class StageQuitButton : MonoBehaviour
 
     private void OpenPause()
     {
+        timeScaleBeforePause = Time.timeScale;
+        pauseMenuOpen = true;
         Time.timeScale = 0f;
         pausePage.SetActive(true);
         settingsPage.SetActive(false);
@@ -191,25 +307,30 @@ public class StageQuitButton : MonoBehaviour
 
     private void ShowPause()
     {
+        pauseMenuOpen = true;
+        Time.timeScale = 0f;
         pausePage.SetActive(true);
         settingsPage.SetActive(false);
     }
 
     private void ResumeGame()
     {
-        Time.timeScale = 1f;
+        Time.timeScale = timeScaleBeforePause;
+        pauseMenuOpen = false;
         settingsPage.SetActive(false);
         pausePage.SetActive(false);
     }
 
     private void RestartStage()
     {
+        pauseMenuOpen = false;
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void ReturnToMainMenu()
     {
+        pauseMenuOpen = false;
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
@@ -531,6 +652,27 @@ public class StageQuitButton : MonoBehaviour
         const float bottom = 934f;
         image.uvRect = new Rect(left / sourceWidth, 1f - bottom / sourceHeight,
             (right - left) / sourceWidth, (bottom - top) / sourceHeight);
+        Button button = go.GetComponent<Button>();
+        button.targetGraphic = image;
+        return button;
+    }
+
+    private static Button CreateContinueButton(
+        string name, Transform parent, Texture2D texture, Vector2 size,
+        Vector2 anchor, Vector2 anchoredPosition)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
+        go.transform.SetParent(parent, false);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        RawImage image = go.GetComponent<RawImage>();
+        image.texture = texture;
+        image.color = Color.white;
+        // The continue artwork fills the central 80% of the source canvas.
+        image.uvRect = new Rect(0.10f, 0.31f, 0.80f, 0.38f);
         Button button = go.GetComponent<Button>();
         button.targetGraphic = image;
         return button;

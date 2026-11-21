@@ -26,29 +26,54 @@ public class Stage2Beam : MonoBehaviour
         Stage2Turret turret = other.GetComponentInParent<Stage2Turret>();
         if (turret != null)
         {
-            turret.TakeHit();
-            Destroy(gameObject);
+            if (IsVisibleToPlayer(turret))
+            {
+                turret.TakeHit();
+                Destroy(gameObject);
+            }
             return;
         }
         Stage2BlobBeast blob = other.GetComponentInParent<Stage2BlobBeast>();
         if (blob != null)
         {
-            blob.TakeHit();
-            Destroy(gameObject);
+            if (IsVisibleToPlayer(blob))
+            {
+                blob.TakeHit();
+                Destroy(gameObject);
+            }
             return;
         }
         Stage3Drone drone = other.GetComponentInParent<Stage3Drone>();
         if (drone != null)
         {
-            drone.TakeHit();
-            Destroy(gameObject);
+            if (IsVisibleToPlayer(drone))
+            {
+                drone.TakeHit();
+                Destroy(gameObject);
+            }
             return;
         }
         Stage3Slime slime = other.GetComponentInParent<Stage3Slime>();
         if (slime != null)
         {
-            slime.TakeHit();
-            Destroy(gameObject);
+            if (IsVisibleToPlayer(slime))
+            {
+                slime.TakeHit();
+                Destroy(gameObject);
+            }
         }
+    }
+
+    private static bool IsVisibleToPlayer(Component enemy)
+    {
+        Camera playerCamera = Camera.main;
+        if (playerCamera == null || enemy == null) return false;
+        Plane[] cameraPlanes = GeometryUtility.CalculateFrustumPlanes(playerCamera);
+        SpriteRenderer[] renderers = enemy.GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer renderer in renderers)
+            if (renderer != null && renderer.enabled && renderer.gameObject.activeInHierarchy &&
+                GeometryUtility.TestPlanesAABB(cameraPlanes, renderer.bounds))
+                return true;
+        return false;
     }
 }

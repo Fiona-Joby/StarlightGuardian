@@ -178,6 +178,8 @@ public class Stage2TurretEncounter : MonoBehaviour
     public bool IsFinished => finished;
     public int TurretGoal => GameDifficulty.Stage2TurretGoal(artReferences != null ? artReferences.TurretGoal : 6);
     public int BlobBeastGoal => GameDifficulty.Stage2BeastGoal(artReferences != null ? artReferences.BlobBeastGoal : 2);
+    public int DestroyedTurrets => destroyedTurrets;
+    public int DestroyedBlobBeasts => destroyedBlobBeasts;
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
 
     public void OnTurretDestroyed()

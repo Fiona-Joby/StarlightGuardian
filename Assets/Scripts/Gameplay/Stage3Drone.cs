@@ -60,14 +60,16 @@ public class Stage3Drone : MonoBehaviour
         shot.transform.localScale = new Vector3(2.5f, 0.35f, 1f);
         var renderer = shot.AddComponent<SpriteRenderer>();
         renderer.sprite = beamSprite;
-        renderer.sortingOrder = 9;
+        renderer.sortingOrder = 11;
         var hitbox = shot.AddComponent<BoxCollider2D>();
         hitbox.isTrigger = true;
-        hitbox.size = new Vector2(1.4f, 0.7f);
+        // Match the opaque laser core. The old 1.4-unit width made the hitbox
+        // 3.5 world units long after scaling, well ahead of the visible beam.
+        hitbox.size = new Vector2(1f, 0.25f);
         var body = shot.AddComponent<Rigidbody2D>();
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
-        shot.AddComponent<TurretProjectile>().Initialize(direction, projectileSpeed, 8f);
+        shot.AddComponent<Stage3DroneProjectile>().Initialize(encounter, direction, projectileSpeed, 8f);
     }
 
     public void TakeHit()

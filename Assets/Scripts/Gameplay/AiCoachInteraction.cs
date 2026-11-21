@@ -24,6 +24,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
     {
         public string stage;
         public string controlMode;
+        public string performance;
         public float durationSeconds;
         public int score;
         public int starsCollected;
@@ -73,6 +74,11 @@ public sealed class AiCoachInteraction : MonoBehaviour
         hostRect.anchorMin = Vector2.zero;
         hostRect.anchorMax = Vector2.one;
         hostRect.offsetMin = hostRect.offsetMax = Vector2.zero;
+        Canvas coachCanvas = host.AddComponent<Canvas>();
+        coachCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        coachCanvas.overrideSorting = true;
+        coachCanvas.sortingOrder = 500;
+        host.AddComponent<GraphicRaycaster>();
         var coach = host.AddComponent<AiCoachInteraction>();
         coach.summary = new CoachSummary
         {
@@ -86,6 +92,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
         coach.gestureMode = playerInput != null && playerInput.IsUsingGestureControls;
         coach.summary.controlMode = coach.gestureMode ? "gesture" : "keyboard";
         coach.stageContext = context ?? string.Empty;
+        coach.summary.performance = coach.stageContext;
         if (playerInput != null && coach.gestureMode)
         {
             coach.summary.gestures.left = playerInput.GestureLeftCount;
@@ -129,12 +136,12 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
         improveButton = AddButton("Improve Prompt", root, Localized(2), new Vector2(0.08f, 0.35f), new Vector2(0.48f, 0.425f));
         wellButton = AddButton("Well Prompt", root, Localized(3), new Vector2(0.52f, 0.35f), new Vector2(0.92f, 0.425f));
-        improveButton.onClick.AddListener(() => Ask(Localized(2), context));
-        wellButton.onClick.AddListener(() => Ask(Localized(3), context));
+        improveButton.onClick.AddListener(() => Ask(Localized(2)));
+        wellButton.onClick.AddListener(() => Ask(Localized(3)));
 
         questionInput = AddInput(root, Localized(4));
         askButton = AddButton("Ask Button", root, Localized(5), new Vector2(0.58f, 0.105f), new Vector2(0.92f, 0.19f));
-        askButton.onClick.AddListener(() => Ask(questionInput.text, context));
+        askButton.onClick.AddListener(() => Ask(questionInput.text));
         restartButton = AddButton("Restart Button", root, Localized(18), new Vector2(0.08f, 0.02f), new Vector2(0.42f, 0.095f));
         restartButton.GetComponent<Image>().color = new Color(0.2f, 0.25f, 0.4f, 1f);
         restartButton.onClick.AddListener(RestartCurrentStage);
@@ -234,7 +241,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
         return input;
     }
 
-    private void Ask(string question, string context)
+    private void Ask(string question)
     {
         if (requestInProgress || string.IsNullOrWhiteSpace(question)) return;
         StartCoroutine(RequestReply(CreateQuestion(question.Trim()), false));
@@ -242,9 +249,25 @@ public sealed class AiCoachInteraction : MonoBehaviour
 
     private string CreateQuestion(string question)
     {
+        string stageFocus;
+        switch (summary != null ? summary.stage : string.Empty)
+        {
+            case "Stage 1":
+                stageFocus = "Stage 1 is about moving, jumping and collecting the required falling stars.";
+                break;
+            case "Stage 2":
+                stageFocus = "Stage 2 is about protecting the star spirit by defeating the required turrets and blob beasts. It has no collectible-star objective.";
+                break;
+            case "Stage 3":
+                stageFocus = "Stage 3 is about defeating the required drones, slimes and hard beasts, then rescuing the star spirit and restoring the constellation. It has no collectible-star or score objective. Never advise collecting stars.";
+                break;
+            default:
+                stageFocus = "Focus only on the active stage's stated objectives.";
+                break;
+        }
         string focus = gestureMode
-            ? "Control mode: webcam gestures. Focus on gesture clarity, timing and consistency. Don't claim to see hand motion; joint data was not sent."
-            : "Control mode: keyboard. Focus on gameplay strategy, stage goals, score and star collection; avoid gesture advice.";
+            ? "Control mode: webcam gestures. Give a relevant gesture tip without claiming to see hand motion; joint data was not sent. " + stageFocus
+            : "Control mode: keyboard. Avoid gesture advice. " + stageFocus;
         string suffix = " " + Localized(11) + " " + Localized(19) + "\n" + focus;
         if (!string.IsNullOrWhiteSpace(stageContext)) suffix += "\nStage details: " + stageContext;
         int questionLimit = Mathf.Max(1, 500 - suffix.Length);

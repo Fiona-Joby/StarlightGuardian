@@ -38,6 +38,9 @@ public class PlatformSpawner : MonoBehaviour
     private bool nextPlatformIsLong;
     private bool hasStarLandingDetectors;
     private int spawnedPlatformCount;
+    private bool isStage3;
+    private bool clearedStage3LootBoxArea;
+    private Stage3DroneEncounter stage3Encounter;
 
     // Start spawning platforms a short distance ahead of initial player position.
     private const float INITIAL_OFFSET = 8f;
@@ -45,8 +48,9 @@ public class PlatformSpawner : MonoBehaviour
     private void Start()
     {
         string activeScene = SceneManager.GetActiveScene().name;
+        isStage3 = activeScene == "Stage3";
         hasStarLandingDetectors = activeScene != "Stage2";
-        if (activeScene == "Stage3")
+        if (isStage3)
         {
             maxHeight = 1.5f;
             Stage3ArtReferences stage3Art = Object.FindAnyObjectByType<Stage3ArtReferences>();
@@ -72,6 +76,27 @@ public class PlatformSpawner : MonoBehaviour
     {
         if (player == null) return;
 
+        if (isStage3)
+        {
+            if (stage3Encounter == null)
+                stage3Encounter = Object.FindAnyObjectByType<Stage3DroneEncounter>();
+            if (stage3Encounter != null && stage3Encounter.HasLootBoxPlacement && !clearedStage3LootBoxArea)
+            {
+                const float clearRadius = 6f;
+                float clearFromX = stage3Encounter.LootBoxX - clearRadius;
+                float clearToX = stage3Encounter.LootBoxX + clearRadius;
+                GameObject[] platforms = GameObject.FindGameObjectsWithTag("Platform");
+                foreach (GameObject platform in platforms)
+                {
+                    SpriteRenderer renderer = platform.GetComponent<SpriteRenderer>();
+                    float platformLeft = renderer != null ? renderer.bounds.min.x : platform.transform.position.x;
+                    float platformRight = renderer != null ? renderer.bounds.max.x : platform.transform.position.x;
+                    if (platformRight >= clearFromX && platformLeft <= clearToX) Destroy(platform);
+                }
+                clearedStage3LootBoxArea = true;
+            }
+        }
+
         // Spawn platforms ahead of the player.
         while (nextSpawnX < player.position.x + spawnAheadDistance)
         {
@@ -83,6 +108,10 @@ public class PlatformSpawner : MonoBehaviour
 
     private void SpawnPlatform(float x)
     {
+        if (isStage3 && stage3Encounter != null && stage3Encounter.HasLootBoxPlacement &&
+            Mathf.Abs(x - stage3Encounter.LootBoxX) <= 6f)
+            return;
+
         // Randomly pick long or short.
         bool isLong = nextPlatformIsLong;
         nextPlatformIsLong = !nextPlatformIsLong;
