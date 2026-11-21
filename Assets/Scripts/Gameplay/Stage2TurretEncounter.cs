@@ -22,14 +22,19 @@ public class Stage2TurretEncounter : MonoBehaviour
     private Stage2ArtReferences artReferences;
     private float stageStartedAt;
 
-    private void Start()
+    private IEnumerator Start()
     {
+        Time.timeScale = 0f;
+        yield return StoryArc.PlayStage2Entry();
+        Time.timeScale = 1f;
+        StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
+        if (pauseUi != null) pauseUi.ShowStage2InstructionsAfterStory();
         stageStartedAt = Time.unscaledTime;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
             Debug.LogError("[Stage2TurretEncounter] No Player tagged object found.");
-            return;
+            yield break;
         }
 
         if (player.GetComponent<Stage2PlayerHealth>() == null)
@@ -238,8 +243,7 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private void ContinueToStage3()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("Stage3");
+        StoryArc.AfterStage2(() => { Time.timeScale = 1f; SceneManager.LoadScene("Stage3"); });
     }
 
     private static PlayerInput FindPlayerInput()

@@ -33,6 +33,7 @@ public class StageQuitButton : MonoBehaviour
     private bool pauseMenuOpen;
     private float timeScaleBeforePause = 1f;
     private GameObject objectivePage;
+    private GestureInstructionOverlay gestureInstructions;
 
     private void Awake()
     {
@@ -73,14 +74,9 @@ public class StageQuitButton : MonoBehaviour
                 Button controlButton = CreateTextureButton("Control Button", canvas.transform, controlButtonTexture,
                     new Vector2(100f, 100f), new Vector2(0f, 1f), new Vector2(316f, -76f));
                 SetupOptionAudio(controlButton);
-                GestureInstructionOverlay instructions = gameObject.AddComponent<GestureInstructionOverlay>();
-                instructions.Configure(activeSceneName == "MainScene" ? 1 : 2, canvas.transform);
-                controlButton.onClick.AddListener(() => instructions.Show());
-                if (activeSceneName != "Stage3")
-                {
-                    instructions.onStartupDismissed = ShowStartupObjectives;
-                    instructions.ShowAtStageStart();
-                }
+                gestureInstructions = gameObject.AddComponent<GestureInstructionOverlay>();
+                gestureInstructions.Configure(activeSceneName == "MainScene" ? 1 : 2, canvas.transform);
+                controlButton.onClick.AddListener(() => gestureInstructions.Show());
             }
             else Debug.LogError("Control Button image is missing from Assets/Resources/StageUI.");
         }
@@ -90,7 +86,6 @@ public class StageQuitButton : MonoBehaviour
         CreateSettingsPage(art);
         pausePage.SetActive(false);
         settingsPage.SetActive(false);
-        if (activeSceneName == "Stage3") ShowStartupObjectives();
     }
 
     private void ShowStartupObjectives()
@@ -101,6 +96,22 @@ public class StageQuitButton : MonoBehaviour
         Time.timeScale = 0f;
         objectivePage.SetActive(true);
     }
+
+    public void ShowStage1InstructionsAfterStory()
+    {
+        if (gestureInstructions == null) return;
+        gestureInstructions.onStartupDismissed = ShowStartupObjectives;
+        gestureInstructions.ShowAtStageStart();
+    }
+
+    public void ShowStage2InstructionsAfterStory()
+    {
+        if (gestureInstructions == null) return;
+        gestureInstructions.onStartupDismissed = ShowStartupObjectives;
+        gestureInstructions.ShowAtStageStart();
+    }
+
+    public void ShowStage3ObjectivesAfterStory() => ShowStartupObjectives();
 
     private void CreateObjectivePage()
     {

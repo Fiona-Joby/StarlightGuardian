@@ -331,7 +331,10 @@ public sealed class AiCoachInteraction : MonoBehaviour
     private void Continue()
     {
         if (requestInProgress) StopAllCoroutines();
-        continueAction?.Invoke();
+        Action action = continueAction;
+        continueAction = null;
+        gameObject.SetActive(false);
+        action?.Invoke();
     }
 
     private void RestartCurrentStage()

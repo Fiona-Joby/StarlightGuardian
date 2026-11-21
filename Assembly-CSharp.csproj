@@ -53,6 +53,7 @@
     <Compile Include="Assets\Scripts\Gameplay\StarMovement.cs" />
     <Compile Include="Assets\Scripts\Gameplay\PlatformMover.cs" />
     <Compile Include="Assets\Scripts\Gameplay\RuntimeUiUtility.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\StoryArc.cs" />
     <Compile Include="Assets\Scripts\Gameplay\StarType.cs" />
     <Compile Include="Assets\Scripts\Stages\StageManager.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Stage2TurretEncounter.cs" />

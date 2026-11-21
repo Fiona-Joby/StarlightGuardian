@@ -37,6 +37,7 @@ public static class GameplayBootstrapper
         bool isStage3 = sceneName == "Stage3";
         bool usesStage2World = isStage2 || isStage3;
         Time.timeScale = 1f;
+        if (sceneName == "MainScene") StoryArc.BeginStage(sceneName);
 
         if ((sceneName == "MainScene" || isStage2 || isStage3) && Object.FindAnyObjectByType<StageQuitButton>() == null)
         {

@@ -63,14 +63,19 @@ public class Stage3DroneEncounter : MonoBehaviour
         $"Drones: {destroyedDrones}/{DroneGoal}\nSlimes: {destroyedSlimes}/{SlimeGoal}\nHard Beasts: {destroyedHardBeasts}/{HardBeastGoal}";
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
 
-    private void Start()
+    private IEnumerator Start()
     {
+        Time.timeScale = 0f;
+        yield return new WaitForSecondsRealtime(0.2f);
+        yield return StoryArc.PlayStage3Entry();
+        StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
+        if (pauseUi != null) pauseUi.ShowStage3ObjectivesAfterStory();
         stageStartedAt = Time.unscaledTime;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
             Debug.LogError("[Stage3DroneEncounter] No Player tagged object found.");
-            return;
+            yield break;
         }
 
         artReferences = FindAnyObjectByType<Stage3ArtReferences>();
@@ -347,6 +352,9 @@ public class Stage3DroneEncounter : MonoBehaviour
         if (pairedCompanion != null && pairedFriend != null)
             yield return FloatTogether(pairedCompanion.transform, pairedFriend.transform);
         yield return new WaitForSeconds(1f);
+        bool storyDone = false;
+        StoryArc.ShowStage3FoundSpirit(() => storyDone = true);
+        while (!storyDone) yield return null;
         ShowRestorePrompt();
         while (!finished && restorePromptVisible) yield return null;
     }
@@ -451,9 +459,12 @@ public class Stage3DroneEncounter : MonoBehaviour
         finished = true;
         GameDifficulty.AdjustAfterCombat(playerHits, LifeLimit);
         Time.timeScale = 0f;
-        yield return new WaitForSecondsRealtime(2f);
+        yield return new WaitForSecondsRealtime(1f);
         if (endingFeedbackShown) yield break;
         endingFeedbackShown = true;
+        bool endingDone = false;
+        StoryArc.ShowEnding(() => endingDone = true);
+        while (!endingDone) yield return null;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player restored the constellation after defeating {destroyedDrones}/{DroneGoal} drones, {destroyedSlimes}/{SlimeGoal} slimes, and {destroyedHardBeasts}/{HardBeastGoal} hard beasts, taking {playerHits} hits.",
             playerInput, ReturnToMainMenu);

@@ -81,11 +81,12 @@ public class StageManager : MonoBehaviour
 
     private void ContinueToNextStage()
     {
-        Time.timeScale = 1f;
-        if (Application.CanStreamedLevelBeLoaded(stage2SceneName))
-            SceneManager.LoadScene(stage2SceneName);
-        else
-            Debug.Log($"[StageManager] Scene \"{stage2SceneName}\" not found in Build Settings. Add it to transition to Stage 2.");
+        StoryArc.AfterStage1(() =>
+        {
+            Time.timeScale = 1f;
+            if (Application.CanStreamedLevelBeLoaded(stage2SceneName)) SceneManager.LoadScene(stage2SceneName);
+            else Debug.Log($"[StageManager] Scene \"{stage2SceneName}\" not found in Build Settings. Add it to transition to Stage 2.");
+        });
     }
 
     // ------------------------------------------------------------------ //
