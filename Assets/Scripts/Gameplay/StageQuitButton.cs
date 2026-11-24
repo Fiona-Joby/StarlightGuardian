@@ -133,13 +133,11 @@ public class StageQuitButton : MonoBehaviour
         objective.horizontalOverflow = HorizontalWrapMode.Wrap;
         objective.verticalOverflow = VerticalWrapMode.Overflow;
         Place(objective.rectTransform, new Vector2(0.5f, 0.55f), new Vector2(800f, 390f));
-        Button continueButton = RuntimeUiUtility.CreateButton("Start Stage", objectivePage.transform,
-            language == 1 ? "തുടരുക" : language == 2 ? "MULAI" : language == 3 ? "開始" : "START", 28,
-            new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(240f, 72f));
-        RectTransform startRect = continueButton.GetComponent<RectTransform>();
-        startRect.anchorMin = startRect.anchorMax = new Vector2(0.5f, 0.5f);
-        startRect.anchoredPosition = new Vector2(0f, -270f);
-        continueButton.GetComponent<RectTransform>().SetAsLastSibling();
+        Button continueButton = CreateImageButton("Start Stage", objectivePage.transform,
+            LoadStartButtonSprite(), new Vector2(240f, 72f),
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -270f));
+        SetupOptionAudio(continueButton);
+        continueButton.transform.SetAsLastSibling();
         continueButton.onClick.AddListener(() => { objectivePage.SetActive(false); Time.timeScale = timeScaleBeforePause; });
         objectivePage.SetActive(false);
     }
@@ -351,6 +349,7 @@ public class StageQuitButton : MonoBehaviour
     private void RestartStage()
     {
         pauseMenuOpen = false;
+        StageRestartState.MarkCurrentStageRestart();
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -661,6 +660,34 @@ public class StageQuitButton : MonoBehaviour
         return texture != null
             ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
             : null;
+    }
+
+    private Sprite LoadStartButtonSprite()
+    {
+        string folder = new[] { "English", "Malayalam", "Indonesian", "Traditional Chinese" }[language];
+        string resourcePath = "Start/" + folder + "/Start";
+        Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+        if (texture == null)
+        {
+            Debug.LogWarning("Missing objective start button image at Resources/" + resourcePath + ".png");
+            return null;
+        }
+
+        // Trim the transparent canvas so preserveAspect fits the visible artwork into the old 240x72 button area.
+        Rect sourceCrop = language switch
+        {
+            0 => new Rect(289f, 483f, 2174f, 570f),
+            1 => new Rect(324f, 663f, 1736f, 466f),
+            2 => new Rect(325f, 733f, 1751f, 461f),
+            _ => new Rect(340f, 712f, 1735f, 463f)
+        };
+        Vector2 sourceSize = language == 0
+            ? new Vector2(2752f, 1536f)
+            : new Vector2(2400f, 1792f);
+        Vector2 importScale = new Vector2(texture.width / sourceSize.x, texture.height / sourceSize.y);
+        Rect crop = new Rect(sourceCrop.x * importScale.x, sourceCrop.y * importScale.y,
+            sourceCrop.width * importScale.x, sourceCrop.height * importScale.y);
+        return Sprite.Create(texture, crop, new Vector2(0.5f, 0.5f), 100f);
     }
 
     private static Button CreateTextureButton(

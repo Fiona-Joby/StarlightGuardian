@@ -30,6 +30,7 @@ public class PlayerShield : MonoBehaviour
     private Animator animator;
     private PlayerInput playerInput;
     private PlayerMovement playerMovement;
+    private Stage2Shooter stage2Shooter;
     private SpriteRenderer spriteRenderer;
     private bool isPlayingShieldRun;
     private float shieldRunFrameTimer;
@@ -51,6 +52,7 @@ public class PlayerShield : MonoBehaviour
         animator = GetComponent<Animator>();
         playerInput = GetComponent<PlayerInput>();
         playerMovement = GetComponent<PlayerMovement>();
+        stage2Shooter = GetComponent<Stage2Shooter>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (shieldHudSprite != null)
         {
@@ -114,11 +116,15 @@ public class PlayerShield : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (stage2Shooter == null) stage2Shooter = GetComponent<Stage2Shooter>();
+        if (stage2Shooter != null && stage2Shooter.IsShooting) return;
+
         bool shouldOverrideShieldPose = IsShielding && playerMovement != null &&
             (playerMovement.IsInAir || (playerMovement.IsHorizontallyMoving && AllRunFramesLoaded())) &&
             spriteRenderer != null && animator != null;
 
-        if (shouldOverrideShieldPose != isPlayingShieldRun)
+        if (shouldOverrideShieldPose != isPlayingShieldRun ||
+            (shouldOverrideShieldPose && animator.enabled))
         {
             isPlayingShieldRun = shouldOverrideShieldPose;
             animator.enabled = !isPlayingShieldRun;

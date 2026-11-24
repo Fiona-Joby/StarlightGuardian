@@ -20,6 +20,8 @@ public class Stage2Shooter : MonoBehaviour
     private bool beamFired;
     private bool facingRight;
 
+    public bool IsShooting => isShooting;
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();

@@ -3,7 +3,7 @@ import OpenAI from "openai";
 
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 const maxBodyBytes = 16 * 1024;
-const maxHistoryItems = 4;
+const maxHistoryItems = 8;
 const maxQuestionLength = 500;
 
 const server = http.createServer(async (request, response) => {
@@ -41,19 +41,22 @@ const server = http.createServer(async (request, response) => {
 
     const summary = normalizeSummary(body.summary);
     const history = normalizeHistory(body.history);
+    const conversationGuidance = history.length === 0
+      ? "For the opening coach reply, briefly mention one relevant stage-specific result from this run, explain what it means, and give one actionable next step."
+      : "This is a follow-up in an ongoing conversation. Answer the player's current question directly and prioritize the specific topic they asked about. Do not repeat the run's star count, enemy counts, score, hit count, or the opening advice unless they explicitly ask about it. Avoid rephrasing a previous answer; use recentConversation to choose a new detail, example, or action when relevant. Refer to run stats only when needed to answer the question. Do not force a generic performance recap into every answer.";
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const result = await client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       instructions: [
         "You are a friendly coach for Starlight Guardian, a short game shown at an exhibition.",
         "Use simple, everyday words that most players will understand. Keep sentences short. Avoid technical terms and explain advice as one clear action at a time.",
-        "Every reply must mention at least one real detail from stageSummary.performance or another field that is relevant to this stage. Explain what that result means and give one useful next step. Avoid advice that could fit any player.",
+        conversationGuidance,
         stageInstructions(summary.stage),
         "Use stageSummary.controlMode to tailor the next step: for gesture controls, give a simple gesture tip as well as referring to the gameplay result; for keyboard controls, focus the tip on gameplay. Do not talk about gestures when keyboard controls are active.",
         "Gesture counts show how often an action was used, not whether it was done correctly. Do not claim to see the player, camera, hand pose, or movement form. Raw camera and joint data are not provided. Do not diagnose health conditions.",
         "Use only facts in the stage summary. Do not guess what the player did. If a stat is missing, do not make one up.",
         "The playedDifficulty field is the difficulty used for the completed run. Automatic mode may have changed the selected difficulty after that run; never describe the completed run using a later selected level.",
-        "Give specific, varied coaching. Lead with a relevant objective, score, collectible, enemy-progress, or survival result, then give one useful next action such as jump timing, reaching, attacking, shielding, or positioning. Avoid repeating left/right movement advice unless the supplied results directly support it.",
+        "Keep coaching specific and varied. Avoid repeating left/right movement advice unless the supplied results directly support it. Use a useful next action such as jump timing, reaching, attacking, shielding, positioning, or another topic that answers the player's question.",
         "Answer the player's question in at most two short sentences and about 40 words.",
       ].join(" "),
       input: JSON.stringify({

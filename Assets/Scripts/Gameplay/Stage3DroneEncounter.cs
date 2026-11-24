@@ -70,7 +70,8 @@ public class Stage3DroneEncounter : MonoBehaviour
     {
         Time.timeScale = 0f;
         yield return new WaitForSecondsRealtime(0.2f);
-        yield return StoryArc.PlayStage3Entry();
+        bool skipEntryStory = StageRestartState.ConsumeEntryStorySkip("Stage3");
+        if (!skipEntryStory) yield return StoryArc.PlayStage3Entry();
         StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
         if (pauseUi != null) pauseUi.ShowStage3ObjectivesAfterStory();
         stageStartedAt = Time.unscaledTime;
@@ -584,6 +585,7 @@ public class Stage3DroneEncounter : MonoBehaviour
 
     private void RetryStage()
     {
+        StageRestartState.MarkCurrentStageRestart();
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

@@ -139,13 +139,13 @@ public sealed class AiCoachInteraction : MonoBehaviour
         autoButton.onClick.AddListener(SelectAutomaticDifficulty);
         RefreshDifficultyControls();
 
-        improveButton = AddImageButton("Improve Prompt", root, "AI Tips", new Vector2(0.26f, 0.31f), new Vector2(0.49f, 0.41f));
-        wellButton = AddImageButton("Well Prompt", root, "AI Do Well", new Vector2(0.51f, 0.31f), new Vector2(0.75f, 0.41f));
+        improveButton = AddImageButton("Improve Prompt", root, "AI Tips", new Vector2(0.275f, 0.325f), new Vector2(0.475f, 0.425f));
+        wellButton = AddImageButton("Well Prompt", root, "AI Do Well", new Vector2(0.53f, 0.325f), new Vector2(0.73f, 0.425f));
         improveButton.onClick.AddListener(() => Ask(Localized(2)));
         wellButton.onClick.AddListener(() => Ask(Localized(3)));
 
         questionInput = AddInput(root);
-        askButton = AddImageButton("Ask Button", root, "Common/AI Ask Enter", new Vector2(0.81f, 0.235f), new Vector2(0.86f, 0.305f));
+        askButton = AddImageButton("Ask Button", root, "Common/AI Ask Enter", new Vector2(0.81f, 0.245f), new Vector2(0.86f, 0.315f));
         askButton.onClick.AddListener(() => Ask(questionInput.text));
         questionInput.onEndEdit.AddListener(text =>
         {
@@ -268,16 +268,25 @@ public sealed class AiCoachInteraction : MonoBehaviour
         GameObject fieldObject = new GameObject("Question Input", typeof(RectTransform), typeof(Image), typeof(InputField));
         fieldObject.transform.SetParent(parent, false);
         RectTransform rect = fieldObject.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.12f, 0.225f);
-        rect.anchorMax = new Vector2(0.78f, 0.315f);
+        rect.anchorMin = new Vector2(0.12f, 0.205f);
+        rect.anchorMax = new Vector2(0.78f, 0.295f);
         rect.offsetMin = rect.offsetMax = Vector2.zero;
         Image hitArea = fieldObject.GetComponent<Image>();
         hitArea.color = new Color(1f, 1f, 1f, 0f);
 
         Text text = RuntimeUiUtility.CreateText("Text", fieldObject.transform, RuntimeUiUtility.GetFont(), 32,
             TextAnchor.MiddleLeft, Color.white, FontStyle.Bold);
-        text.rectTransform.offsetMin = new Vector2(16f, 4f);
-        text.rectTransform.offsetMax = new Vector2(-16f, -4f);
+        RectTransform textRect = text.rectTransform;
+        textRect.anchorMin = new Vector2(0f, 0.5f);
+        textRect.anchorMax = new Vector2(1f, 0.5f);
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.sizeDelta = new Vector2(-32f, 56f);
+        // The text bar is artwork in the card background and sits above the input hit area's center.
+        // Offset the text and caret together so they align with the visible bar.
+        textRect.anchoredPosition = new Vector2(0f, 28f);
+        text.alignment = TextAnchor.MiddleLeft;
+        text.alignByGeometry = true;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
         text.raycastTarget = false;
         var input = fieldObject.GetComponent<InputField>();
         input.textComponent = text;
@@ -285,8 +294,10 @@ public sealed class AiCoachInteraction : MonoBehaviour
         input.placeholder = null;
         input.characterLimit = 300;
         input.lineType = InputField.LineType.SingleLine;
-        input.caretColor = Color.white;
         input.customCaretColor = true;
+        input.caretColor = Color.white;
+        input.caretWidth = 6;
+        input.caretBlinkRate = 0.5f;
         input.selectionColor = new Color(0.25f, 1f, 0.5f, 0.35f);
         return input;
     }
@@ -374,7 +385,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
                     replyText.text = answer.Trim();
                     history.Add(new CoachTurn { role = "user", content = question });
                     history.Add(new CoachTurn { role = "assistant", content = answer.Trim() });
-                    while (history.Count > 4) history.RemoveAt(0);
+                    while (history.Count > 8) history.RemoveAt(0);
                 }
                 else ShowFallback();
             }
@@ -413,6 +424,7 @@ public sealed class AiCoachInteraction : MonoBehaviour
     private void RestartCurrentStage()
     {
         if (requestInProgress) StopAllCoroutines();
+        StageRestartState.MarkCurrentStageRestart();
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }

@@ -29,7 +29,8 @@ public class Stage2TurretEncounter : MonoBehaviour
     private IEnumerator Start()
     {
         Time.timeScale = 0f;
-        yield return StoryArc.PlayStage2Entry();
+        bool skipEntryStory = StageRestartState.ConsumeEntryStorySkip("Stage2");
+        if (!skipEntryStory) yield return StoryArc.PlayStage2Entry();
         Time.timeScale = 1f;
         StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
         if (pauseUi != null) pauseUi.ShowStage2InstructionsAfterStory();
@@ -335,6 +336,7 @@ public class Stage2TurretEncounter : MonoBehaviour
 
     private void RetryStage()
     {
+        StageRestartState.MarkCurrentStageRestart();
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

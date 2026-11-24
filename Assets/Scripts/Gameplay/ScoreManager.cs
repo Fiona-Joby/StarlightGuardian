@@ -17,8 +17,8 @@ public class ScoreManager : MonoBehaviour
     /// <summary>Current accumulated score.</summary>
     public int Score { get; private set; }
 
-    /// <summary>The score required to complete Stage 1 at this difficulty.</summary>
-    public int StageGoal => GameDifficulty.Stage1PointGoal;
+    /// <summary>The score required to complete Stage 1 at its starting difficulty.</summary>
+    public int StageGoal => stageGoal;
 
     /// <summary>Total stars caught during the current stage, including rainbow stars.</summary>
     public int StarsCollected { get; private set; }
@@ -30,6 +30,7 @@ public class ScoreManager : MonoBehaviour
     public event System.Action StageGoalReached;
 
     private bool goalReached;
+    private int stageGoal;
 
     // Singleton-lite for easy access from UI scripts.
     public static ScoreManager Instance { get; private set; }
@@ -37,6 +38,7 @@ public class ScoreManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        stageGoal = GameDifficulty.Stage1PointGoal;
     }
 
     private void OnEnable()

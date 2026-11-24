@@ -37,12 +37,19 @@ public static class GameplayBootstrapper
         bool isStage3 = sceneName == "Stage3";
         bool usesStage2World = isStage2 || isStage3;
         Time.timeScale = 1f;
-        if (sceneName == "MainScene") StoryArc.BeginStage(sceneName);
+        bool skipStage1Intro = sceneName == "MainScene" && StageRestartState.ConsumeEntryStorySkip(sceneName);
+        if (sceneName == "MainScene" && !skipStage1Intro) StoryArc.BeginStage(sceneName);
 
         if ((sceneName == "MainScene" || isStage2 || isStage3) && Object.FindAnyObjectByType<StageQuitButton>() == null)
         {
             var pauseMenuGO = new GameObject("Stage Pause Menu");
             pauseMenuGO.AddComponent<StageQuitButton>();
+        }
+
+        if (skipStage1Intro)
+        {
+            StageQuitButton pauseUi = Object.FindAnyObjectByType<StageQuitButton>();
+            if (pauseUi != null) pauseUi.ShowStage1InstructionsAfterStory();
         }
 
         if (isStage2)
@@ -118,5 +125,23 @@ public static class GameplayBootstrapper
             platGO.AddComponent<PlatformSpawner>();
             Debug.Log("[GameplayBootstrapper] Created PlatformSpawner.");
         }
+    }
+}
+
+/// <summary>One-shot signal used to skip only the entry story when restarting a stage.</summary>
+public static class StageRestartState
+{
+    private static string restartScene;
+
+    public static void MarkCurrentStageRestart()
+    {
+        restartScene = SceneManager.GetActiveScene().name;
+    }
+
+    public static bool ConsumeEntryStorySkip(string sceneName)
+    {
+        if (restartScene != sceneName) return false;
+        restartScene = null;
+        return true;
     }
 }
