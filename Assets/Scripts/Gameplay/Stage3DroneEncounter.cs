@@ -29,7 +29,8 @@ public class Stage3DroneEncounter : MonoBehaviour
     private bool lootBoxLanded;
     private bool lootBoxOpened;
     private bool restorePromptVisible;
-    private bool endingFeedbackShown;
+    private bool completionFeedbackShown;
+    private bool lootBoxReleaseAuthorized;
     private Transform lootBoxTransform;
     private SpriteRenderer lootBoxRenderer;
     private PlayerInput playerInput;
@@ -48,6 +49,8 @@ public class Stage3DroneEncounter : MonoBehaviour
     private float finalEnemyRightBoundary;
     private float lootBoxGroundY;
     private float stageStartedAt;
+    private int playedDifficulty;
+    private bool automaticDifficulty;
 
     public bool IsFinished => finished;
     public bool HasLootBoxPlacement => lootBoxLanded;
@@ -71,6 +74,8 @@ public class Stage3DroneEncounter : MonoBehaviour
         StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
         if (pauseUi != null) pauseUi.ShowStage3ObjectivesAfterStory();
         stageStartedAt = Time.unscaledTime;
+        playedDifficulty = GameDifficulty.Level;
+        automaticDifficulty = GameDifficulty.IsAutomatic;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
@@ -107,7 +112,7 @@ public class Stage3DroneEncounter : MonoBehaviour
             boxPosition.y = lootBoxGroundY + lootBoxRenderer.bounds.extents.y;
             lootBoxTransform.position = boxPosition;
         }
-        if (enemiesDefeated && lootBoxLanded && !lootBoxOpened &&
+        if (enemiesDefeated && lootBoxReleaseAuthorized && lootBoxLanded && !lootBoxOpened &&
             Vector2.Distance(playerInput.transform.position, lootBoxTransform.position) < 2f)
             OpenLootBox();
         if (restorePromptVisible && playerInput.FinalPosePressed)
@@ -274,6 +279,21 @@ public class Stage3DroneEncounter : MonoBehaviour
             destroyedHardBeasts < HardBeastGoal) return;
         enemiesDefeated = true;
         if (lootBoxRenderer != null) lootBoxRenderer.sprite = artReferences.LootBox;
+        if (completionFeedbackShown) return;
+        completionFeedbackShown = true;
+        Time.timeScale = 0f;
+        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
+            0, 0, $"The player defeated {destroyedDrones}/{DroneGoal} drones, {destroyedSlimes}/{SlimeGoal} slimes, and {destroyedHardBeasts}/{HardBeastGoal}, taking {playerHits} hits.",
+            playerInput, ContinueAfterCombatFeedback, true, playedDifficulty, automaticDifficulty);
+    }
+
+    private void ContinueAfterCombatFeedback()
+    {
+        StoryArc.ShowStage3ChestLine(() =>
+        {
+            lootBoxReleaseAuthorized = true;
+            Time.timeScale = 1f;
+        });
     }
 
     private void PlaceLootBox()
@@ -351,10 +371,10 @@ public class Stage3DroneEncounter : MonoBehaviour
         GameObject pairedFriend = GameObject.Find("Reunited Freed Star Spirit");
         if (pairedCompanion != null && pairedFriend != null)
             yield return FloatTogether(pairedCompanion.transform, pairedFriend.transform);
-        yield return new WaitForSeconds(1f);
         bool storyDone = false;
-        StoryArc.ShowStage3FoundSpirit(() => storyDone = true);
+        StoryArc.ShowStage3Reunion(() => storyDone = true);
         while (!storyDone) yield return null;
+        Time.timeScale = 1f;
         ShowRestorePrompt();
         while (!finished && restorePromptVisible) yield return null;
     }
@@ -413,7 +433,7 @@ public class Stage3DroneEncounter : MonoBehaviour
             { "合起雙掌以修復星座。", "輸入「STAR」以修復星座。" }
         };
         restorePrompt = RuntimeUiUtility.CreateRect("Restore Constellation Prompt", overlayCanvas.transform);
-        restorePrompt.sizeDelta = new Vector2(1040f, 300f);
+        restorePrompt.sizeDelta = new Vector2(960f, 300f);
         RawImage box = restorePrompt.gameObject.AddComponent<RawImage>();
         box.texture = Resources.Load<Texture2D>("StageUI/UI Box");
         box.uvRect = new Rect(566f / 1920f, 1f - 901f / 1080f,
@@ -433,6 +453,7 @@ public class Stage3DroneEncounter : MonoBehaviour
         reunitedCompanion = GameObject.Find("Reunited Star Spirit Companion");
         reunitedFriend = GameObject.Find("Reunited Freed Star Spirit");
         if (reunitedCompanion == null || reunitedFriend == null) yield break;
+        Time.timeScale = 0f;
         whiteFade = RuntimeUiUtility.CreateRect("Constellation White Fade", overlayCanvas.transform).gameObject.AddComponent<Image>();
         RectTransform fadeRect = whiteFade.rectTransform;
         fadeRect.anchorMin = Vector2.zero;
@@ -442,15 +463,23 @@ public class Stage3DroneEncounter : MonoBehaviour
         whiteFade.color = new Color(1f, 1f, 1f, 0f);
         whiteFade.raycastTarget = false;
         whiteFade.transform.SetAsLastSibling();
-        const float closeDistance = 0.5f;
-        while (reunitedCompanion != null && reunitedFriend != null &&
-               Vector3.Distance(reunitedCompanion.transform.position, reunitedFriend.transform.position) > closeDistance)
+        Vector3 firstStart = reunitedCompanion.transform.position;
+        Vector3 secondStart = reunitedFriend.transform.position;
+        Vector3 spiritCenter = (firstStart + secondStart) * 0.5f;
+        Vector3 firstEnd = spiritCenter + Vector3.left * 0.4f + Vector3.up * 2.2f;
+        Vector3 secondEnd = spiritCenter + Vector3.right * 0.4f + Vector3.up * 2.2f;
+        completionFeedbackShown = true;
+        StoryArc.ShowEnding(ReturnToMainMenu);
+        const float fadeDuration = 3f;
+        float elapsed = 0f;
+        while (elapsed < fadeDuration)
         {
-            float distance = Vector3.Distance(reunitedCompanion.transform.position, reunitedFriend.transform.position);
-            float t = Mathf.Clamp01(1f - (distance - closeDistance) / 1.9f);
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / fadeDuration);
+            float eased = t * t * (3f - 2f * t);
+            if (reunitedCompanion != null) reunitedCompanion.transform.position = Vector3.Lerp(firstStart, firstEnd, eased);
+            if (reunitedFriend != null) reunitedFriend.transform.position = Vector3.Lerp(secondStart, secondEnd, eased);
             whiteFade.color = new Color(1f, 1f, 1f, t);
-            reunitedCompanion.transform.position = Vector3.MoveTowards(reunitedCompanion.transform.position,
-                reunitedFriend.transform.position, 0.65f * Time.deltaTime);
             yield return null;
         }
         whiteFade.color = Color.white;
@@ -458,16 +487,7 @@ public class Stage3DroneEncounter : MonoBehaviour
         if (shieldHud != null) shieldHud.SetActive(false);
         finished = true;
         GameDifficulty.AdjustAfterCombat(playerHits, LifeLimit);
-        Time.timeScale = 0f;
-        yield return new WaitForSecondsRealtime(1f);
-        if (endingFeedbackShown) yield break;
-        endingFeedbackShown = true;
-        bool endingDone = false;
-        StoryArc.ShowEnding(() => endingDone = true);
-        while (!endingDone) yield return null;
-        AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
-            0, 0, $"The player restored the constellation after defeating {destroyedDrones}/{DroneGoal} drones, {destroyedSlimes}/{SlimeGoal} slimes, and {destroyedHardBeasts}/{HardBeastGoal} hard beasts, taking {playerHits} hits.",
-            playerInput, ReturnToMainMenu);
+        StoryArc.SetEndingFadeComplete();
     }
 
     public void OnPlayerHit()
@@ -489,7 +509,7 @@ public class Stage3DroneEncounter : MonoBehaviour
         yield return new WaitForSecondsRealtime(1.5f);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player lost after defeating {destroyedDrones}/{DroneGoal} drones, {destroyedSlimes}/{SlimeGoal} slimes, and {destroyedHardBeasts}/{HardBeastGoal} hard beasts, taking {playerHits} hits.",
-            playerInput, null, false);
+            playerInput, null, false, playedDifficulty, automaticDifficulty);
     }
 
     private void ReturnToMainMenu()

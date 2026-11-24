@@ -806,6 +806,7 @@ MonoBehaviour:
   moveSpeed: 5
   leftBoundary: -15
   rightBoundary: 200
+  limitRightBoundary: 0
   reachDuration: 0.875
   platformRayLength: 0.6
   playerHalfHeight: 0.75

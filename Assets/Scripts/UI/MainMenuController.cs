@@ -40,6 +40,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Image settingsPopupCard;
     private Image[] englishMainOptionImages;
     private Image[] englishStageOptionImages;
+    private Color[] englishStageOptionImageColors;
     private AudioSource menuAudioSource;
 
     [Header("Localized labels")]
@@ -126,6 +127,7 @@ public class MainMenuController : MonoBehaviour
         englishMainOptionImages = CollectEnglishOptionImages(new[]
             { newGameButton, stageMenuButton, languageMenuButton, settingsMenuButton, GetExitButton() });
         englishStageOptionImages = CollectEnglishOptionImages(stageButtons);
+        englishStageOptionImageColors = CaptureImageColors(englishStageOptionImages);
         ApplyLanguage();
     }
 
@@ -160,12 +162,57 @@ public class MainMenuController : MonoBehaviour
     {
         bool englishSelected = SelectedLanguage == (int)Language.English;
         SetImagesEnabled(englishMainOptionImages, englishSelected);
-        SetImagesEnabled(englishStageOptionImages, englishSelected);
+        SetEnglishStageOptionImagesVisible(englishSelected);
         SetVisualObjects(localizedMainOptionVisuals, SelectedLanguage - 1, 5);
         SetVisualObjects(localizedStageOptionVisuals, SelectedLanguage - 1, 3);
+        MakeLocalizedStageVisualsIgnorePointerInput();
         RefreshStageSelectionMarkers();
         SetVisualObjects(localizedSettingsTabVisuals, SelectedLanguage - 1, 1);
         if (settingsPopupCard != null) settingsPopupCard.enabled = englishSelected;
+    }
+
+    private void SetEnglishStageOptionImagesVisible(bool visible)
+    {
+        if (englishStageOptionImages == null) return;
+        for (int i = 0; i < englishStageOptionImages.Length; i++)
+        {
+            Image image = englishStageOptionImages[i];
+            if (image == null) continue;
+
+            // The Image is also each Button's raycast target. Keep it enabled
+            // in every language so the button receives hover and click events.
+            image.enabled = true;
+            image.raycastTarget = true;
+            Color color = englishStageOptionImageColors != null && i < englishStageOptionImageColors.Length
+                ? englishStageOptionImageColors[i]
+                : image.color;
+            color.a = visible ? color.a : 0f;
+            image.color = color;
+        }
+    }
+
+    private static Color[] CaptureImageColors(Image[] images)
+    {
+        if (images == null) return new Color[0];
+        Color[] colors = new Color[images.Length];
+        for (int i = 0; i < images.Length; i++)
+            if (images[i] != null) colors[i] = images[i].color;
+        return colors;
+    }
+
+    private void MakeLocalizedStageVisualsIgnorePointerInput()
+    {
+        if (localizedStageOptionVisuals == null) return;
+
+        // These translated images sit over the actual stage Buttons. If they
+        // participate in raycasts, they swallow hover and click events, which
+        // also prevents the button's arrow and audio handlers from running.
+        foreach (GameObject visual in localizedStageOptionVisuals)
+        {
+            if (visual == null) continue;
+            foreach (Graphic graphic in visual.GetComponentsInChildren<Graphic>(true))
+                graphic.raycastTarget = false;
+        }
     }
 
     private void RefreshStageSelectionMarkers()

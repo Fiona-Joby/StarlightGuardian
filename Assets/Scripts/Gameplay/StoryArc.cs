@@ -83,12 +83,16 @@ public sealed class StoryArc : MonoBehaviour
     private RawImage stageBackground;
     private Text narration, dialogue;
     private Button next;
+    private AudioSource voiceSource;
+    private AudioClip normalizedVoiceClip;
+    private int voiceRequestId;
     private bool advance;
     private int language;
     private Sprite spirit1, spirit2;
     private Sprite storyBoxSprite, dialogueBoxSprite;
     private Sprite continueArrowSprite;
     private Texture2D stage1Background, stage2Background, stage3Background;
+    private bool endingFadeComplete;
 
     public static StoryArc Ensure()
     {
@@ -114,6 +118,19 @@ public sealed class StoryArc : MonoBehaviour
         stage3Background = Resources.Load<Texture2D>("StoryBackgroundStage3");
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "MainMenu") ClearOverlay();
+    }
+
     public static void BeginStage(string scene)
     {
         var arc = Ensure();
@@ -125,8 +142,23 @@ public sealed class StoryArc : MonoBehaviour
 
     public static void AfterStage1(Action done) => Ensure().StartCoroutine(Ensure().Stage1Transition(done));
     public static void AfterStage2(Action done) => Ensure().StartCoroutine(Ensure().Stage2Transition(done));
-    public static void ShowStage3FoundSpirit(Action done) => Ensure().StartCoroutine(Ensure().FoundSpirit(done));
+    public static void ShowStage3ChestLine(Action done) => Ensure().StartCoroutine(Ensure().Stage3ChestLine(done));
+    public static void ShowStage3Reunion(Action done) => Ensure().StartCoroutine(Ensure().Stage3Reunion(done));
     public static void ShowEnding(Action done) => Ensure().StartCoroutine(Ensure().Ending(done));
+    public static void SetEndingFadeComplete() { if (instance != null) instance.endingFadeComplete = true; }
+    public static void ClearOverlay()
+    {
+        if (instance == null || instance.canvas == null) return;
+        instance.panel.gameObject.SetActive(false);
+        instance.narration.gameObject.SetActive(false);
+        instance.dialogue.gameObject.SetActive(false);
+        instance.next.gameObject.SetActive(false);
+        instance.stageBackground.gameObject.SetActive(false);
+        instance.backdrop.color = new Color(0f, 0f, 0f, 0f);
+        instance.StopVoice();
+        GameAudio.SetStoryMusicDucking(false);
+        instance.HideSpirits();
+    }
 
     private static Sprite LoadSprite(string resource) { Texture2D texture = Resources.Load<Texture2D>(resource); return texture != null ? Sprite.Create(texture, new Rect(0,0,texture.width,texture.height), new Vector2(.5f,.5f), 100f) : null; }
     private static Sprite LoadBoxSprite(string resource, float x, float y, float width, float height)
@@ -157,25 +189,42 @@ public sealed class StoryArc : MonoBehaviour
         yield return Present(new[] { 5 }, false, true, true, null);
         yield return Present(new[] { 6 }, true, false, true, null);
         yield return SpiritFlight();
-        yield return Present(new[] { 7 }, false, true, false, null);
+        yield return Present(new[] { 7 }, false, true, false, null, true);
         Time.timeScale = 1f;
         done?.Invoke();
     }
-    private IEnumerator Stage2Transition(Action done) { Time.timeScale = 0f; yield return Present(new[] { 11 }, false, true, false, null); Time.timeScale = 1f; done?.Invoke(); }
-    private IEnumerator FoundSpirit(Action done) { Time.timeScale = 0f; yield return Present(new[] { 14, 15 }, false, false, true, null); yield return Present(new[] { 16 }, true, false, true, null); Time.timeScale = 1f; done?.Invoke(); }
-    private IEnumerator Ending(Action done)
+    private IEnumerator Stage2Transition(Action done) { Time.timeScale = 0f; yield return Present(new[] { 11 }, false, true, false, null, true); Time.timeScale = 1f; done?.Invoke(); }
+    private IEnumerator Stage3ChestLine(Action done)
     {
-        yield return Present(new[] { 17, 18, 19, 20 }, false, false, true, null);
+        Time.timeScale = 0f;
+        yield return Present(new[] { 14 }, false, false, false, null, false, true);
         done?.Invoke();
     }
-
-    private IEnumerator Present(int[] keys, bool isDialogue, bool black, bool spirits, Action completed)
+    private IEnumerator Stage3Reunion(Action done)
     {
+        Time.timeScale = 0f;
+        yield return Present(new[] { 15 }, false, false, false, null, false, true);
+        yield return Present(new[] { 16 }, true, false, false, null, false, true);
+        done?.Invoke();
+    }
+    private IEnumerator Ending(Action done)
+    {
+        endingFadeComplete = false;
+        yield return Present(new[] { 17 }, false, false, false, null, false, true);
+        yield return Present(new[] { 18, 19, 20 }, false, false, false, done, false, false, true, true);
+    }
+
+    private IEnumerator Present(int[] keys, bool isDialogue, bool black, bool spirits, Action completed,
+        bool holdBlackBackdrop = false, bool currentGameplayBackground = false,
+        bool whiteBackground = false, bool holdWhiteBackdrop = false)
+    {
+        SyncLanguage();
         Build();
-        backdrop.color = black ? Color.black : new Color(0, 0, 0, 0);
-        Texture2D background = black ? null : GetStageBackground();
+        GameAudio.SetStoryMusicDucking(true);
+        backdrop.color = black ? Color.black : whiteBackground ? Color.white : new Color(0, 0, 0, 0);
+        Texture2D background = black || currentGameplayBackground || whiteBackground ? null : GetStageBackground();
         stageBackground.texture = background;
-        stageBackground.uvRect = GetCoverUv(background);
+        ConfigureStageBackground(background);
         stageBackground.gameObject.SetActive(background != null);
         panel.sprite = isDialogue ? dialogueBoxSprite : storyBoxSprite;
         RectTransform panelRect = panel.rectTransform;
@@ -187,10 +236,11 @@ public sealed class StoryArc : MonoBehaviour
             string value = Lines[language][keys[i]];
             Text target = isDialogue ? dialogue : narration;
             target.text = value;
+            StartCoroutine(PlayVoice(keys[i], isDialogue));
             next.gameObject.SetActive(true); advance = false;
             if (spirits && spirit1 != null) ShowSpirit(spirit1); else HideSpirits();
             Vector2 spiritAnchor = spiritImage != null ? spiritImage.rectTransform.anchorMin : Vector2.zero;
-            while (!advance)
+            while (!advance || (keys[i] == 17 && !endingFadeComplete))
             {
                 if (spirits && spiritImage != null && spiritImage.gameObject.activeSelf)
                 {
@@ -201,13 +251,16 @@ public sealed class StoryArc : MonoBehaviour
                 yield return null;
             }
         }
+        StopVoice();
         panel.gameObject.SetActive(false);
         narration.gameObject.SetActive(false);
         dialogue.gameObject.SetActive(false);
         next.gameObject.SetActive(false);
         stageBackground.gameObject.SetActive(false);
-        backdrop.color = new Color(0, 0, 0, 0);
-        HideSpirits(); completed?.Invoke();
+        backdrop.color = holdBlackBackdrop ? Color.black : holdWhiteBackdrop ? Color.white : new Color(0, 0, 0, 0);
+        HideSpirits();
+        GameAudio.SetStoryMusicDucking(false);
+        completed?.Invoke();
     }
 
     private Texture2D GetStageBackground()
@@ -220,10 +273,55 @@ public sealed class StoryArc : MonoBehaviour
         }
     }
 
+    private void SyncLanguage()
+    {
+        int selected = Mathf.Clamp(PlayerPrefs.GetInt("Language", 0), 0, 3);
+        if (language == selected) return;
+        language = selected;
+        ApplyLanguageStyle(narration, 48);
+        ApplyLanguageStyle(dialogue, 50);
+    }
+
+    private void ApplyLanguageStyle(Text text, int baseSize)
+    {
+        if (text == null) return;
+        text.fontSize = language == 1 ? baseSize - 6 : language == 3 ? baseSize + 2 : baseSize;
+        string fontName = language == 1 ? "Nirmala UI" : language == 3 ? "Microsoft YaHei" : "Arial";
+        Font selectedFont = Font.CreateDynamicFontFromOSFont(fontName, text.fontSize);
+        if (selectedFont != null) text.font = selectedFont;
+    }
+
+    private void ConfigureStageBackground(Texture2D texture)
+    {
+        if (texture == null) return;
+        RectTransform rect = stageBackground.rectTransform;
+        if (SceneManager.GetActiveScene().name == "MainScene")
+        {
+            // Preserve the complete Stage 1 image height. If its aspect is
+            // narrower than the screen, let its sides crop instead of stretching it.
+            float height = Screen.height / canvas.scaleFactor;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+            rect.sizeDelta = new Vector2(height * texture.width / texture.height, height);
+            rect.anchoredPosition = Vector2.zero;
+            stageBackground.uvRect = new Rect(0f, 0f, 1f, 1f);
+        }
+        else
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            stageBackground.uvRect = GetCoverUv(texture);
+        }
+    }
+
     private void Build()
     {
         if (canvas != null) return;
         language = Mathf.Clamp(PlayerPrefs.GetInt("Language", 0), 0, 3);
+        voiceSource = gameObject.AddComponent<AudioSource>();
+        voiceSource.playOnAwake = false;
+        voiceSource.loop = false;
+        voiceSource.spatialBlend = 0f;
         canvas = RuntimeUiUtility.CreateOverlayCanvas("Story Overlay", 900, new Vector2(1920, 1080));
         canvas.transform.SetParent(transform, false);
         backdrop = RuntimeUiUtility.CreateRect("Story Backdrop", canvas.transform).gameObject.AddComponent<Image>();
@@ -250,6 +348,107 @@ public sealed class StoryArc : MonoBehaviour
         RectTransform nr = next.GetComponent<RectTransform>();
         nr.anchorMin = nr.anchorMax = new Vector2(.93f,.07f); nr.pivot = new Vector2(1,0); nr.sizeDelta = new Vector2(76,76);
         next.onClick.AddListener(() => advance = true);
+    }
+
+    private IEnumerator PlayVoice(int lineKey, bool isDialogue)
+    {
+        StopVoice();
+        int requestId = voiceRequestId;
+        string[] languageFolders = { "English", "Malayalam", "Indonesian", "TraditionalChinese" };
+        string lineType = isDialogue ? "Dialogue" : "Narration";
+        string resourcePath = $"Audio/StoryVoice/{languageFolders[language]}/{lineType}_{lineKey:00}";
+        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
+        if (clip == null)
+        {
+            Debug.LogWarning($"Story voice clip not found at Resources/{resourcePath}.mp3");
+            yield break;
+        }
+
+        if (clip.loadState == AudioDataLoadState.Unloaded) clip.LoadAudioData();
+        while (clip.loadState == AudioDataLoadState.Loading) yield return null;
+        if (requestId != voiceRequestId) yield break;
+
+        int sampleCount = clip.samples * clip.channels;
+        float[] samples = new float[sampleCount];
+        if (!clip.GetData(samples, 0))
+        {
+            Debug.LogWarning($"Could not read story voice samples for {resourcePath}; playing without loudness normalization.");
+            voiceSource.clip = clip;
+        }
+        else
+        {
+            float extraGain = !isDialogue && lineKey == 0 ? 1.4f : 1f;
+            normalizedVoiceClip = CreateLoudnessNormalizedClip(clip, samples, extraGain);
+            voiceSource.clip = normalizedVoiceClip != null ? normalizedVoiceClip : clip;
+        }
+
+        if (requestId != voiceRequestId) yield break;
+        // Story voice has no separate setting, so keep it at full source level;
+        // loudness is controlled per clip by the normalization pass below.
+        voiceSource.volume = 1f;
+        voiceSource.Play();
+    }
+
+    private static AudioClip CreateLoudnessNormalizedClip(AudioClip source, float[] samples, float extraGain)
+    {
+        double squareSum = 0d;
+        int activeSamples = 0;
+        float peak = 0f;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float magnitude = Mathf.Abs(samples[i]);
+            peak = Mathf.Max(peak, magnitude);
+            // Ignore silence at the edges so it does not make short lines seem quieter.
+            if (magnitude < 0.008f) continue;
+            squareSum += samples[i] * samples[i];
+            activeSamples++;
+        }
+
+        if (activeSamples == 0 || peak <= 0f) return null;
+        float rms = Mathf.Sqrt((float)(squareSum / activeSamples));
+        if (rms <= 0.0001f) return null;
+
+        const float targetRms = 0.17f;
+        const float limiterStart = 0.84f;
+        const float limiterRange = 0.11f;
+        float gain = targetRms / rms * extraGain;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float amplified = samples[i] * gain;
+            float magnitude = Mathf.Abs(amplified);
+            if (magnitude > limiterStart)
+            {
+                float limited = limiterStart + limiterRange *
+                    (1f - Mathf.Exp(-(magnitude - limiterStart) / limiterRange));
+                amplified = Mathf.Sign(amplified) * limited;
+            }
+            samples[i] = amplified;
+        }
+
+        AudioClip normalized = AudioClip.Create(
+            source.name + " Loudness Normalized", source.samples, source.channels,
+            source.frequency, false);
+        if (!normalized.SetData(samples, 0))
+        {
+            Destroy(normalized);
+            return null;
+        }
+        return normalized;
+    }
+
+    private void StopVoice()
+    {
+        voiceRequestId++;
+        if (voiceSource != null)
+        {
+            voiceSource.Stop();
+            voiceSource.clip = null;
+        }
+        if (normalizedVoiceClip != null)
+        {
+            Destroy(normalizedVoiceClip);
+            normalizedVoiceClip = null;
+        }
     }
 
     private Text MakeText(string name, Vector2 min, Vector2 max, int size, TextAnchor align)

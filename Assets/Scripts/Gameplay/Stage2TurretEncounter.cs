@@ -21,6 +21,10 @@ public class Stage2TurretEncounter : MonoBehaviour
     private Button retryButton;
     private Stage2ArtReferences artReferences;
     private float stageStartedAt;
+    private int turretGoalAtStart;
+    private int beastGoalAtStart;
+    private int playedDifficulty;
+    private bool automaticDifficulty;
 
     private IEnumerator Start()
     {
@@ -30,6 +34,8 @@ public class Stage2TurretEncounter : MonoBehaviour
         StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
         if (pauseUi != null) pauseUi.ShowStage2InstructionsAfterStory();
         stageStartedAt = Time.unscaledTime;
+        playedDifficulty = GameDifficulty.Level;
+        automaticDifficulty = GameDifficulty.IsAutomatic;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
         {
@@ -40,6 +46,8 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (player.GetComponent<Stage2PlayerHealth>() == null)
             player.AddComponent<Stage2PlayerHealth>();
         artReferences = FindAnyObjectByType<Stage2ArtReferences>();
+        turretGoalAtStart = GameDifficulty.Stage2TurretGoal(artReferences != null ? artReferences.TurretGoal : 6);
+        beastGoalAtStart = GameDifficulty.Stage2BeastGoal(artReferences != null ? artReferences.BlobBeastGoal : 2);
         StarSpiritCompanion.Attach(player.transform,
             artReferences != null ? artReferences.CompanionMoveFrames : null);
         BuildHud();
@@ -181,8 +189,8 @@ public class Stage2TurretEncounter : MonoBehaviour
     }
 
     public bool IsFinished => finished;
-    public int TurretGoal => GameDifficulty.Stage2TurretGoal(artReferences != null ? artReferences.TurretGoal : 6);
-    public int BlobBeastGoal => GameDifficulty.Stage2BeastGoal(artReferences != null ? artReferences.BlobBeastGoal : 2);
+    public int TurretGoal => turretGoalAtStart > 0 ? turretGoalAtStart : GameDifficulty.Stage2TurretGoal(artReferences != null ? artReferences.TurretGoal : 6);
+    public int BlobBeastGoal => beastGoalAtStart > 0 ? beastGoalAtStart : GameDifficulty.Stage2BeastGoal(artReferences != null ? artReferences.BlobBeastGoal : 2);
     public int DestroyedTurrets => destroyedTurrets;
     public int DestroyedBlobBeasts => destroyedBlobBeasts;
     public int LifeLimit => artReferences != null ? Mathf.Max(1, artReferences.LifeLimit) : 5;
@@ -214,7 +222,7 @@ public class Stage2TurretEncounter : MonoBehaviour
         transitionText.gameObject.SetActive(false);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player defeated {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
-            FindPlayerInput(), ContinueToStage3);
+            FindPlayerInput(), ContinueToStage3, true, playedDifficulty, automaticDifficulty);
     }
 
     public void OnPlayerHit(float damage = 1f)
@@ -238,11 +246,12 @@ public class Stage2TurretEncounter : MonoBehaviour
         yield return new WaitForSecondsRealtime(1.5f);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player lost after defeating {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
-            FindPlayerInput(), null, false);
+            FindPlayerInput(), null, false, playedDifficulty, automaticDifficulty);
     }
 
     private void ContinueToStage3()
     {
+        if (overlayCanvas != null) overlayCanvas.gameObject.SetActive(false);
         StoryArc.AfterStage2(() => { Time.timeScale = 1f; SceneManager.LoadScene("Stage3"); });
     }
 

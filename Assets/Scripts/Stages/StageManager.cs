@@ -70,17 +70,21 @@ public class StageManager : MonoBehaviour
         ScoreManager score = ScoreManager.Instance;
         int currentScore = score != null ? score.Score : 0;
         int starsCollected = score != null ? score.StarsCollected : 0;
+        int stageGoal = score != null ? score.StageGoal : GameDifficulty.Stage1PointGoal;
+        int playedDifficulty = GameDifficulty.Level;
+        bool automaticDifficulty = GameDifficulty.IsAutomatic;
         GameDifficulty.AdjustAfterStage1(Time.timeSinceLevelLoad, starsCollected);
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         PlayerInput playerInput = player != null ? player.GetComponent<PlayerInput>() : null;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 1", Time.timeSinceLevelLoad,
             currentScore, starsCollected,
-            $"The player collected {starsCollected} of {score?.StageGoal ?? GameDifficulty.Stage1StarGoal} stars, scored {currentScore} points, and took {Time.timeSinceLevelLoad:0} seconds.",
-            playerInput, ContinueToNextStage);
+            $"The player collected {starsCollected} stars, reached {currentScore} of {stageGoal} points, and took {Time.timeSinceLevelLoad:0} seconds.",
+            playerInput, ContinueToNextStage, true, playedDifficulty, automaticDifficulty);
     }
 
     private void ContinueToNextStage()
     {
+        if (overlayCanvas != null) overlayCanvas.gameObject.SetActive(false);
         StoryArc.AfterStage1(() =>
         {
             Time.timeScale = 1f;

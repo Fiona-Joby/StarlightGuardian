@@ -29,6 +29,7 @@ public class StageQuitButton : MonoBehaviour
     private GameObject taskPage;
     private Text taskGoalText;
     private Text taskHeading;
+    private float timeScaleBeforeTaskPopup = 1f;
     private float nextTaskRefreshTime;
     private bool pauseMenuOpen;
     private float timeScaleBeforePause = 1f;
@@ -127,7 +128,7 @@ public class StageQuitButton : MonoBehaviour
         panel.rectTransform.sizeDelta = new Vector2(1500f, 1000f);
         Text objective = CreateLabel("Objective Text", objectivePage.transform, GetStartupObjective(), 40);
         objective.font = GetLanguageFont();
-        objective.fontSize = language == 3 ? 38 : 44;
+        objective.fontSize = language == 1 ? 32 : language == 3 ? 38 : 44;
         objective.alignment = TextAnchor.MiddleCenter;
         objective.horizontalOverflow = HorizontalWrapMode.Wrap;
         objective.verticalOverflow = VerticalWrapMode.Overflow;
@@ -148,13 +149,13 @@ public class StageQuitButton : MonoBehaviour
         string scene = SceneManager.GetActiveScene().name;
         if (scene == "MainScene")
         {
-            int stars = GameDifficulty.Stage1StarGoal;
+            int points = GameDifficulty.Stage1PointGoal;
             return language switch
             {
-                1 => $"നക്ഷത്രരാശി പുനഃസ്ഥാപിക്കാൻ ആസ്റ്ററിനെ സഹായിക്കുക!\nഘട്ടം പൂർത്തിയാക്കാൻ {stars} നക്ഷത്രങ്ങൾ ശേഖരിക്കുക",
-                2 => $"Bantu Aster memulihkan rasi bintang!\nKumpulkan {stars} bintang untuk menyelesaikan tahap",
-                3 => $"幫助 Aster 修復星座！\n收集 {stars} 顆星星以完成關卡",
-                _ => $"Help Aster restore the constellation!\nCollect {stars} stars to complete the stage"
+                1 => $"നക്ഷത്രരാശി പുനഃസ്ഥാപിക്കാൻ ആസ്റ്ററിനെ സഹായിക്കുക!\nഘട്ടം പൂർത്തിയാക്കാൻ {points} പോയിന്റുകൾ നേടുക",
+                2 => $"Bantu Aster memulihkan rasi bintang!\nRaih {points} poin untuk menyelesaikan tahap",
+                3 => $"幫助 Aster 修復星座！\n取得 {points} 分以完成關卡",
+                _ => $"Help Aster restore the constellation!\nEarn {points} points to complete the stage"
             };
         }
         if (scene == "Stage2")
@@ -204,26 +205,41 @@ public class StageQuitButton : MonoBehaviour
         const float boxBottom = 901f;
         panel.uvRect = new Rect(boxLeft / boxSourceWidth, 1f - boxBottom / boxSourceHeight,
             (boxRight - boxLeft) / boxSourceWidth, (boxBottom - boxTop) / boxSourceHeight);
-        taskHeading = CreateLabel("Task Heading", taskPage.transform, "GOAL", 36);
+        taskHeading = CreateLabel("Task Heading", taskPage.transform, "GOAL", 40);
         taskHeading.font = GetLanguageFont();
-        Place(taskHeading.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(920f, 70f));
+        Place(taskHeading.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(920f, 76f));
         taskGoalText = CreateLabel("Stage Goal", taskPage.transform, GetStageGoal(), 40);
         taskGoalText.font = GetLanguageFont();
-        taskGoalText.fontSize = 34;
+        taskGoalText.fontSize = 48;
         Place(taskGoalText.rectTransform, new Vector2(0.5f, 0.46f), new Vector2(820f, 260f));
-        Button close = RuntimeUiUtility.CreateButton("Close Task", taskPage.transform, "CLOSE", 26,
-            new Color(0.15f, 0.08f, 0.42f, 1f), Color.white, new Vector2(220f, 64f));
-        Place(close.GetComponent<RectTransform>(), new Vector2(0.5f, 0.20f), new Vector2(220f, 64f));
+        Sprite closeSprite = LoadRuntimeSprite("StageUI/Close Tab Cross");
+        Button close = CreateImageButton("Close Task", taskPage.transform, closeSprite, new Vector2(250f, 250f),
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(430f, 202f));
         SetupOptionAudio(close);
-        close.onClick.AddListener(() => taskPage.SetActive(false));
+        close.onClick.AddListener(CloseTaskPage);
         taskPage.SetActive(false);
     }
 
     private void ToggleTaskPage()
     {
         if (taskPage == null) return;
-        taskPage.SetActive(!taskPage.activeSelf);
-        if (taskPage.activeSelf) RefreshTaskPage();
+        if (taskPage.activeSelf)
+        {
+            CloseTaskPage();
+            return;
+        }
+
+        timeScaleBeforeTaskPopup = Time.timeScale;
+        Time.timeScale = 0f;
+        taskPage.SetActive(true);
+        RefreshTaskPage();
+    }
+
+    private void CloseTaskPage()
+    {
+        if (taskPage == null || !taskPage.activeSelf) return;
+        taskPage.SetActive(false);
+        Time.timeScale = timeScaleBeforeTaskPopup;
     }
 
     private string GetStageGoal()
@@ -231,14 +247,14 @@ public class StageQuitButton : MonoBehaviour
         switch (SceneManager.GetActiveScene().name)
         {
             case "MainScene":
-                int starGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : GameDifficulty.Stage1StarGoal;
-                int starsCollected = ScoreManager.Instance != null ? ScoreManager.Instance.StarsCollected : 0;
+                int pointGoal = ScoreManager.Instance != null ? ScoreManager.Instance.StageGoal : GameDifficulty.Stage1PointGoal;
+                int currentScore = ScoreManager.Instance != null ? ScoreManager.Instance.Score : 0;
                 return language switch
                 {
-                    1 => $"{starGoal} നക്ഷത്രങ്ങൾ ശേഖരിക്കുക.\n{starsCollected}/{starGoal} നക്ഷത്രങ്ങൾ ശേഖരിച്ചു",
-                    2 => $"Kumpulkan {starGoal} bintang.\n{starsCollected}/{starGoal} bintang terkumpul",
-                    3 => $"收集 {starGoal} 顆星星。\n已收集 {starsCollected}/{starGoal} 顆星星",
-                    _ => $"Collect {starGoal} stars.\n{starsCollected}/{starGoal} Stars collected"
+                    1 => $"{pointGoal} പോയിന്റുകൾ നേടുക.\n{currentScore}/{pointGoal} പോയിന്റുകൾ നേടി",
+                    2 => $"Raih {pointGoal} poin.\n{currentScore}/{pointGoal} poin terkumpul",
+                    3 => $"取得 {pointGoal} 分。\n已取得 {currentScore}/{pointGoal} 分",
+                    _ => $"Earn {pointGoal} points.\n{currentScore}/{pointGoal} points earned"
                 };
             case "Stage2":
                 Stage2ArtReferences stage2 = Object.FindAnyObjectByType<Stage2ArtReferences>();
@@ -378,7 +394,7 @@ public class StageQuitButton : MonoBehaviour
         float[] x = { 0.265f, 0.425f, 0.58f, 0.735f };
         for (int i = 0; i < optionNames.Length; i++)
         {
-            Sprite optionSprite = CreateOptionSprite(optionTextures[i]);
+            Sprite optionSprite = CreateOptionSprite(optionTextures[i], language == 2);
             Button button = CreateImageButton(
                 optionNames[i] + " Option", options.transform, optionSprite,
                 new Vector2(240f, 292f), new Vector2(x[i], 0.49f),
@@ -639,6 +655,14 @@ public class StageQuitButton : MonoBehaviour
         return button;
     }
 
+    private static Sprite LoadRuntimeSprite(string resourcePath)
+    {
+        Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+        return texture != null
+            ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
+            : null;
+    }
+
     private static Button CreateTextureButton(
         string name, Transform parent, Texture2D texture, Vector2 size,
         Vector2 anchor, Vector2 anchoredPosition)
@@ -759,12 +783,12 @@ public class StageQuitButton : MonoBehaviour
         return slider;
     }
 
-    private static Sprite CreateOptionSprite(Texture2D texture)
+    private static Sprite CreateOptionSprite(Texture2D texture, bool indonesian)
     {
         if (texture == null) return null;
-        // The supplied English option textures are 1920x1080 sheets. This crop
-        // contains the complete circular icon and its label, excluding the empty canvas.
-        Rect contentRect = new Rect(600f, 100f, 700f, 850f);
+        // Indonesian option art places the icon higher on its sheet, so its crop
+        // starts higher while retaining the same dimensions and displayed aspect ratio.
+        Rect contentRect = new Rect(600f, indonesian ? 170f : 100f, 700f, 850f);
         return Sprite.Create(texture, contentRect,
             new Vector2(0.5f, 0.5f), 100f);
     }

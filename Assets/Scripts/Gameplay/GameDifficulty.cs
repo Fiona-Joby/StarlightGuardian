@@ -9,7 +9,7 @@ public static class GameDifficulty
     public static int Level => Mathf.Clamp(PlayerPrefs.GetInt(LevelKey, 0), 0, 2);
     public static bool IsAutomatic => PlayerPrefs.GetInt(AutomaticKey, 1) == 1;
 
-    public static int Stage1StarGoal => Level == 0 ? 10 : Level == 1 ? 25 : 35;
+    public static int Stage1PointGoal => Level == 0 ? 50 : Level == 1 ? 130 : 200;
 
     public static int Stage2TurretGoal(int normalGoal) => Level == 0 ? 2 :
         Level == 1 ? Mathf.Max(2, normalGoal) : Mathf.Max(4, normalGoal + 2);

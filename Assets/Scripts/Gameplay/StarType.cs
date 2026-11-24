@@ -2,5 +2,7 @@
 public enum StarType
 {
     Normal,
-    Rainbow
+    Rainbow,
+    Yellow,
+    Blue
 }

@@ -6,14 +6,6 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
 {
     public System.Action onStartupDismissed;
     private static readonly string[] Languages = { "English", "Malayalam", "Indonesian", "Traditional Chinese" };
-    private static readonly string[][] Labels =
-    {
-        new[] { "PREVIOUS", "NEXT", "EXIT" },
-        new[] { "മുമ്പത്തെ", "അടുത്തത്", "പുറത്ത്" },
-        new[] { "SEBELUMNYA", "BERIKUTNYA", "KELUAR" },
-        new[] { "上一頁", "下一頁", "退出" }
-    };
-
     private GameObject page;
     private RawImage instructionImage;
     private Button previousButton;
@@ -52,21 +44,21 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
 
         if (stage == 2)
         {
-            previousButton = CreateControlButton("Previous", imageRect, Labels[language][0], new Vector2(0f, 0f));
+            previousButton = CreateControlButton("Previous", imageRect, "StageUI/AI Ask Enter", new Vector2(0f, 0f), false);
             previousButton.onClick.AddListener(ShowPrevious);
         }
-        nextButton = CreateControlButton("Next", imageRect, stage == 2 ? Labels[language][1] : Labels[language][2], new Vector2(1f, 0f));
+        nextButton = stage == 2
+            ? CreateControlButton("Next", imageRect, "StageUI/AI Ask Enter", new Vector2(1f, 0f), true)
+            : CreateControlButton("Close", imageRect, "StageUI/Close Tab Cross", new Vector2(1f, 1f), false);
         nextButton.onClick.AddListener(stage == 2 ? (UnityEngine.Events.UnityAction)ShowNext : Exit);
         if (stage == 2)
         {
-            exitButton = CreateControlButton("Exit", imageRect, Labels[language][2], new Vector2(1f, 0f));
-            exitButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-224f, 24f);
+            exitButton = CreateControlButton("Close", imageRect, "StageUI/Close Tab Cross", new Vector2(1f, 1f), false);
             exitButton.onClick.AddListener(Exit);
         }
         startupContinueButton = CreateContinueButton(imageRect);
         startupContinueButton.onClick.AddListener(Exit);
         previousButton?.GetComponent<RectTransform>().SetAsLastSibling();
-        nextButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-24f, 24f);
         page.SetActive(false);
     }
 
@@ -76,7 +68,6 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         currentPage = 1;
         UpdatePage();
         SetReminderControls(true);
-        SetButtonLabel(nextButton, stage == 2 ? Labels[language][1] : Labels[language][2]);
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         page.SetActive(true);
@@ -140,12 +131,6 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         if (startupContinueButton != null) startupContinueButton.gameObject.SetActive(false);
     }
 
-    private static void SetButtonLabel(Button button, string label)
-    {
-        Text text = button != null ? button.GetComponentInChildren<Text>(true) : null;
-        if (text != null) text.text = label;
-    }
-
     private static Vector2 FitSize(Texture2D texture, Vector2 bounds)
     {
         if (texture == null) return bounds;
@@ -154,33 +139,49 @@ public sealed class GestureInstructionOverlay : MonoBehaviour
         return new Vector2(width, width / aspect);
     }
 
-    private static Button CreateControlButton(string name, Transform parent, string label, Vector2 anchor)
+    private static Button CreateControlButton(string name, Transform parent, string spriteResource, Vector2 anchor, bool flipped)
     {
-        Button button = RuntimeUiUtility.CreateButton(name, parent, label, 20,
-            new Color(0.12f, 0.38f, 0.68f, 1f), Color.white, new Vector2(200f, 64f));
+        Texture2D texture = Resources.Load<Texture2D>(spriteResource);
+        Sprite sprite = texture != null
+            ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
+            : null;
+        GameObject go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        Image image = go.GetComponent<Image>();
+        image.sprite = sprite;
+        image.preserveAspect = true;
+        image.color = Color.white;
+        image.rectTransform.localScale = new Vector3(flipped ? -1f : 1f, 1f, 1f);
+        Button button = go.GetComponent<Button>();
+        button.targetGraphic = image;
         RectTransform rect = button.GetComponent<RectTransform>();
         rect.anchorMin = rect.anchorMax = anchor;
-        rect.pivot = anchor;
-        rect.anchoredPosition = new Vector2(anchor.x == 0f ? 24f : -24f, 24f);
+        rect.pivot = anchor.y == 1f
+            ? new Vector2(1f, 1f)
+            : new Vector2(anchor.x == 0f ? 1f : 0f, 0f);
+        rect.anchoredPosition = anchor.y == 1f
+            ? new Vector2(16f, 16f)
+            : new Vector2(anchor.x == 0f ? 80f : 32f, 70f);
+        float buttonSize = anchor.y == 1f ? 230f : 170f;
+        rect.sizeDelta = new Vector2(buttonSize, buttonSize);
         return button;
     }
 
     private Button CreateContinueButton(Transform parent)
     {
-        string[] languageFolders = { "English", "Malayalam", "Indonesian", "Traditional Chinese" };
-        Texture2D texture = Resources.Load<Texture2D>("AIContinue/" + languageFolders[language]);
-        GameObject go = new GameObject("AI Continue", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
+        Texture2D texture = Resources.Load<Texture2D>("StageUI/Pick Arrow");
+        GameObject go = new GameObject("AI Continue Arrow", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
         go.transform.SetParent(parent, false);
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.anchorMin = rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
-        // Keep the startup action within the illustrated control panel, slightly left and higher.
-        rect.anchoredPosition = new Vector2(-140f, 112f);
-        rect.sizeDelta = new Vector2(300f, 80f);
+        // Place the continue arrow just below the instruction panel's lower-right corner.
+        rect.anchoredPosition = new Vector2(-4f, -84f);
+        rect.sizeDelta = FitSize(texture, new Vector2(340f, 340f));
         RawImage image = go.GetComponent<RawImage>();
         image.texture = texture;
         image.color = Color.white;
-        image.uvRect = new Rect(0.10f, 0.31f, 0.80f, 0.38f);
+        image.uvRect = new Rect(0f, 0f, 1f, 1f);
         image.raycastTarget = true;
         Button button = go.GetComponent<Button>();
         button.targetGraphic = image;

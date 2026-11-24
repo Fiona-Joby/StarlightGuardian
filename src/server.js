@@ -52,6 +52,8 @@ const server = http.createServer(async (request, response) => {
         "Use stageSummary.controlMode to tailor the next step: for gesture controls, give a simple gesture tip as well as referring to the gameplay result; for keyboard controls, focus the tip on gameplay. Do not talk about gestures when keyboard controls are active.",
         "Gesture counts show how often an action was used, not whether it was done correctly. Do not claim to see the player, camera, hand pose, or movement form. Raw camera and joint data are not provided. Do not diagnose health conditions.",
         "Use only facts in the stage summary. Do not guess what the player did. If a stat is missing, do not make one up.",
+        "The playedDifficulty field is the difficulty used for the completed run. Automatic mode may have changed the selected difficulty after that run; never describe the completed run using a later selected level.",
+        "Give specific, varied coaching. Lead with a relevant objective, score, collectible, enemy-progress, or survival result, then give one useful next action such as jump timing, reaching, attacking, shielding, or positioning. Avoid repeating left/right movement advice unless the supplied results directly support it.",
         "Answer the player's question in at most two short sentences and about 40 words.",
       ].join(" "),
       input: JSON.stringify({
@@ -134,6 +136,8 @@ function normalizeSummary(value) {
     durationSeconds: boundedNumber(summary.durationSeconds, 0, 3600),
     score: boundedNumber(summary.score, 0, 100000),
     starsCollected: boundedNumber(summary.starsCollected, 0, 10000),
+    playedDifficulty: Math.round(boundedNumber(summary.playedDifficulty, 0, 2)),
+    automaticDifficulty: summary.automaticDifficulty === true,
     gestures: {
       left: boundedNumber(summary.gestures?.left, 0, 10000),
       right: boundedNumber(summary.gestures?.right, 0, 10000),

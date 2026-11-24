@@ -7,6 +7,10 @@ public sealed class GameAudio : MonoBehaviour
     private static GameAudio instance;
     private AudioSource musicSource;
     private AudioSource sfxSource;
+    private bool storyMusicDucked;
+
+    private const float StoryMusicVolumeMultiplier = 0.55f;
+    private const float MusicVolumeChangeSpeed = 2f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
@@ -45,6 +49,29 @@ public sealed class GameAudio : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlaySceneMusic(scene.name);
 
+    private void Update()
+    {
+        if (musicSource == null || musicSource.clip == null) return;
+        float userVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
+        float targetVolume = userVolume * (storyMusicDucked ? StoryMusicVolumeMultiplier : 1f);
+        musicSource.volume = Mathf.MoveTowards(musicSource.volume, targetVolume,
+            Time.unscaledDeltaTime * MusicVolumeChangeSpeed);
+    }
+
+    public static void SetStoryMusicDucking(bool duck)
+    {
+        if (instance == null) return;
+        instance.storyMusicDucked = duck;
+        instance.ApplyMusicVolume();
+    }
+
+    private void ApplyMusicVolume()
+    {
+        if (musicSource == null || musicSource.clip == null) return;
+        float userVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
+        musicSource.volume = userVolume * (storyMusicDucked ? StoryMusicVolumeMultiplier : 1f);
+    }
+
     private void PlaySceneMusic(string sceneName)
     {
         string clipName = sceneName == "MainMenu" ? "Bgm 1 Calming" :
@@ -64,10 +91,15 @@ public sealed class GameAudio : MonoBehaviour
 
     public static void PlaySfx(string clipName)
     {
+        PlaySfx(clipName, 1f);
+    }
+
+    public static void PlaySfx(string clipName, float volumeScale)
+    {
         if (instance == null || instance.sfxSource == null) return;
         AudioClip clip = Resources.Load<AudioClip>("Audio/" + clipName);
         if (clip == null) return;
         instance.sfxSource.volume = PlayerPrefs.GetFloat("SfxVolume", 0.8f);
-        instance.sfxSource.PlayOneShot(clip);
+        instance.sfxSource.PlayOneShot(clip, Mathf.Max(0f, volumeScale));
     }
 }

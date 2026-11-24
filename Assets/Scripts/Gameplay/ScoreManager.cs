@@ -6,8 +6,8 @@ using UnityEngine;
 /// Subscribes to <see cref="StarEvents.StarCaught"/> and awards points based
 /// on the star type and the current <see cref="ScoreMultiplier"/>.
 ///
-/// Normal star → 1 × multiplier points and one star toward the objective.
-/// Rainbow star → no points, but counts toward the objective and activates 2×.
+/// Yellow star → 5 × multiplier points. Blue star → 10 × multiplier points.
+/// Rainbow star → no points, but activates the 2× multiplier.
 ///
 /// Fires <see cref="ScoreChanged"/> whenever a star is caught and
 /// <see cref="StageGoalReached"/> once when the target is met.
@@ -17,8 +17,8 @@ public class ScoreManager : MonoBehaviour
     /// <summary>Current accumulated score.</summary>
     public int Score { get; private set; }
 
-    /// <summary>The number of stars required to complete Stage 1 at this difficulty.</summary>
-    public int StageGoal => GameDifficulty.Stage1StarGoal;
+    /// <summary>The score required to complete Stage 1 at this difficulty.</summary>
+    public int StageGoal => GameDifficulty.Stage1PointGoal;
 
     /// <summary>Total stars caught during the current stage, including rainbow stars.</summary>
     public int StarsCollected { get; private set; }
@@ -55,12 +55,17 @@ public class ScoreManager : MonoBehaviour
 
         StarsCollected++;
 
-        // Rainbow stars count toward the stage objective but don't award points.
-        if (star.Type != StarType.Rainbow)
-            Score += Mathf.RoundToInt(1 * ScoreMultiplier.CurrentMultiplier);
+        int points = star.Type switch
+        {
+            StarType.Yellow => 5,
+            StarType.Blue => 10,
+            StarType.Rainbow => 0,
+            _ => 5
+        };
+        Score += Mathf.RoundToInt(points * ScoreMultiplier.CurrentMultiplier);
         ScoreChanged?.Invoke(Score, StageGoal);
 
-        if (StarsCollected >= StageGoal && !goalReached)
+        if (Score >= StageGoal && !goalReached)
         {
             goalReached = true;
             StageGoalReached?.Invoke();

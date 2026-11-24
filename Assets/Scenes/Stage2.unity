@@ -317,9 +317,7 @@ MonoBehaviour:
       m_Bits: 4294967295
     spottingTime: 0.12
     preparationTime: 0.45
-    predictionTime: 0.95
-    maximumPredictionDistance: 4.5
-    landingOffsetTowardFacing: 0.75
+    landingOffsetTowardFacing: 0.25
     playerAimHalfWidth: 0.85
     jumpHeight: 2.8
     attackDuration: 1.5

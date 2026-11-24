@@ -42,7 +42,7 @@ public class Stage2Turret : MonoBehaviour
         if (viewportPosition.z <= 0f || viewportPosition.x < 0f || viewportPosition.x > 1f ||
             viewportPosition.y < 0f || viewportPosition.y > 1f) return;
 
-        GameAudio.PlaySfx("Turret and Drone Shoot");
+        GameAudio.PlaySfx("Turret and Drone Shoot", 1.8f);
         Vector2 direction = Vector2.left;
         GameObject shot = new GameObject("Turret Beam");
         // The beam sprite is centered on its transform; advance half its visible

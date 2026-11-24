@@ -22,8 +22,6 @@ public class Stage3ArtReferences : MonoBehaviour
         visionAngle = 120f,
         spottingTime = 0.05f,
         preparationTime = 0.25f,
-        predictionTime = 1.1f,
-        maximumPredictionDistance = 4.5f,
         jumpHeight = 3.2f,
         attackDuration = 1.1f,
         damage = 1f,

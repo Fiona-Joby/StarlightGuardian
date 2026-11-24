@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Moves the player horizontally based on PlayerInput.
-/// Clamps position between configurable left/right boundaries.
+/// Clamps position between configurable boundaries.
 /// Drives the Animator's "isMoving" and "isReaching" parameters.
 ///
 /// The reach animation triggers when collecting a star (via CatchZone.StarCaught)
@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
     [SerializeField] private float leftBoundary = -6f;
     [SerializeField] private float rightBoundary = 50f;
+    [SerializeField] private bool limitRightBoundary = true;
     [SerializeField, Min(0f)] private float reachDuration = 0.875f; // 7 frames at 8fps
 
     [Header("Platform Detection")]
@@ -78,6 +79,7 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>Sets the furthest right position allowed by the current stage.</summary>
     public void SetRightBoundary(float boundary)
     {
+        limitRightBoundary = true;
         rightBoundary = Mathf.Max(leftBoundary, boundary);
         if (transform.position.x > rightBoundary)
         {
@@ -189,11 +191,13 @@ public class PlayerMovement : MonoBehaviour
         transform.position += platformDelta + Vector3.right * horizontalSpeed * Time.deltaTime;
 
         Vector3 pos = transform.position;
-        pos.x = Mathf.Clamp(pos.x, leftBoundary, rightBoundary);
+        pos.x = limitRightBoundary
+            ? Mathf.Clamp(pos.x, leftBoundary, rightBoundary)
+            : Mathf.Max(pos.x, leftBoundary);
         transform.position = pos;
         // Hitting a boundary must not keep a hidden outward velocity.
         if ((pos.x <= leftBoundary && horizontalSpeed < 0f) ||
-            (pos.x >= rightBoundary && horizontalSpeed > 0f))
+            (limitRightBoundary && pos.x >= rightBoundary && horizontalSpeed > 0f))
             airborneSpeed = 0f;
         if (!isJumping && Time.deltaTime > 0f)
         {
@@ -263,7 +267,7 @@ public class PlayerMovement : MonoBehaviour
             float launchSpeed = isReaching ? 0f :
                 (Mathf.Abs(groundSpeed) > 0.01f ? groundSpeed : lastGroundSpeed);
             if ((transform.position.x <= leftBoundary && launchSpeed < 0f) ||
-                (transform.position.x >= rightBoundary && launchSpeed > 0f))
+                (limitRightBoundary && transform.position.x >= rightBoundary && launchSpeed > 0f))
                 launchSpeed = 0f;
             airborneSpeed = Mathf.Abs(launchSpeed) > 0.01f
                 ? launchSpeed * takeoffSpeedMultiplier + Mathf.Sign(launchSpeed) * takeoffForwardBoost

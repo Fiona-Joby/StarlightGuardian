@@ -47,19 +47,23 @@ public class StarSpawner : MonoBehaviour
 
     private void SpawnNext()
     {
-        StarType type = Random.value < rainbowChance ? StarType.Rainbow : StarType.Normal;
+        bool isRainbow = Random.value < rainbowChance;
         float distanceAhead = Random.Range(minDistanceAhead, Mathf.Max(minDistanceAhead, maxDistanceAhead));
         float height = Random.Range(minHeightAbovePlayer, Mathf.Max(minHeightAbovePlayer, maxHeightAbovePlayer));
         Vector3 position = new Vector3(player.position.x + distanceAhead, player.position.y + height, 0f);
 
+        StarType type;
         Sprite visual;
-        if (type == StarType.Rainbow)
+        if (isRainbow)
         {
+            type = StarType.Rainbow;
             visual = rainbowStarSprite;
         }
         else
         {
-            visual = (normalStarCounter % 2 == 0) ? yellowStarSprite : blueStarSprite;
+            bool isYellow = normalStarCounter % 2 == 0;
+            type = isYellow ? StarType.Yellow : StarType.Blue;
+            visual = isYellow ? yellowStarSprite : blueStarSprite;
             normalStarCounter++;
         }
 

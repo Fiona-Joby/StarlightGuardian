@@ -19,9 +19,7 @@ public class Stage2BlobBeast : MonoBehaviour
         [Min(0f)] public float spottingTime = 0.12f;
         [Header("Jump attack")]
         [Min(0f)] public float preparationTime = 0.45f;
-        [Min(0f)] public float predictionTime = 0.95f;
-        [Min(0f)] public float maximumPredictionDistance = 4.5f;
-        [Min(0f)] public float landingOffsetTowardFacing = 0.75f;
+        [Min(0f)] public float landingOffsetTowardFacing = 0.25f;
         [Min(0.1f)] public float playerAimHalfWidth = 0.85f;
         [Min(0.1f)] public float jumpHeight = 2.8f;
         [Min(0.1f)] public float attackDuration = 1.5f;
@@ -40,6 +38,7 @@ public class Stage2BlobBeast : MonoBehaviour
     private Transform artTransform;
     private AISettings settings;
     private Stage2PlayerHealth playerHealth;
+    private PlayerMovement playerMovement;
     private Collider2D playerCollider;
     private SpriteRenderer playerSpriteRenderer;
     private Rigidbody2D body;
@@ -54,18 +53,15 @@ public class Stage2BlobBeast : MonoBehaviour
     private float patrolTargetX;
     private float patrolLegElapsed;
     private float patrolLegDuration;
-    private float lastPlayerRootX;
-    private float playerVelocityX;
     private float attackStartX;
     private float attackStartY;
     private float attackTargetX;
     private float attackJumpHeight;
     private float attackApproachSide;
-    private float terminalCorrectionStartX;
     private float attackElapsed;
     private float recoveryTargetX;
-    private bool terminalCorrectionStarted;
     private bool attackPassedAbovePlayer;
+    private bool attackSoundPlayed;
     private bool damageApplied;
     private bool destroyed;
 
@@ -102,8 +98,7 @@ public class Stage2BlobBeast : MonoBehaviour
         playerCollider = player != null ? player.GetComponent<Collider2D>() : null;
         playerSpriteRenderer = player != null ? player.GetComponent<SpriteRenderer>() : null;
         playerHealth = player != null ? player.GetComponent<Stage2PlayerHealth>() : null;
-        if (playerCollider != null) lastPlayerRootX = playerCollider.transform.position.x;
-
+        playerMovement = player != null ? player.GetComponent<PlayerMovement>() : null;
         float spawnX = body.position.x;
         patrolLeft = spawnX + Mathf.Min(settings.patrolLeftOffset, settings.patrolRightOffset);
         patrolRight = spawnX + Mathf.Max(settings.patrolLeftOffset, settings.patrolRightOffset);
@@ -121,7 +116,6 @@ public class Stage2BlobBeast : MonoBehaviour
     private void FixedUpdate()
     {
         if (destroyed || IsEncounterFinished) return;
-        UpdatePlayerVelocity();
         if (playerCollider == null)
         {
             state = AIState.Patrol;
@@ -179,11 +173,8 @@ public class Stage2BlobBeast : MonoBehaviour
 
     private void UpdateDetection()
     {
-        if (!CanSeePlayer(false))
-        {
-            ResumePatrol();
-            return;
-        }
+        // Once spotted, finish the windup even if the player briefly leaves
+        // the beast's vision or moves off-screen.
         FacePlayer();
         stateTimer += Time.fixedDeltaTime;
         if (stateTimer >= settings.spottingTime)
@@ -196,11 +187,6 @@ public class Stage2BlobBeast : MonoBehaviour
 
     private void UpdatePreparation()
     {
-        if (!CanSeePlayer(false))
-        {
-            ResumePatrol();
-            return;
-        }
         FacePlayer();
         stateTimer += Time.fixedDeltaTime;
         if (stateTimer >= settings.preparationTime)
@@ -215,15 +201,12 @@ public class Stage2BlobBeast : MonoBehaviour
         attackStartY = body.position.y;
         attackElapsed = 0f;
         damageApplied = false;
-        terminalCorrectionStarted = false;
+        attackSoundPlayed = false;
         attackPassedAbovePlayer = false;
-        float predictionHorizon = Mathf.Max(settings.predictionTime, settings.attackDuration);
-        float predictedLead = Mathf.Clamp(
-            playerVelocityX * predictionHorizon,
-            -settings.maximumPredictionDistance,
-            settings.maximumPredictionDistance);
         Bounds playerBounds = GetPlayerAimBounds();
-        attackTargetX = playerBounds.center.x + predictedLead;
+        // Lock the target at takeoff. The player can avoid the stomp by moving
+        // after the beast commits to its jump.
+        attackTargetX = playerBounds.center.x;
         attackJumpHeight = Mathf.Max(
             settings.jumpHeight,
             playerBounds.max.y - attackStartY + 0.5f);
@@ -240,29 +223,27 @@ public class Stage2BlobBeast : MonoBehaviour
         attackElapsed += Time.fixedDeltaTime;
         float t = Mathf.Clamp01(attackElapsed / Mathf.Max(0.1f, settings.attackDuration));
         float easedT = t * t * (3f - 2f * t);
-        float plannedX = Mathf.Lerp(attackStartX, attackTargetX, easedT);
-        float x = plannedX;
-        const float landingCorrectionStart = 0.55f;
-        if (t >= landingCorrectionStart)
-        {
-            if (!terminalCorrectionStarted)
-            {
-                terminalCorrectionStartX = plannedX;
-                terminalCorrectionStarted = true;
-            }
-            float correctionT = Mathf.InverseLerp(landingCorrectionStart, 1f, t);
-            correctionT = correctionT * correctionT * (3f - 2f * correctionT);
-            x = Mathf.Lerp(terminalCorrectionStartX, GetPlayerAimBounds().center.x, correctionT);
-        }
+        float x = Mathf.Lerp(attackStartX, attackTargetX, easedT);
         float y = attackStartY + Mathf.Sin(t * Mathf.PI) * attackJumpHeight;
         float previousY = body.position.y;
         MoveTo(new Vector2(x, y));
         Bounds playerBounds = GetPlayerAimBounds();
         if (y > playerBounds.max.y) attackPassedAbovePlayer = true;
 
-        if (spriteRenderer != null && t >= 0.72f) SetSprite(stompFrame);
+        if (t >= 0.72f)
+        {
+            SetSprite(stompFrame);
+            if (!attackSoundPlayed && t >= 0.6f)
+            {
+                // Start the impact cue with the visible stomp frame so its
+                // onset is heard at the landing, including any clip latency.
+                GameAudio.PlaySfx("Blob Beast Stomp", 1.8f);
+                attackSoundPlayed = true;
+            }
+        }
         if (!damageApplied && t >= 0.5f && previousY > playerBounds.max.y &&
-            y <= playerBounds.max.y && HorizontalStompOverlap(x, playerBounds))
+            y <= playerBounds.max.y && HorizontalStompOverlap(x, playerBounds) &&
+            !PlayerIsGroundedOnPlatform())
         {
             if (playerHealth != null) playerHealth.TakeHit(settings.damage);
             damageApplied = true;
@@ -270,21 +251,23 @@ public class Stage2BlobBeast : MonoBehaviour
 
         if (t < 1f) return;
         playerBounds = GetPlayerAimBounds();
-        float landingX = playerBounds.center.x;
+        float landingX = attackTargetX;
         MoveTo(new Vector2(landingX, attackStartY));
         if (!damageApplied && attackPassedAbovePlayer && HorizontalStompOverlap(landingX, playerBounds) &&
-            playerCollider.bounds.min.y <= attackStartY + 0.6f)
+            playerCollider.bounds.min.y <= attackStartY + 0.6f && !PlayerIsGroundedOnPlatform())
         {
             if (playerHealth != null) playerHealth.TakeHit(settings.damage);
             damageApplied = true;
         }
         SetSprite(stompFrame);
-        GameAudio.PlaySfx("Blob Beast Stomp");
         float playerX = playerCollider != null ? GetPlayerAimBounds().center.x : attackTargetX;
         recoveryTargetX = playerX - attackApproachSide * settings.recoverySideDistance;
         state = AIState.Recover;
         stateTimer = 0f;
     }
+
+    private bool PlayerIsGroundedOnPlatform() =>
+        playerMovement != null && playerMovement.IsGroundedOnPlatform;
 
     private bool HorizontalStompOverlap(float beastX, Bounds playerBounds)
     {
@@ -361,14 +344,6 @@ public class Stage2BlobBeast : MonoBehaviour
         return true;
     }
 
-    private void UpdatePlayerVelocity()
-    {
-        if (playerCollider == null) return;
-        float currentRootX = playerCollider.transform.position.x;
-        playerVelocityX = (currentRootX - lastPlayerRootX) / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
-        lastPlayerRootX = currentRootX;
-    }
-
     private void FacePlayer()
     {
         if (playerCollider == null) return;
@@ -402,9 +377,9 @@ public class Stage2BlobBeast : MonoBehaviour
     {
         if (playerSpriteRenderer != null && playerSpriteRenderer.sprite != null)
         {
-            // Sprite frames use different pivots and trim widths. Anchor impact to
-            // the stable player root, slightly ahead of the facing direction, and
-            // use a consistent body width rather than a frame's padded rectangle.
+            // Sprite frames have bottom-left pivots, so their rendered bounds
+            // center shifts with each frame. Aim from the stable player root
+            // and apply only the small offset toward the player's facing side.
             Bounds renderedBounds = playerSpriteRenderer.bounds;
             Vector3 center = renderedBounds.center;
             float facing = playerSpriteRenderer.flipX ? -1f : 1f;
