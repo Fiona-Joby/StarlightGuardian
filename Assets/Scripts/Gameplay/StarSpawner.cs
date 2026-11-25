@@ -23,6 +23,7 @@ public class StarSpawner : MonoBehaviour
 
     private float spawnTimer;
     private int normalStarCounter;
+    private int spawnedStarCount;
 
     private void Awake()
     {
@@ -47,7 +48,10 @@ public class StarSpawner : MonoBehaviour
 
     private void SpawnNext()
     {
-        bool isRainbow = Random.value < rainbowChance;
+        // Keep rainbow stars reliably available while still allowing extra
+        // random rainbows between the guaranteed spawns.
+        bool isRainbow = spawnedStarCount % 8 == 7 || Random.value < rainbowChance;
+        spawnedStarCount++;
         float distanceAhead = Random.Range(minDistanceAhead, Mathf.Max(minDistanceAhead, maxDistanceAhead));
         float height = Random.Range(minHeightAbovePlayer, Mathf.Max(minHeightAbovePlayer, maxHeightAbovePlayer));
         Vector3 position = new Vector3(player.position.x + distanceAhead, player.position.y + height, 0f);

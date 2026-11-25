@@ -74,6 +74,7 @@ public class StageManager : MonoBehaviour
         int playedDifficulty = GameDifficulty.Level;
         bool automaticDifficulty = GameDifficulty.IsAutomatic;
         GameDifficulty.AdjustAfterStage1(Time.timeSinceLevelLoad, starsCollected);
+        yield return new WaitForSecondsRealtime(0.4f);
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         PlayerInput playerInput = player != null ? player.GetComponent<PlayerInput>() : null;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 1", Time.timeSinceLevelLoad,
@@ -140,6 +141,6 @@ public class StageManager : MonoBehaviour
         subRT.anchorMax = new Vector2(1f, 0.42f);
         subRT.offsetMin = Vector2.zero;
         subRT.offsetMax = Vector2.zero;
-        subLabel.text = "Transitioning to Stage 2...";
+        subLabel.text = string.Empty;
     }
 }

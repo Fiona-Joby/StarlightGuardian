@@ -29,12 +29,12 @@ public class ScoreProgressBar : MonoBehaviour
             {
                 alignment = TextAnchor.MiddleRight,
                 fontStyle = FontStyle.Bold,
-                fontSize = 20
+                fontSize = 30
             };
         }
         float pulse = 0.7f + Mathf.Sin(Time.time * 5f) * 0.3f;
         multiplierStyle.normal.textColor = new Color(1f, 0.4f, 0.9f, pulse);
-        GUI.Label(new Rect(Screen.width - 80f, 10f, 60f, 36f), "×2", multiplierStyle);
+        GUI.Label(new Rect(Screen.width - 100f, 6f, 80f, 44f), "×2", multiplierStyle);
     }
 
     private void OnMultiplierChanged(float m)

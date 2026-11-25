@@ -72,6 +72,9 @@ public class Stage3DroneEncounter : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.2f);
         bool skipEntryStory = StageRestartState.ConsumeEntryStorySkip("Stage3");
         if (!skipEntryStory) yield return StoryArc.PlayStage3Entry();
+        // The entry story restores time after it finishes. A restart skips that
+        // story, so restore gameplay time here as well before showing objectives.
+        Time.timeScale = 1f;
         StageQuitButton pauseUi = FindAnyObjectByType<StageQuitButton>();
         if (pauseUi != null) pauseUi.ShowStage3ObjectivesAfterStory();
         stageStartedAt = Time.unscaledTime;
@@ -282,6 +285,13 @@ public class Stage3DroneEncounter : MonoBehaviour
         if (lootBoxRenderer != null) lootBoxRenderer.sprite = artReferences.LootBox;
         if (completionFeedbackShown) return;
         completionFeedbackShown = true;
+        StartCoroutine(ShowCompletionFeedbackAfterFinalAttack());
+    }
+
+    private IEnumerator ShowCompletionFeedbackAfterFinalAttack()
+    {
+        // Let the final attack animation finish before pausing gameplay for the coach panel.
+        yield return new WaitForSecondsRealtime(0.35f);
         Time.timeScale = 0f;
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 3", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player defeated {destroyedDrones}/{DroneGoal} drones, {destroyedSlimes}/{SlimeGoal} slimes, and {destroyedHardBeasts}/{HardBeastGoal}, taking {playerHits} hits.",

@@ -217,10 +217,16 @@ public class Stage2TurretEncounter : MonoBehaviour
         if (finished || destroyedTurrets < TurretGoal || destroyedBlobBeasts < BlobBeastGoal) return;
         finished = true;
         GameDifficulty.AdjustAfterCombat(playerDamage, LifeLimit);
-        ShowOverlay("All turrets and beasts defeated successfully", true);
+        ShowOverlay("Level 2 Completed!");
         Time.timeScale = 0f;
-        overlayText.gameObject.SetActive(false);
         transitionText.gameObject.SetActive(false);
+        StartCoroutine(ShowCompletionCoachAfterBeat());
+    }
+
+    private IEnumerator ShowCompletionCoachAfterBeat()
+    {
+        yield return new WaitForSecondsRealtime(0.4f);
+        overlayCanvas.transform.Find("Encounter Result").gameObject.SetActive(false);
         AiCoachInteraction.Show(overlayCanvas.transform, "Stage 2", Time.unscaledTime - stageStartedAt,
             0, 0, $"The player defeated {destroyedTurrets} of {TurretGoal} turrets and {destroyedBlobBeasts} of {BlobBeastGoal} blob beasts, taking {playerDamage:0.#} hits.",
             FindPlayerInput(), ContinueToStage3, true, playedDifficulty, automaticDifficulty);
